@@ -1,0 +1,4 @@
+This is a log file for documenting changes to AraSim.
+Enter the date, your name, and comments about the changes you have made.
+8/25/10	Connolly   Committed first version to be released to RadioSim group, tagged Release_Connolly_082510.  This version compiles and runs without errors but does not actually calculate anything.
+
