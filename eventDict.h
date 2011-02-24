@@ -16,6 +16,7 @@
 #define G__DICTIONARY
 #define G__PRIVATE_GVALUE
 #include "G__ci.h"
+#include "FastAllocString.h"
 extern "C" {
 extern void G__cpp_setup_tagtableeventDict();
 extern void G__cpp_setup_inheritanceeventDict();
@@ -45,6 +46,8 @@ extern G__linked_taginfo G__eventDictLN_TMemberInspector;
 extern G__linked_taginfo G__eventDictLN_TObject;
 extern G__linked_taginfo G__eventDictLN_vectorlEROOTcLcLTSchemaHelpercOallocatorlEROOTcLcLTSchemaHelpergRsPgR;
 extern G__linked_taginfo G__eventDictLN_reverse_iteratorlEvectorlEROOTcLcLTSchemaHelpercOallocatorlEROOTcLcLTSchemaHelpergRsPgRcLcLiteratorgR;
+extern G__linked_taginfo G__eventDictLN_vectorlETVirtualArraymUcOallocatorlETVirtualArraymUgRsPgR;
+extern G__linked_taginfo G__eventDictLN_reverse_iteratorlEvectorlETVirtualArraymUcOallocatorlETVirtualArraymUgRsPgRcLcLiteratorgR;
 extern G__linked_taginfo G__eventDictLN_Efficiencies;
 extern G__linked_taginfo G__eventDictLN_Trigger;
 extern G__linked_taginfo G__eventDictLN_vectorlEintcOallocatorlEintgRsPgR;
@@ -53,5 +56,7 @@ extern G__linked_taginfo G__eventDictLN_vectorlEvectorlEdoublecOallocatorlEdoubl
 extern G__linked_taginfo G__eventDictLN_reverse_iteratorlEvectorlEvectorlEdoublecOallocatorlEdoublegRsPgRcOallocatorlEvectorlEdoublecOallocatorlEdoublegRsPgRsPgRsPgRcLcLiteratorgR;
 extern G__linked_taginfo G__eventDictLN_Event;
 extern G__linked_taginfo G__eventDictLN_Detector;
+extern G__linked_taginfo G__eventDictLN_vectorlEPositioncOallocatorlEPositiongRsPgR;
+extern G__linked_taginfo G__eventDictLN_reverse_iteratorlEvectorlEPositioncOallocatorlEPositiongRsPgRcLcLiteratorgR;
 
 /* STUB derived class for protected member access */

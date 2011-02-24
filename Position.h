@@ -61,4 +61,4 @@ public:
 }; //class Position
 
 
-#endif POSITION_H
+#endif //POSITION_H
