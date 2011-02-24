@@ -4,9 +4,9 @@
 Ray::Ray() {
 
 }
-vector<double> Ray::getEField(Event *event,vector<double> pos) {
+vector<double> Ray::getEField(Event *event,Position pos) {
 
-  double d=Tools::distance(event->posnu,pos);
+  double d=event->posnu.Distance(pos);
   
   vector<double> efield;
   efield.push_back(event->eField1m[0]/d);

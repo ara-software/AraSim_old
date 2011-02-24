@@ -4,14 +4,18 @@
 #ifndef DETECTOR_H
 #define DETECTOR_H
 
+
 #include <TObject.h>
 #include <vector>
 #include "Trigger.h"
+#include "Position.h"
+
 using namespace std;
 
 //#include "Trigger.h"
 class Event;
 class Efficiencies;
+class Position;
 
 class Detector : public TObject {
 
@@ -20,7 +24,7 @@ class Detector : public TObject {
   int nRx; // number of antennas
   Trigger *trigger;
   int nSamples; // number of samples in waveforms for analysis
-  vector< vector<double> > rxpos; // position of antennas 
+  vector< Position > rxpos; // position of antennas 
   vector< vector<double> > waveforms;// waveforms for analysis 
   vector<int> rxtype; // antenna types (0=dipole, 1=slot) 
   
@@ -30,7 +34,7 @@ class Detector : public TObject {
 
 
  public:
- Detector(): nRx(100), trigger(new Trigger(nRx)),  nSamples(128), rxpos(nRx,vector<double>(3)), waveforms(nRx,vector<double>(nSamples)), rxtype(nRx)  {} 
+ Detector(): nRx(100), trigger(new Trigger(nRx)),  nSamples(128), rxpos(nRx,Position()), waveforms(nRx,vector<double>(nSamples)), rxtype(nRx)  {} 
   void simulateDetector(Event *event,Efficiencies *efficiencies); // simulates the detector response, including the waveforms at each antenna for analysis
   void resetDetector();
   int getnRx();
