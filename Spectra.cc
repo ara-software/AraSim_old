@@ -419,7 +419,7 @@ double  Spectra::GetNuEnergy() {
 	
 } //Pick Neutrino Energy
 
-inline void Spectra::GetFlux(string filename)
+void Spectra::GetFlux(string filename)
 {ifstream influx(("./fluxes/"+filename).c_str());
  const int NLINES=11;
  double flux[NLINES];//E2dNdE GeV cm^-2 s^-1 sr^-1
