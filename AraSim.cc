@@ -48,7 +48,7 @@ using namespace std;
 #include "Event.h"
 #include "Trigger.h"
 #include "Detector.h"
-#include "Signal.h"
+
 
 #include "Ray.h"
 
