@@ -16,7 +16,7 @@ SRCSUF = ${SrcSuf}
 
 
 #Generic and Site Specific Flags
-CXXFLAGS     += $(ROOTCFLAGS) $(SYSINCLUDES) 
+CXXFLAGS     += $(ROOTCFLAGS) $(SYSINCLUDES)
 LDFLAGS      += -g $(ROOTLDFLAGS) 
 
 LIBS          = $(ROOTLIBS) -lMinuit $(SYSLIBS) 
@@ -25,8 +25,8 @@ GLIBS         = $(ROOTGLIBS) $(SYSLIBS)
 
 ROOT_LIBRARY = libAra.${DLLSUF}
 #LIB_OBJS = AraSim.o Detector.o Event.o Efficiencies.o Trigger.o IceModel.o EarthModel.o eventDict.o
-LIB_OBJS =  Vector.o EarthModel.o IceModel.o Trigger.o Ray.o Tools.o Efficiencies.o Event.o Detector.o Position.o Spectra.o eventDict.o
-CCFILE       =  Vector.cc EarthModel.cc IceModel.cc Trigger.cc Ray.cc Tools.cc Efficiencies.cc Event.cc Detector.cc Spectra.cc Position.cc
+LIB_OBJS =  Vector.o EarthModel.o IceModel.o Trigger.o Ray.o Tools.o Efficiencies.o Event.o Detector.o Position.o Spectra.o RayTrace.o RayTrace_IceModels.o eventDict.o
+CCFILE       =  Vector.cc EarthModel.cc IceModel.cc Trigger.cc Ray.cc Tools.cc Efficiencies.cc Event.cc Detector.cc Spectra.cc Position.cc RayTrace.cc RayTrace_IceModels.cc
 CLASS_HEADERS = Trigger.h Detector.h
 
 PROGRAMS = araSim
