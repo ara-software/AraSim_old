@@ -5,6 +5,8 @@
 #include <limits>
 #include <queue>
 
+#include <boost/scoped_ptr.hpp>
+
 namespace RayTrace{
 	
 	const double TraceRecord::noReflection(100.0);
@@ -215,7 +217,7 @@ namespace RayTrace{
 
 	//========== TraceFinder ==========//
 
-	const double TraceFinder::maximum_ice_depth = 2850.0;
+	const double TraceFinder::maximum_ice_depth = -2850.0;
 	
 	///\brief Computes the derivatives of the position coordinates with respect to path length
 	///
@@ -534,6 +536,16 @@ namespace RayTrace{
 		pos.attenuation*=fresnelTransmit(pos.theta, polarization, n1, n2);
 	}
 	
+	template <>
+	void correctAmplitudeReflect<positionRecordingWrapper<fullRayPosition> >(positionRecordingWrapper<fullRayPosition>& pos, double polarization, double n1, double n2){
+		pos.attenuation*=fresnelReflect(pos.theta, polarization, n1, n2);
+	}
+	
+	template <>
+	void correctAmplitudeTransmit<positionRecordingWrapper<fullRayPosition> >(positionRecordingWrapper<fullRayPosition>& pos, double polarization, double n1, double n2){
+		pos.attenuation*=fresnelTransmit(pos.theta, polarization, n1, n2);
+	}
+	
 	double TraceFinder::recalculateAmplitude(const traceReplayRecord& trace, double frequency, double polarization){
 		double attenuation=1.0, attenuationDerivative,nextAttenuation;
 		//std::cout << " att: " << attenuation << std::endl;
@@ -544,6 +556,7 @@ namespace RayTrace{
 					break;
 				case RK_AIR_STEP:
 					//TODO: implement this!
+					attenuation*=fresnelTransmit(step->angle, polarization, 1.0, rModel->indexOfRefraction(0.0));
 					break;
 				case RK_STEP:
 					attenuationDerivative=-attenuation/aModel->attenuationLength(step->rkData.z[0],frequency);
@@ -552,13 +565,13 @@ namespace RayTrace{
 					attenuation=nextAttenuation;
 					break;
 				case RK_REFLECT_STEP:
-					if(step->angle<(pi/2.)){ //ray was reflected down form the ice surface
+					if(step->angle<(pi/2.)){ //ray was reflected down from the ice surface
 						//use the angle _after_ reflection
-						attenuation*=fresnelReflect(step->angle, polarization, rModel->indexOfRefraction(0.0),1.0);
+						attenuation*=fresnelReflect(step->angle, polarization, rModel->indexOfRefraction(maximum_ice_depth),1.0);
 					}
 					else{ //ray was reflected up from bedrock
 						//use the angle _before_ reflection
-						attenuation*=fresnelReflect(pi-step->angle, polarization, rModel->indexOfRefraction(maximum_ice_depth),1.0);
+						attenuation*=fresnelReflect(pi-step->angle, polarization, rModel->indexOfRefraction(0.0),1.0);
 					}
 					break;
 			}
@@ -625,9 +638,11 @@ namespace RayTrace{
 		double d,dy;
 		const double tol=1e-3;
 		while(cy>0.0 && fabs(b-a)>tol*c){
+			//std::cout << "\tsearch domain is now [" << a << ',' << b << ']' << std::endl;
 			if((c-a)>=(b-c)){ //the left subinterval is larger, so search within it
 				d=c-w*(c-a);
 				dy=doTrace<minimalRayPosition>(emit_depth,d,target,BedrockReflection,0.0,0.0).miss; //evaluate the miss distance
+				//std::cout << "\t " << d << ' ' << dy << std::endl;
 				if(dy>cy){
 					b=c;
 					c=d;
@@ -639,6 +654,7 @@ namespace RayTrace{
 			else{ //otherwise seach within the right subinterval
 				d=c+w*(b-c);
 				dy=doTrace<minimalRayPosition>(emit_depth,d,target,BedrockReflection,0.0,0.0).miss; //evaluate the miss distance
+				//std::cout << "\t " << d << ' ' << dy << std::endl;
 				if(dy>cy){
 					a=c;
 					c=d;
@@ -676,7 +692,7 @@ namespace RayTrace{
 			//std::cout << " Trying angle=" << angle << std::endl;
 			trace=doTrace<minimalRayPosition>(emit_depth,angle,target,allowedReflections,0.0,0.0);
 			//steps++;
-			//std::cout << " miss distance was " << trace.miss << '\n';
+			//std::cout << "  miss distance was " << trace.miss << '\n';
 			if(std::abs(trace.miss) < requiredAccuracy){
 				//std::cout << "traceRoot took " << steps << " steps" << std::endl;
 				//doTrace<fullRayPosition>(emit_depth,angle,target,allowedReflections,frequency,polarization)
@@ -742,12 +758,14 @@ namespace RayTrace{
 		aTrace = doTrace<minimalRayPosition>(emit_depth,a,target,allowedReflections,0.0,0.0);
 		cTrace = doTrace<minimalRayPosition>(emit_depth,c,target,allowedReflections,0.0,0.0);
 		double angle=0.5*(minAngle+maxAngle);
+		//std::cout << "Attempting to find root in range [" << minAngle << ',' << maxAngle << ')' << std::endl;
 		//std::cout << " end point miss values are " << aTrace.miss << ',' << cTrace.miss << std::endl;
 		return(traceRootImpl(emit_depth, target, rising, allowedReflections, requiredAccuracy, a, aTrace, c, cTrace, angle));
 	}
 	
 	double TraceFinder::refineRoot(double emit_depth, const rayTargetRecord& target, const TraceRecord& seed, bool rising, unsigned short allowedReflections, double requiredAccuracy) const{
 		//bracket the root
+		//std::cout << "Attempting to refine root near theta=" << seed.launchAngle << std::endl;
 		double a, c;
 		TraceRecord aTrace, cTrace;
 		double testDisp=.01;
@@ -763,7 +781,9 @@ namespace RayTrace{
 				a=0.0;
 			else if(a>pi)
 				a=pi;
+			//std::cout << "\ttesting theta=" << a << std::endl;
 			aTrace=doTrace<minimalRayPosition>(emit_depth,a,target,allowedReflections,0.0,0.0);
+			//std::cout << "\t (miss=" << aTrace.miss << ")" << std::endl;
 			if(std::abs(aTrace.miss) < requiredAccuracy)
 				return(a);
 				//return(doTrace<fullRayPosition>(emit_depth,a,target,allowedReflections,0.0,0.0));
@@ -786,6 +806,7 @@ namespace RayTrace{
 			aTrace=seed;
 		}
 		
+		//std::cout << "Endpoint miss distances are " << aTrace.miss << " and " << cTrace.miss << std::endl;
 		double angle=0.5*(a+c);
 		return(traceRootImpl(emit_depth, target, rising, allowedReflections, requiredAccuracy, a, aTrace, c, cTrace, angle));
 	}
@@ -793,16 +814,46 @@ namespace RayTrace{
 	bool shorterPath(const TraceRecord& a, const TraceRecord& b){
 		return(a.pathLen < b.pathLen);
 	}
+	
+	///A quick-and-dirty function to simultaneously sort two sequences according to the values in the first sequence. 
+	///That is, the first sequence is sorted in the normal way, and the second sequence undergoes the same permutation. 
+	///This is only expected to be used on very short sequences, so it uses the inefficient but simple insertion sort algorithm. 
+	///
+	///\param begin1 An iterator to the beginning of the first sequence
+	///\param end1 An iterator to the end of the first sequence
+	///\param begin2 An iterator to the beginning of the second sequence 
+	////		(which must be the same length as the first sequence)
+	///\param comp The comparison function object used to determine the 
+	///		proper ordering of the elements in the first sequence
+	template<typename RandomAccessIterator1, typename RandomAccessIterator2, class Compare>
+	void dual_insertion_sort(RandomAccessIterator1 begin1, RandomAccessIterator1 end1, RandomAccessIterator2 begin2, Compare comp){
+		RandomAccessIterator2 frontier2=begin2+1;
+		for(RandomAccessIterator1 frontier1=begin1+1; frontier1!=end1; ++frontier1,++frontier2){
+			RandomAccessIterator1 it1=frontier1;
+			RandomAccessIterator2 it2=frontier2;
+			while(it1!=begin1){
+				RandomAccessIterator1 nit=it1-1;
+				if(comp(*it1,*nit)){
+					std::iter_swap(it1,nit);
+					std::iter_swap(it2,it2-1);
+					it1=nit;
+					--it2;
+					continue;
+				}
+				break;
+			}
+		}
+	}
 
 	std::vector<TraceRecord> TraceFinder::findPaths(Vector sourcePos, Vector targetPos, double frequency, double polarization, unsigned short allowedReflections, double requiredAccuracy, std::vector<traceReplayRecord>* replayBuffer) const{
 		std::vector<TraceRecord> results;
-		pathRecorder<fullRayPosition>* recorder=NULL;
+		boost::scoped_ptr<pathRecorder<fullRayPosition> > recorder;
 		if(replayBuffer!=NULL)
-			recorder=new pathRecorder<fullRayPosition>();
-		//std::cout << "Finding paths from (" << sourcePos.x << ',' << sourcePos.y << ',' << sourcePos.z << ") to (" << targetPos.x << ',' << targetPos.y << ',' << targetPos.z << ')' << std::endl;
-		if(sourcePos.GetZ()>maximum_ice_depth || targetPos.GetZ()>maximum_ice_depth)
+			recorder.reset(new pathRecorder<fullRayPosition>());
+		//std::cout << "Finding paths from (" << sourcePos.GetX() << ',' << sourcePos.GetY() << ',' << sourcePos.GetZ() << ") to (" << targetPos.GetX() << ',' << targetPos.GetY() << ',' << targetPos.GetZ() << ')' << std::endl;
+		if(sourcePos.GetZ()<maximum_ice_depth || targetPos.GetZ()<maximum_ice_depth)
 			return(results);
-		bool fullyContained=(sourcePos.GetZ()>=0.0 && targetPos.GetZ()>=0.0); //whether the ray is entirely inside the ice
+		bool fullyContained=(sourcePos.GetZ()<=0.0 && targetPos.GetZ()<=0.0); //whether the ray is entirely inside the ice
 		double dist = sqrt((targetPos.GetX()-sourcePos.GetX())*(targetPos.GetX()-sourcePos.GetX())+(targetPos.GetY()-sourcePos.GetY())*(targetPos.GetY()-sourcePos.GetY()));
 		rayTargetRecord target(targetPos.GetZ(),dist);
 		
@@ -812,25 +863,28 @@ namespace RayTrace{
 			if(replayBuffer==NULL)
 				results.push_back(doVerticalTrace<fullRayPosition>(sourcePos.GetZ(), (sourcePos.GetZ()<targetPos.GetZ()?0.0:pi), target, NoReflection, frequency, polarization));
 			else{
-				results.push_back(doVerticalTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(), (sourcePos.GetZ()<targetPos.GetZ()?0.0:pi), target, NoReflection, frequency, polarization, recorder));
+				results.push_back(doVerticalTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(), (sourcePos.GetZ()<targetPos.GetZ()?0.0:pi), target, NoReflection, frequency, polarization, recorder.get()));
 				replayBuffer->push_back(recorder->getData());
+				recorder->clearData();
 			}
 			if((allowedReflections & SurfaceReflection) && fullyContained){
 				//std::cout << "Computing surface-reflected ray" << std::endl;
 				if(replayBuffer==NULL)
-					results.push_back(doVerticalTrace<fullRayPosition>(sourcePos.GetZ(), pi, target, SurfaceReflection, frequency, polarization));
+					results.push_back(doVerticalTrace<fullRayPosition>(sourcePos.GetZ(), 0.0, target, SurfaceReflection, frequency, polarization));
 				else{
-					results.push_back(doVerticalTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(), pi, target, SurfaceReflection, frequency, polarization, recorder));
+					results.push_back(doVerticalTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(), 0.0, target, SurfaceReflection, frequency, polarization, recorder.get()));
 					replayBuffer->push_back(recorder->getData());
+					recorder->clearData();
 				}
 			}
 			if(allowedReflections & BedrockReflection){
 				//std::cout << "Computing bedrock-reflected ray" << std::endl;
 				if(replayBuffer==NULL)
-					results.push_back(doVerticalTrace<fullRayPosition>(sourcePos.GetZ(), 0.0, target, BedrockReflection, frequency, polarization));
+					results.push_back(doVerticalTrace<fullRayPosition>(sourcePos.GetZ(), pi, target, BedrockReflection, frequency, polarization));
 				else{
-					results.push_back(doVerticalTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(), 0.0, target, BedrockReflection, frequency, polarization, recorder));
+					results.push_back(doVerticalTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(), pi, target, BedrockReflection, frequency, polarization, recorder.get()));
 					replayBuffer->push_back(recorder->getData());
+					recorder->clearData();
 				}
 			}
 			std::sort(results.begin(),results.end(),&shorterPath);
@@ -839,8 +893,12 @@ namespace RayTrace{
 		
 		indexOfRefractionModel::RayEstimate est;
 		if(!fullyContained){
-			//TODO: Hande recording!
-			results.push_back(findUncontainedFast(sourcePos, targetPos, frequency, polarization, requiredAccuracy));
+			if(replayBuffer==NULL)
+				results.push_back(findUncontainedFast(sourcePos, targetPos, frequency, polarization, requiredAccuracy));
+			else{
+				results.push_back(findUncontainedFast(sourcePos, targetPos, frequency, polarization, requiredAccuracy, recorder.get()));
+				replayBuffer->push_back(recorder->getData());
+			}
 			return(results);
 		}
 		if(fullyContained){
@@ -849,40 +907,45 @@ namespace RayTrace{
 		}
 		if(est.status==indexOfRefractionModel::SOLUTION){
 			//std::cout << "Got fast solution" << std::endl;
+			//std::cout << "\t(theta=" << est.angle << ')' << std::endl;
 			if(replayBuffer==NULL)
 				results.push_back(doTrace<fullRayPosition>(sourcePos.GetZ(), est.angle, target, NoReflection, frequency, polarization)); //this is supposed to be a direct ray, so no reflections should be needed
 			else{
-				results.push_back(doTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(), est.angle, target, NoReflection, frequency, polarization, recorder)); //this is supposed to be a direct ray, so no reflections should be needed
+				results.push_back(doTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(), est.angle, target, NoReflection, frequency, polarization, recorder.get())); //this is supposed to be a direct ray, so no reflections should be needed
 				replayBuffer->push_back(recorder->getData());
+				recorder->clearData();
 			}
 			if(std::abs(results.front().miss) > requiredAccuracy){
-				//std::cout << "Fast Solution not close enough; refining" << std::endl;
-				est.angle=refineRoot(sourcePos.GetZ(), target, results.front(), true, NoReflection, requiredAccuracy);
+				//std::cout << "Fast Solution not close enough (" << results.front().miss << "); refining" << std::endl;
+				est.angle=refineRoot(sourcePos.GetZ(), target, results.front(), false, NoReflection, requiredAccuracy);
 				if(replayBuffer==NULL)
 					results.front()=doTrace<fullRayPosition>(sourcePos.GetZ(), est.angle, target, NoReflection, frequency, polarization);
 				else{
-					results.front()=doTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(), est.angle, target, NoReflection, frequency, polarization, recorder);
+					results.front()=doTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(), est.angle, target, NoReflection, frequency, polarization, recorder.get());
 					replayBuffer->front()=recorder->getData();
+					recorder->clearData();
 				}
 			}
 			if(allowedReflections & SurfaceReflection){
 				//std::cout << "Looking for surface reflected solution" << std::endl;
-				double angle=traceRoot(sourcePos.GetZ(),target,est.angle+0.01,pi,false,SurfaceReflection,requiredAccuracy);
+				double angle=traceRoot(sourcePos.GetZ(),target,0.0,est.angle-0.01,true,SurfaceReflection,requiredAccuracy);
 				if(replayBuffer==NULL)
 					results.push_back(doTrace<fullRayPosition>(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization));
 				else{
-					results.push_back(doTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization,recorder));
+					results.push_back(doTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization,recorder.get()));
 					replayBuffer->push_back(recorder->getData());
+					recorder->clearData();
 				}
 			}
 			if(allowedReflections & BedrockReflection){
 				//std::cout << "Looking for bedrock reflected solution" << std::endl;
-				double angle=traceRoot(sourcePos.GetZ(),target,0.0,est.angle-0.01,false,BedrockReflection,requiredAccuracy);
+				double angle=traceRoot(sourcePos.GetZ(),target,est.angle+0.01,pi,true,BedrockReflection,requiredAccuracy);
 				if(replayBuffer==NULL)
 					results.push_back(doTrace<fullRayPosition>(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization));
 				else{
-					results.push_back(doTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization,recorder));
+					results.push_back(doTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization,recorder.get()));
 					replayBuffer->push_back(recorder->getData());
+					recorder->clearData();
 				}
 			}
 		}
@@ -894,20 +957,23 @@ namespace RayTrace{
 					//impossible
 					break;
 				case indexOfRefractionModel::UPPER_LIMIT:
-					b=est.angle;//std::min(pi,est.angle+.1); //add a small amount incase the solution is right at the boundary given by the estimate
-					maxRes = traceMax(sourcePos.GetZ(),target,b,pi);
-					minRes = traceMin(sourcePos.GetZ(),target,0.0,b);
+					b=est.angle;//std::min(pi,est.angle+.1); //add a small amount in case the solution is right at the boundary given by the estimate
+					minRes = traceMin(sourcePos.GetZ(),target,b,pi);
+					maxRes = traceMax(sourcePos.GetZ(),target,0.0,b);
 					break;
 				case indexOfRefractionModel::LOWER_LIMIT:
 					a=est.angle;//std::max(0.0,est.angle-.1);
-					maxRes = traceMax(sourcePos.GetZ(),target,a,pi);
-					minRes = traceMin(sourcePos.GetZ(),target,0.0,a);
+					minRes = traceMin(sourcePos.GetZ(),target,a,pi);
+					maxRes = traceMax(sourcePos.GetZ(),target,0.0,a);
 					break;
 				case indexOfRefractionModel::NO_SOLUTION:
 					//Note that getting indexOfRefractionModel::NO_SOLUTION implies no _direct_ solution exists
 					//if we were instructed to find reflected rays, we still need to do the work to look for them
-					
-					//fall through
+					if((allowedReflections & SurfaceReflection) || (allowedReflections & BedrockReflection)){
+						maxRes = traceMax(sourcePos.GetZ(),target,0.0,pi);
+						minRes = traceMin(sourcePos.GetZ(),target,0.0,pi);
+					}
+					break;
 				case indexOfRefractionModel::UNKNOWN:
 					maxRes = traceMax(sourcePos.GetZ(),target,0.0,pi);
 					minRes = traceMin(sourcePos.GetZ(),target,0.0,pi);
@@ -916,34 +982,39 @@ namespace RayTrace{
 			
 			if(minRes.first && (allowedReflections & BedrockReflection)){
 				//std::cout << "Looking for bedrock reflected solution" << std::endl;
-				double angle=traceRoot(sourcePos.GetZ(),target,0.0,minRes.second,false,BedrockReflection,requiredAccuracy);
+				double angle=traceRoot(sourcePos.GetZ(),target,minRes.second,pi,true,BedrockReflection,requiredAccuracy);
 				if(replayBuffer==NULL)
 					results.push_back(doTrace<fullRayPosition>(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization));
 				else{
-					results.push_back(doTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization,recorder));
+					results.push_back(doTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization,recorder.get()));
 					replayBuffer->push_back(recorder->getData());
+					recorder->clearData();
 				}
-				a=std::max(minRes.second,a);
 			}
 			if(maxRes.first && (allowedReflections & SurfaceReflection) && fullyContained){
 				//std::cout << "Looking for surface reflected solution" << std::endl;
-				double angle=traceRoot(sourcePos.GetZ(),target,maxRes.second,pi,false,SurfaceReflection,requiredAccuracy);
+				double angle=traceRoot(sourcePos.GetZ(),target,0.0,maxRes.second,true,SurfaceReflection,requiredAccuracy);
 				if(replayBuffer==NULL)
 					results.push_back(doTrace<fullRayPosition>(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization));
 				else{
-					results.push_back(doTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization,recorder));
+					results.push_back(doTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization,recorder.get()));
 					replayBuffer->push_back(recorder->getData());
+					recorder->clearData();
 				}
-				b=std::min(maxRes.second,b);
 			}
 			if((minRes.first || maxRes.first) && est.status!=indexOfRefractionModel::NO_SOLUTION){
+				if(minRes.first && minRes.second<b)
+					b=minRes.second;
+				if(maxRes.first && maxRes.second>a)
+					a=maxRes.second;
 				//std::cout << "Looking for direct solution" << std::endl;
-				double angle=traceRoot(sourcePos.GetZ(),target,a,b,true,NoReflection,requiredAccuracy);
+				double angle=traceRoot(sourcePos.GetZ(),target,a,b,false,NoReflection,requiredAccuracy);
 				if(replayBuffer==NULL)
 					results.push_back(doTrace<fullRayPosition>(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization));
 				else{
-					results.push_back(doTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization,recorder));
+					results.push_back(doTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization,recorder.get()));
 					replayBuffer->push_back(recorder->getData());
+					recorder->clearData();
 				}
 				if(std::abs(results.back().miss) > 10.0*requiredAccuracy){ //if it wasn't really a solution, throw it away
 					//std::cout << "Supposed solution missed by " << results.back().miss << " meters, rejecting" << std::endl;
@@ -953,44 +1024,51 @@ namespace RayTrace{
 				}
 			}
 		}
-		if(results.size() > 1)
-			std::sort(results.begin(),results.end(),&shorterPath);
+		if(results.size() > 1){
+			if(replayBuffer==NULL)
+				std::sort(results.begin(),results.end(),&shorterPath);
+			else
+				dual_insertion_sort(results.begin(),results.end(),replayBuffer->begin(),&shorterPath);
+		}
 		return(results);
 	}
 	
-	TraceRecord TraceFinder::findUncontainedFast(Vector sourcePos, Vector targetPos, double frequency, double polarization, double requiredAccuracy) const{
+	TraceRecord TraceFinder::findUncontainedFast(Vector sourcePos, Vector targetPos, double frequency, double polarization, double requiredAccuracy, pathRecorder<fullRayPosition>* recorder) const{
 		TraceRecord trace;
 		//TODO: if both points are above surface, give obvious answers
-		if(sourcePos.GetZ()>maximum_ice_depth || targetPos.GetZ()>maximum_ice_depth)
+		if(sourcePos.GetZ()<maximum_ice_depth || targetPos.GetZ()<maximum_ice_depth)
 			return(trace);
 		//the index of refraction of the ice at the surface
 		const double surfaceN = rModel->indexOfRefraction(0.0);
 		double wholeDist = sqrt((targetPos.GetX()-sourcePos.GetX())*(targetPos.GetX()-sourcePos.GetX())+(targetPos.GetY()-sourcePos.GetY())*(targetPos.GetY()-sourcePos.GetY()));
-		double upper=std::min(sourcePos.GetZ(),targetPos.GetZ()); //upper position in our coordinates has the smaller z coordinate!
-		double lower=std::max(sourcePos.GetZ(),targetPos.GetZ());
+		double upper=std::max(sourcePos.GetZ(),targetPos.GetZ());
+		double lower=std::min(sourcePos.GetZ(),targetPos.GetZ());
 		rayTargetRecord target(lower,wholeDist);
 		double minDist=0.0, maxDist=wholeDist;
-		double dist=(minDist+maxDist)/2.;
+		double dist=(minDist+maxDist)/2.; //the distance which will be covered by the ray while in the ice
 		double thetaA=0.0,thetaB=0.0;
 		while((maxDist-minDist)>requiredAccuracy/10.){
 			//std::cout << "Trying dist=" << dist << std::endl;
 			//thetaA is the angle of the straight line ray above the ice
-			thetaA=atan((wholeDist-dist)/-upper);
+			thetaA=pi-atan((wholeDist-dist)/upper);
 			//thetaB is the angle the straight line ray would have below the ice
-			thetaB=asin(sin(thetaA)/surfaceN);
+			thetaB=pi-asin(sin(pi-thetaA)/surfaceN);
+			//std::cout << "Angles are " << thetaA << ' ' << thetaB << std::endl;
 			
 			indexOfRefractionModel::RayEstimate est=rModel->estimateRayAngle(0.0, lower, dist);
 			if(est.status == indexOfRefractionModel::SOLUTION){
+				//std::cout << "Got estimate at angle " << est.angle << std::endl;
 				if(est.angle<thetaB)
-					minDist=dist;
-				else if(est.angle>thetaB)
 					maxDist=dist;
+				else if(est.angle>thetaB)
+					minDist=dist;
 				else //we got lucky
 					break;
 			}
 			else{
 				target.distance = dist;
 				trace = doTrace<minimalRayPosition>(0.0,thetaB,target,NoReflection,0.0,0.0);
+				//std::cout << "Trace missed by " << trace.miss << std::endl;
 				if(std::abs(trace.miss) <= requiredAccuracy)
 					break;
 				if(trace.miss<0.0)
@@ -1001,27 +1079,38 @@ namespace RayTrace{
 			
 			dist=(minDist+maxDist)/2.;
 		}
-		//do the final version trace
-		target.distance = dist;
-		trace = doTrace<fullRayPosition>(0.0,thetaB,target,NoReflection,frequency,polarization);
-		//add on the above ice segment
+		
+		//compute the path length the above ice segment
 		double extraLength=sqrt(upper*upper+(wholeDist-dist)*(wholeDist-dist));
-		//double oldLenth=trace.pathLen;
+		//compute attenuation due to passing through the ice surface
+		double transmissionAttenuation;
+		if(sourcePos.GetZ() > targetPos.GetZ())
+			transmissionAttenuation=fresnelTransmit(pi-thetaA, polarization, 1.0, surfaceN);
+		else
+			transmissionAttenuation=fresnelTransmit(pi-thetaB, polarization, surfaceN, 1.0);
+		//do the final version trace
+		target.distance = dist;	
+		if(recorder==NULL)
+			trace = doTrace<fullRayPosition>(0.0,thetaB,target,NoReflection,frequency,polarization);
+		else{
+			callCallback(recorder,positionRecordingWrapper<fullRayPosition>(fullRayPosition(0.0,upper,((sourcePos.GetZ() > targetPos.GetZ())?thetaA:thetaB)-pi,extraLength/speedOfLight,transmissionAttenuation)),RK_AIR_STEP);
+			trace = doTrace<positionRecordingWrapper<fullRayPosition> >(0.0,thetaB,target,NoReflection,frequency,polarization,recorder);
+		}
+		//include surface crossing attenuation
+		trace.attenuation*=transmissionAttenuation;
+		//add on path length the above ice segment
 		trace.pathLen+=extraLength;
 		trace.pathTime+=extraLength/speedOfLight;
-		//trace.amplitude=(trace.amplitude*oldLenth)/trace.pathLen;
-		//fix up all the angles, and take care of the refraction
-		if(sourcePos.GetZ() < targetPos.GetZ()){ //upper is the source depth
+		//fix up the angles
+		if(sourcePos.GetZ() > targetPos.GetZ()){ //upper is the source depth
 			trace.launchAngle=thetaA;
 			//receipt angle is as calculated by doTrace
 			trace.reflectionAngle=-thetaA;
-			trace.attenuation*=fresnelTransmit(thetaA, polarization, 1.0, surfaceN);
 		}
-		else{ //lower is the source dpeth
+		else{ //lower is the source depth
 			trace.launchAngle=pi-trace.receiptAngle;
 			trace.receiptAngle=pi-thetaA;
-			trace.reflectionAngle=thetaB-(pi/2.);
-			trace.attenuation*=fresnelTransmit(-trace.reflectionAngle, polarization, 1.0, surfaceN);
+			trace.reflectionAngle=thetaB-pi;
 		}
 		return(trace);
 	}

@@ -3,7 +3,7 @@
 // (It is for internal use by RayTrace.h) //
 // -------------------------------------- //
 
-//theta is the angle off of vertical (0 = straight _down_, due to the direction of the z axis)
+//theta is the angle off of vertical (0 = straight up)
 template<typename positionType
 #ifdef DO_TRACE_WITH_CALLBACK
 , typename callbackType
@@ -15,7 +15,7 @@ TraceRecord TraceFinder::doTrace(const double depth, const double theta, const r
 #endif
 								 ) const{
 	const unsigned long maxIter = 10000;
-	const double eps=1e-10; //TODO: figure out what value to use here
+	const double eps=1e-10;
 	const double targetTol = 0.01; //try to get the final value of x this close to target.distance
 	
 	//std::cout << "TraceFinder::doTrace with inital angle " << theta << std::endl;
@@ -35,16 +35,16 @@ TraceRecord TraceFinder::doTrace(const double depth, const double theta, const r
 #endif
 	
 	//intro for the case of downward going rays above the ice
-	if(pos.z<0.0 && pos.theta<(pi/2.)){
+	if(pos.z>0.0 && pos.theta>(pi/2.)){
 		if(target.distance > pos.x-pos.z*tan(pos.theta)){
-			//z<0, so use subtraction here
+			//cos(theta)<0, so use subtraction here
 			length-=pos.z/cos(pos.theta);
 			pos.addTime(-pos.z/(speedOfLight*cos(pos.theta)));
 			pos.x-=pos.z*tan(pos.theta);
 			pos.z=0.0;
 			result.reflectionAngle=-pos.theta; //store negative of value to distinguish from reflection
 			correctAmplitudeTransmit(pos,polarization,1.0,rModel->indexOfRefraction(0.0));
-			pos.theta=asin(sin(pos.theta)/rModel->indexOfRefraction(0.0));
+			pos.theta=pi-asin(sin(pi-pos.theta)/rModel->indexOfRefraction(0.0));
 #ifdef DO_TRACE_WITH_CALLBACK
 			callCallback(callback,pos,RK_AIR_STEP);
 #endif
@@ -53,7 +53,7 @@ TraceRecord TraceFinder::doTrace(const double depth, const double theta, const r
 			pos.giveData(result);
 			result.pathLen=(target.distance-pos.x)/sin(pos.theta);
 			result.pathTime=result.pathLen/speedOfLight;
-			result.miss = target.depth-pos.z-result.pathLen*cos(theta);
+			result.miss = pos.z-target.depth+(target.distance-pos.x)/tan(pos.theta); //theta>pi/2 => cos(theta)<0
 #ifdef DO_TRACE_WITH_CALLBACK
 			callCallback(callback,pos,RK_AIR_STEP);
 #endif
@@ -64,7 +64,7 @@ TraceRecord TraceFinder::doTrace(const double depth, const double theta, const r
 	//choose starting stepsize using a heuristic:
 	//the greater the depth the smoother the ice, so the larger the steps we can use
 	//however, make sure that the proposed step size is smaller than the total distance
-	double h=std::max(0.1,std::min(0.2*depth,0.1*target.distance));
+	double h=std::max(0.1,std::min(0.2*-depth,0.1*target.distance));
 	double hdid, hnext;
 	unsigned long stepCount;
 	for(stepCount=0; stepCount<maxIter; stepCount++){
@@ -90,13 +90,13 @@ TraceRecord TraceFinder::doTrace(const double depth, const double theta, const r
 		}
 		
 		//the next step would cross the ice surface, going up
-		if(pos.theta>(pi/2.) && (pos.z<=targetTol || pos.z+hnext*derivatives.z<0.0)){
-			if(pos.z<=targetTol){ //the ray is already about touching the surface, send it on through
+		if(pos.theta<(pi/2.) && (-pos.z<=targetTol || pos.z+hnext*derivatives.z>0.0)){
+			if(-pos.z<=targetTol){ //the ray is already about touching the surface, send it on through
 				if(allowedReflections & SurfaceReflection){ //just reflect the ray back down, recording the angle of incidence
 					result.reflectionAngle=pos.theta;
-					pos.theta=pi-pos.theta;
-					//do this _after_ changing theta:
+					//do this _before_ changing theta:
 					correctAmplitudeReflect(pos,polarization,rModel->indexOfRefraction(0.0),1.0);
+					pos.theta=pi-pos.theta;
 #ifdef DO_TRACE_WITH_CALLBACK
 					callCallback(callback,pos,RK_REFLECT_STEP);
 #endif
@@ -106,17 +106,17 @@ TraceRecord TraceFinder::doTrace(const double depth, const double theta, const r
 			}
 			else{ //the ray isn't close enough yet, so just stop it from overshooting
 				//std::cout << "Expect to go to z=" << pos.z+hnext*derivatives.z << std::endl;
-				hnext = 0.9*(-pos.z/derivatives.z); //dz_ds < 0, so htemp > 0
+				hnext = 0.9*(-pos.z/derivatives.z); //dz_ds > 0, z<0, so htemp > 0
 				//std::cout << "Limiting step size, now expect to go to z=" << pos.z+hnext*derivatives.z << std::endl;
 			}
 		}
-		else if(pos.theta<(pi/2.) && (pos.z>=(maximum_ice_depth-targetTol) || pos.z+hnext*derivatives.z>maximum_ice_depth)){
-			if(pos.z>=(maximum_ice_depth-targetTol)){ //the ray is suitably close to the rock
+		else if(pos.theta>(pi/2.) && (pos.z<=(maximum_ice_depth+targetTol) || pos.z+hnext*derivatives.z<maximum_ice_depth)){
+			if(pos.z<=(maximum_ice_depth+targetTol)){ //the ray is suitably close to the rock
 				if(allowedReflections & BedrockReflection){ //reflect the ray back up, recording the angle of incidence
 					result.reflectionAngle=pos.theta;
-					//do this _before_ changing theta
-					correctAmplitudeReflect(pos,polarization,rModel->indexOfRefraction(pos.z),/*TODO: correct IoR for bedrock?*/1.0);
 					pos.theta=pi-pos.theta;
+					//do this _after_ changing theta
+					correctAmplitudeReflect(pos,polarization,rModel->indexOfRefraction(pos.z),/*TODO: correct IoR for bedrock?*/1.0);
 #ifdef DO_TRACE_WITH_CALLBACK
 					callCallback(callback,pos,RK_REFLECT_STEP);
 #endif
@@ -140,11 +140,8 @@ TraceRecord TraceFinder::doTrace(const double depth, const double theta, const r
 	}
 	//std::cout << "TraceFinder::doTrace: final position is (" << pos.x << ',' << pos.z << ')' << std::endl;
 	result.pathLen=length;
-	//result.pathTime=pos.time;
-	//result.receiptAngle=pos.theta;
 	pos.giveData(result);
-	result.miss=(target.distance-pos.x)*tan(result.receiptAngle-pi/2) + target.depth-pos.z;
-	//result.amplitude/=result.pathLen;
+	result.miss=(target.distance-pos.x)*tan(pi/2-result.receiptAngle) - target.depth + pos.z;
 	
 	return(result);
 }
@@ -167,8 +164,8 @@ TraceRecord TraceFinder::doVerticalTrace(const double depth, const double theta,
 	//std::cout << "TraceFinder::doVerticalTrace with inital angle " << theta << std::endl;
 	
 	bool willReflect=false;
-	if((allowedReflections&SurfaceReflection && theta>pi/2.) ||
-	   (allowedReflections&BedrockReflection && theta<pi/2.))
+	if((allowedReflections&SurfaceReflection && theta<pi/2.) ||
+	   (allowedReflections&BedrockReflection && theta>pi/2.))
 		willReflect=true;
 	
 	TraceRecord result;
@@ -186,14 +183,15 @@ TraceRecord TraceFinder::doVerticalTrace(const double depth, const double theta,
 #endif
 	
 	//intro for the case of downward going rays above the ice
-	if(pos.z<0.0 && pos.theta<(pi/2.)){
-		//z<0, so use subtraction here
+	if(pos.z>0.0 && pos.theta>(pi/2.)){
+		//cos(theta)<0, so use subtraction here
 		length-=pos.z/cos(pos.theta);
 		pos.time-=pos.z/(speedOfLight*cos(pos.theta));
 		pos.x-=pos.z*tan(pos.theta);
 		pos.z=0.0;
 		result.reflectionAngle=pos.theta;
-		pos.theta=asin(sin(pos.theta)/rModel->indexOfRefraction(0.0));
+		correctAmplitudeTransmit(pos,polarization,1.0,rModel->indexOfRefraction(0.0));
+		pos.theta=pi-asin(sin(pi-pos.theta)/rModel->indexOfRefraction(0.0));
 #ifdef DO_TRACE_WITH_CALLBACK
 		callCallback(callback,pos,RK_FIRST_STEP);
 #endif
@@ -202,7 +200,7 @@ TraceRecord TraceFinder::doVerticalTrace(const double depth, const double theta,
 	//choose starting stepsize using a heuristic:
 	//the greater the depth the smoother the ice, so the larger the steps we can use
 	//however, make sure that the proposed step size is smaller than the total distance
-	double h=std::max(0.1,std::min(0.2*depth,0.1*std::abs(depth-target.depth)));
+	double h=std::max(0.1,std::min(0.2*-depth,0.1*std::abs(depth-target.depth)));
 	double hdid, hnext;
 	unsigned long stepCount;
 	for(stepCount=0; stepCount<maxIter; stepCount++){
@@ -217,29 +215,31 @@ TraceRecord TraceFinder::doVerticalTrace(const double depth, const double theta,
 		//std::cout << "Elapsed time is now " << pos.time << std::endl;
 		
 		if(!willReflect){
-			if(pos.theta<pi/2.){ //down-going
-				//check for completion
-				if(pos.z >= target.depth)
-					break;
-				//prevent overshooting
-				if((pos.z+hnext*derivatives.z) > (target.depth+targetTol))
-					hnext = 0.9*(target.depth-pos.z)/derivatives.z;
-			}
-			else{ //up-going
+			if(pos.theta>pi/2.){ //down-going
 				//check for completion
 				if(pos.z <= target.depth)
 					break;
 				//prevent overshooting
 				if((pos.z+hnext*derivatives.z) < (target.depth-targetTol))
+					hnext = 0.9*(target.depth-pos.z)/derivatives.z;
+			}
+			else{ //up-going
+				//check for completion
+				if(pos.z >= target.depth)
+					break;
+				//prevent overshooting
+				if((pos.z+hnext*derivatives.z) > (target.depth+targetTol))
 					hnext = 0.9*(pos.z-target.depth)/derivatives.z;
 			}
 		}
 		
 		//the next step would cross the ice surface, going up
-		if(pos.theta>(pi/2.) && (pos.z<=targetTol || pos.z+hnext*derivatives.z<0.0)){
-			if(pos.z<=targetTol){ //the ray is already about touching the surface, send it on through
+		if(pos.theta<(pi/2.) && (-pos.z<=targetTol || pos.z+hnext*derivatives.z>0.0)){
+			if(-pos.z<=targetTol){ //the ray is already about touching the surface, send it on through
 				if(allowedReflections & SurfaceReflection){ //just reflect the ray back down, recording the angle of incidence
 					result.reflectionAngle=pos.theta;
+					//do this _before_ changing theta:
+					correctAmplitudeReflect(pos,polarization,rModel->indexOfRefraction(0.0),1.0);
 					pos.theta=pi-pos.theta;
 					willReflect=false;
 #ifdef DO_TRACE_WITH_CALLBACK
@@ -255,11 +255,13 @@ TraceRecord TraceFinder::doVerticalTrace(const double depth, const double theta,
 				//std::cout << "Limiting step size, now expect to go to z=" << pos.z+hnext*derivatives.z << std::endl;
 			}
 		}
-		else if(pos.theta<(pi/2.) && (pos.z>=(maximum_ice_depth-targetTol) || pos.z+hnext*derivatives.z>maximum_ice_depth)){
-			if(pos.z>=(maximum_ice_depth-targetTol)){ //the ray is suitably close to the rock
+		else if(pos.theta>(pi/2.) && (pos.z<=(maximum_ice_depth+targetTol) || pos.z+hnext*derivatives.z<maximum_ice_depth)){
+			if(pos.z<=(maximum_ice_depth+targetTol)){ //the ray is suitably close to the rock
 				if(allowedReflections & BedrockReflection){ //reflect the ray back up, recording the angle of incidence
 					result.reflectionAngle=pos.theta;
 					pos.theta=pi-pos.theta;
+					//do this _after_ changing theta
+					correctAmplitudeReflect(pos,polarization,rModel->indexOfRefraction(pos.z),/*TODO: correct IoR for bedrock?*/1.0);
 					willReflect=false;
 #ifdef DO_TRACE_WITH_CALLBACK
 					callCallback(callback,pos,RK_REFLECT_STEP);
@@ -284,8 +286,7 @@ TraceRecord TraceFinder::doVerticalTrace(const double depth, const double theta,
 	}
 	//std::cout << "TraceFinder::doTrace: final position is (" << pos.x << ',' << pos.z << ')' << std::endl;
 	result.pathLen=length;
-	result.pathTime=pos.time;
-	result.receiptAngle=pos.theta;
+	pos.giveData(result);
 	result.miss=sqrt((target.depth-pos.z)*(target.depth-pos.z) + (target.distance-pos.x)*(target.distance-pos.x));
 	
 	return(result);
