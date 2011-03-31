@@ -26,11 +26,17 @@ namespace RayTrace{
 	template <>
 	void correctAmplitudeReflect<fullRayPosition>(fullRayPosition& pos, double polarization, double n1, double n2);
 	
+	template <>
+	void correctAmplitudeReflect<positionRecordingWrapper<fullRayPosition> >(positionRecordingWrapper<fullRayPosition>& pos, double polarization, double n1, double n2);
+	
 	template <typename positionType>
 	void correctAmplitudeTransmit(positionType& pos, double polarization, double n1, double n2){}
 	
 	template <>
 	void correctAmplitudeTransmit<fullRayPosition>(fullRayPosition& pos, double polarization, double n1, double n2);
+	
+	template <>
+	void correctAmplitudeTransmit<positionRecordingWrapper<fullRayPosition> >(positionRecordingWrapper<fullRayPosition>& pos, double polarization, double n1, double n2);
 	
 	//Callback dispatch machinery
 	//object version

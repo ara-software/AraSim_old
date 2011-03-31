@@ -6,7 +6,10 @@
 include Makefile.arch
 
 #Site Specific  Flags
-SYSINCLUDES	= -I/usr/include
+ifeq ($(strip $(BOOST_INCDIR)),)
+	BOOST_INCDIR = /usr/local/include
+endif
+SYSINCLUDES	= -I/usr/include -I$(BOOST_INCDIR)
 SYSLIBS         = -L/usr/lib
 DLLSUF = ${DllSuf}
 OBJSUF = ${ObjSuf}

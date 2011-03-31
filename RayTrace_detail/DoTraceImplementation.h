@@ -85,7 +85,7 @@ TraceRecord TraceFinder::doTrace(const double depth, const double theta, const r
 		//prevent overshooting
 		if((pos.x+hnext*derivatives.x) > (target.distance+targetTol)){
 			//std::cout << "Expect to go to x=" << (pos.x+hnext*derivatives.x) << std::endl;
-			hnext = 0.9*(target.distance-pos.x)/derivatives.x;
+			hnext = /*0.9**/(target.distance-pos.x)/derivatives.x;
 			//std::cout << "Limiting step size, now expect to go to x=" << (pos.x+hnext*derivatives.x) << std::endl;
 		}
 		
@@ -106,7 +106,7 @@ TraceRecord TraceFinder::doTrace(const double depth, const double theta, const r
 			}
 			else{ //the ray isn't close enough yet, so just stop it from overshooting
 				//std::cout << "Expect to go to z=" << pos.z+hnext*derivatives.z << std::endl;
-				hnext = 0.9*(-pos.z/derivatives.z); //dz_ds > 0, z<0, so htemp > 0
+				hnext = /*0.9**/(-pos.z/derivatives.z); //dz_ds > 0, z<0, so htemp > 0
 				//std::cout << "Limiting step size, now expect to go to z=" << pos.z+hnext*derivatives.z << std::endl;
 			}
 		}
@@ -126,7 +126,7 @@ TraceRecord TraceFinder::doTrace(const double depth, const double theta, const r
 			}
 			else{ //the ray isn't close enough yet, so just stop it from overshooting
 				//std::cout << "Expect to go to z=" << pos.z+hnext*derivatives.z << std::endl;
-				hnext = 0.9*((maximum_ice_depth-pos.z)/derivatives.z);
+				hnext = /*0.9**/((maximum_ice_depth-pos.z)/derivatives.z);
 				//std::cout << "Limiting step size, now expect to go to z=" << pos.z+hnext*derivatives.z << std::endl;
 			}
 		}
@@ -141,7 +141,10 @@ TraceRecord TraceFinder::doTrace(const double depth, const double theta, const r
 	//std::cout << "TraceFinder::doTrace: final position is (" << pos.x << ',' << pos.z << ')' << std::endl;
 	result.pathLen=length;
 	pos.giveData(result);
-	result.miss=(target.distance-pos.x)*tan(pi/2-result.receiptAngle) - target.depth + pos.z;
+	//result.miss=(target.distance-pos.x)*tan(pi/2-result.receiptAngle) - target.depth + pos.z;
+	//std::cout << result.receiptAngle << " \t";
+	//std::cout << "  " << result.receiptAngle << ' ' << (target.distance-pos.x) << ' ' << target.depth << ' ' << pos.z << std::endl;
+	result.miss=(target.distance-pos.x)/tan(result.receiptAngle) - target.depth + pos.z;
 	
 	return(result);
 }
@@ -211,7 +214,7 @@ TraceRecord TraceFinder::doVerticalTrace(const double depth, const double theta,
 #ifdef DO_TRACE_WITH_CALLBACK
 		callCallback(callback,pos,RK_STEP);
 #endif
-		//std::cout << "Did step of size " << hdid << " to depth " << pos.z << ", angle now " << pos.theta << std::endl;
+		//std::cout << "Did step of size " << hdid << " to depth " << pos.z << " at distance " << pos.x << ", angle now " << pos.theta << std::endl;
 		//std::cout << "Elapsed time is now " << pos.time << std::endl;
 		
 		if(!willReflect){
@@ -221,7 +224,7 @@ TraceRecord TraceFinder::doVerticalTrace(const double depth, const double theta,
 					break;
 				//prevent overshooting
 				if((pos.z+hnext*derivatives.z) < (target.depth-targetTol))
-					hnext = 0.9*(target.depth-pos.z)/derivatives.z;
+					hnext = /*0.9**/(target.depth-pos.z)/derivatives.z;
 			}
 			else{ //up-going
 				//check for completion
@@ -229,7 +232,7 @@ TraceRecord TraceFinder::doVerticalTrace(const double depth, const double theta,
 					break;
 				//prevent overshooting
 				if((pos.z+hnext*derivatives.z) > (target.depth+targetTol))
-					hnext = 0.9*(pos.z-target.depth)/derivatives.z;
+					hnext = /*0.9**/(pos.z-target.depth)/derivatives.z;
 			}
 		}
 		
@@ -251,7 +254,7 @@ TraceRecord TraceFinder::doVerticalTrace(const double depth, const double theta,
 			}
 			else{ //the ray isn't close enough yet, so just stop it from overshooting
 				//std::cout << "Expect to go to z=" << pos.z+hnext*derivatives.z << std::endl;
-				hnext = 0.9*(-pos.z/derivatives.z); //dz_ds < 0, so htemp > 0
+				hnext = /*0.9**/(-pos.z/derivatives.z); //dz_ds < 0, so htemp > 0
 				//std::cout << "Limiting step size, now expect to go to z=" << pos.z+hnext*derivatives.z << std::endl;
 			}
 		}
@@ -272,7 +275,7 @@ TraceRecord TraceFinder::doVerticalTrace(const double depth, const double theta,
 			}
 			else{ //the ray isn't close enough yet, so just stop it from overshooting
 				//std::cout << "Expect to go to z=" << pos.z+hnext*derivatives.z << std::endl;
-				hnext = 0.9*((maximum_ice_depth-pos.z)/derivatives.z);
+				hnext = /*0.9**/((maximum_ice_depth-pos.z)/derivatives.z);
 				//std::cout << "Limiting step size, now expect to go to z=" << pos.z+hnext*derivatives.z << std::endl;
 			}
 		}

@@ -30,9 +30,7 @@ void exponentialRefractiveIndex::indexOfRefractionWithDerivative(double z, doubl
 	}
 }
 
-//TODO: fix coordinates!!!
 RayTrace::indexOfRefractionModel::RayEstimate exponentialRefractiveIndex::estimateRayAngle(double sourceDepth, double receiverDepth, double distance) const{
-	//std::cout << "Looking for fast estimate from " << sourceDepth << " to " << receiverDepth << " over " << distance << std::endl;
 	if(B==0.0){
 		//in this degenerate case, n(z)==A for all z
 		//which causes problems when we divide by (n-A) and (n0-A) below
@@ -46,88 +44,56 @@ RayTrace::indexOfRefractionModel::RayEstimate exponentialRefractiveIndex::estima
 	double n0=A+B*exp(C*sourceDepth);
 	double n=A+B*exp(C*receiverDepth);
 	bool swap=(n<n0);
-	if(swap){
-		//std::cout << "Swapped endpoints" << std::endl;
-		std::swap(sourceDepth,receiverDepth);
-	}
-	double t1=((sourceDepth<receiverDepth)?0.0:RayTrace::pi/2);
-	double t2((sourceDepth<receiverDepth)?RayTrace::pi/2:RayTrace::pi);
+	if(swap)
+		std::swap(n,n0);
+	double s1=1e-10;
+	double s2=1.0;
 	
-	//std::cout << "n(" << sourceDepth << ")=" << n0 << ", n(" << receiverDepth << ")=" << n << std::endl;
 	double sDiff=C*distance;
 	
 	double a,b,c,s;
-	//std::cout << "t1=" << t1 << ", t2=" << t2 << std::endl;
 	
 	double f;
-	s=sin(t1);
-	a=s*s*n0*n0;
+	a=s1*s1*n0*n0;
 	b=sqrt(A*A-a);
 	c=A/b;
-	f=log((((sqrt(n*n-a)+b)/(n-A))+c)/(((sqrt(n0*n0-a)+b)/(n0-A))+c))-((b*sDiff)/(s*n0));
-	//std::cout << "f(" << t1 << ")=" << f << std::endl;
+	f=log((((sqrt(n*n-a)+b)/(n-A))+c)/(((sqrt(n0*n0-a)+b)/(n0-A))+c))-((b*sDiff)/(s1*n0));
 	
 	double fmid;
-	s=sin(t2);
-	a=s*s*n0*n0;
+	a=s2*s2*n0*n0;
 	b=sqrt(A*A-a);
 	c=A/b;
-	fmid=log((((sqrt(n*n-a)+b)/(n-A))+c)/(((sqrt(n0*n0-a)+b)/(n0-A))+c))-((b*sDiff)/(s*n0));
-	//std::cout << "f(" << t2 << ")=" << fmid << std::endl;
+	fmid=log((((sqrt(n*n-a)+b)/(n-A))+c)/(((sqrt(n0*n0-a)+b)/(n0-A))+c))-((b*sDiff)/(s2*n0));
 	
-	if(f*fmid>=0.0 || std::isnan(fmid)){
-		//std::cout << "Did not bracket a root" << std::endl;
-		/*if(swap){
-			std::cout << "asserting that solution can only be at an angle greater than " << (RayTrace::pi-asin((n0/n)*sin(t2))) << std::endl;
-			return(RayEstimate(LOWER_LIMIT,RayTrace::pi-asin((n0/n)*sin(t2))));
-		}
-		std::cout << "asserting that solution can only be at an angle greater than " << t2 << std::endl;
-		return(RayEstimate(LOWER_LIMIT,t2));*/
-		if(sourceDepth<receiverDepth){
-			if(!swap){
-				//std::cout << "asserting that solution can only be at an angle greater than " << t2 << std::endl;
-				return(RayEstimate(LOWER_LIMIT,t2));
-			}
-			else{
-				//std::cout << "asserting that solution can only be at an angle greater than " << (RayTrace::pi-asin((n0/n)*sin(t2))) << std::endl;
-				return(RayEstimate(LOWER_LIMIT,(RayTrace::pi-asin((n0/n)*sin(t2)))));
-			}
-		}
-		else{
-			if(!swap){
-				//std::cout << "asserting that solution can only be at an angle less than " << t1 << std::endl;
-				return(RayEstimate(UPPER_LIMIT,t1));
-			}
-			else{
-				//std::cout << "asserting that solution can only be at an angle less than " << (RayTrace::pi-asin((n0/n)*sin(t1))) << std::endl;
-				return(RayEstimate(UPPER_LIMIT,(RayTrace::pi-asin((n0/n)*sin(t1)))));
-			}
-		}
-	}
+	if(f*fmid>=0.0 || std::isnan(f) || std::isnan(fmid))
+		return(RayEstimate());
 	
-	double dt,tmid;
-	double rtb=(f<0.0?(dt=t2-t1,t1):(dt=t1-t2,t2));
+	double ds;
+	double rtb=(f<0.0?(ds=s2-s1,s1):(ds=s1-s2,s2));
 	const unsigned int maxIter=40;
 	unsigned int i;
 	for(i=0; i<maxIter; i++){
-		dt*=0.5;
-		tmid=rtb+dt;
-		//std::cout << "\ttesting " << tmid << std::endl;
-		s=sin(tmid);
+		ds*=0.5;
+		s=rtb+ds;
 		a=s*s*n0*n0;
 		b=sqrt(A*A-a);
 		c=A/b;
 		fmid=log((((sqrt(n*n-a)+b)/(n-A))+c)/(((sqrt(n0*n0-a)+b)/(n0-A))+c))-((b*sDiff)/(s*n0));
 		if(fmid<=0.0)
-			rtb=tmid;
+			rtb=s;
 		if(std::abs(fmid)<1.0e-4)
 			break;
 	}
 	if(i==maxIter)
 		return(RayEstimate());
-	if(swap)
-		return(RayEstimate(SOLUTION,RayTrace::pi-asin((n0/n)*sin(tmid))));
-	return(RayEstimate(SOLUTION,tmid));
+	if(swap){
+		if(sourceDepth>receiverDepth)
+			return(RayEstimate(SOLUTION,RayTrace::pi-asin((n0/n)*s)));
+		return(RayEstimate(SOLUTION,asin((n0/n)*s)));
+	}
+	if(sourceDepth<receiverDepth)
+		return(RayEstimate(SOLUTION,asin(s)));
+	return(RayEstimate(SOLUTION,RayTrace::pi-asin(s)));
 }
 
 

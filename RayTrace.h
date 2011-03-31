@@ -16,7 +16,7 @@ namespace RayTrace{
 
 	///\brief A structure to describe the location of a target for a ray-trace
 	struct rayTargetRecord{
-		///The depth of the target below the ice surface, in meters
+		///The vertical coordinate of the target, in meters
 		double depth;
 		
 		///The horizontal distance form the source to the target, in meters
@@ -114,21 +114,21 @@ namespace RayTrace{
 		
 		///Computes the index of refraction as a function of depth. 
 		///
-		///\param z The depth of the point at which the index of refraction is to be calculated. 
-		///\return The index of refraction at the given depth
+		///\param z The vertical coordinate of the point at which the index of refraction is to be calculated. 
+		///\return The index of refraction at the given position
 		virtual double indexOfRefraction(double z) const=0;
 		
 		///Computes the derivative of index of refraction with respect to depth  as a function of depth. 
 		///
-		///\param z The depth of the point at which the index of refraction derivative is to be calculated. 
-		///\return The index of refraction derivative at the given depth
+		///\param z The vertical coordinate of the point at which the index of refraction derivative is to be calculated. 
+		///\return The index of refraction derivative at the given position
 		virtual double indexOfRefractionDerivative(double z) const=0;
 		
 		///Computes the index of refraction as a function of depth and its derivative with respect to 
 		///depth at the same time. 
 		///
 		///This is expected to be more efficient, since sub-calculations are often shared. 
-		///\param z The depth of the point at which the index of refraction is to be calculated. 
+		///\param z The vertical coordinate of the point at which the index of refraction is to be calculated. 
 		///\param n The variable into which to place the calculated index of refraction. 
 		///\param dndz The variable into which to place the calculated derivative. 
 		virtual void indexOfRefractionWithDerivative(double z, double& n, double& dndz) const=0;
@@ -159,8 +159,8 @@ namespace RayTrace{
 		///Subclasses may choose not to implement this function, leaving in place the default 
 		///implementation, which provides no advice. 
 		///
-		///\param sourceDepth The depth of the source position below the ice surface, in meters. 
-		///\param receiverDepth The depth of the target position below the ice surface, in meters. 
+		///\param sourceDepth The vertical coordinate of the source position, in meters. 
+		///\param receiverDepth The vertical coordinate of the target position, in meters. 
 		///\param distance The horizontal distance between the source and target positions, in meters. 
 		///\return A pair containing an EstimateStatus value and an angle whose interpretation depends on the status. 
 		virtual RayEstimate estimateRayAngle(double sourceDepth, double receiverDepth, double distance) const{
@@ -175,7 +175,7 @@ namespace RayTrace{
 		
 		///Computes the attenuation length as a function of depth. 
 		///
-		///\param z The depth of the point at which the attenuation length is to be calculated. 
+		///\param z The vertical coordinate of the point at which the attenuation length is to be calculated. 
 		///\param frequency The signal frequency, in GHz. 
 		///\return The attenuation length at the given depth, in meters. 
 		virtual double attenuationLength(double z, double frequency) const=0;
@@ -191,7 +191,7 @@ namespace RayTrace{
 		///The vertical coordinate of the ray position, in meters
 		double z;
 		
-		///The angle of the ray, in radians (from the downward vertical)
+		///The angle of the ray, in radians (from the upward vertical)
 		double theta;
 		
 		///Default constructs a minimalRayPosition with all coordinates initialized to zero. 
@@ -201,7 +201,7 @@ namespace RayTrace{
 		///
 		///\param x_ The radial coordinate of the ray position, in meters
 		///\param z_ The vertical coordinate of the ray position, in meters
-		///\param theta_ The angle of the ray, in radians (from the downward vertical)
+		///\param theta_ The angle of the ray, in radians (from the upward vertical)
 		minimalRayPosition(double x_, double z_, double theta_);
 		
 		///Overloaded increment operator
@@ -259,7 +259,7 @@ namespace RayTrace{
 		///The vertical coordinate of the ray position, in meters
 		double z;
 		
-		///The angle of the ray, in radians (from the downward vertical)
+		///The angle of the ray, in radians (from the upward vertical)
 		double theta;
 		
 		///The time to traverse the path, in seconds
@@ -272,7 +272,7 @@ namespace RayTrace{
 		///
 		///\param x_ The radial coordinate of the ray position, in meters
 		///\param z_ The vertical coordinate of the ray position, in meters
-		///\param theta_ The angle of the ray, in radians (from the downward vertical)
+		///\param theta_ The angle of the ray, in radians (from the upward vertical)
 		///\param time_ The time to traverse the path, in seconds
 		rayPosition(double x_, double z_, double theta_, double time_);
 		
@@ -330,7 +330,7 @@ namespace RayTrace{
 		///The vertical coordinate of the ray position, in meters
 		double z;
 		
-		///The angle of the ray, in radians (from the downward vertical)
+		///The angle of the ray, in radians (from the upward vertical)
 		double theta;
 		
 		///The time to traverse the path, in seconds
@@ -347,7 +347,7 @@ namespace RayTrace{
 		///
 		///\param x_ The radial coordinate of the ray position, in meters
 		///\param z_ The vertical coordinate of the ray position, in meters
-		///\param theta_ The angle of the ray, in radians (from the downward vertical)
+		///\param theta_ The angle of the ray, in radians (from the upward vertical)
 		///\param time_ The time to traverse the path, in seconds
 		///\param attenuation_ The factor by which signal amplitude is decreased along the path
 		fullRayPosition(double x_, double z_, double theta_, double time_, double attenuation_);
@@ -412,6 +412,10 @@ namespace RayTrace{
 			rec.length=0.0;
 			std::fill(&rec.z[0],&rec.z[6],0.0);
 		}
+		positionRecordingWrapper<positionType>(const positionType& pos):positionType(pos){
+			rec.length=0.0;
+			std::fill(&rec.z[0],&rec.z[6],0.0);
+		}
 		
 		void recordStep(unsigned int step){
 			rec.z[step]=positionType::z;
@@ -467,7 +471,8 @@ namespace RayTrace{
 					//do nothing
 					break;
 				case RK_AIR_STEP:
-					record.steps.push_back(stepRecord(RK_AIR_STEP,p.theta));
+					//negate theta since we have other means of knowing that this is refraction:
+					record.steps.push_back(stepRecord(RK_AIR_STEP,-p.theta));
 					break;
 				case RK_STEP:
 					record.steps.push_back(stepRecord(p.rec));
@@ -618,7 +623,7 @@ namespace RayTrace{
 		///
 		///This function seeks roots of the vertical miss as a function of launch angle using a simplified version of Brent's method. 
 		///
-		///\param emit_depth The depth of the source in the ice, in meters
+		///\param emit_depth The vertical coordinate of the source, in meters
 		///\param target The description of the position of the target
 		///\param minAngle The minimum launch angle to be considered, in radians
 		///\param maxAngle The maximum launch angle to be considered, in radians
@@ -634,7 +639,7 @@ namespace RayTrace{
 		///It steps outward from the seed solution to try to bracket the root (solution with zero miss distance), and then uses a 
 		///simplified version of Brent's method to seek the root. 
 		///
-		///\param emit_depth The depth of the source in the ice, in meters
+		///\param emit_depth The vertical coordinate of the source, in meters
 		///\param target The description of the position of the target
 		///\param seed The existing trace which is insufficiently close to the target
 		///\param rising Whether the root being sought is on a rising slope
@@ -645,7 +650,7 @@ namespace RayTrace{
 		
 		///\brief Attempts to locate the ray path with passes the farthest above the given target
 		///
-		///\param emit_depth The depth of the source in the ice, in meters
+		///\param emit_depth The vertical coordinate of the source, in meters
 		///\param target The description of the position of the target
 		///\param left The left bound of the angular search space
 		///\param right The right bound of the angular search space
@@ -653,7 +658,7 @@ namespace RayTrace{
 		
 		///\brief Attempts to locate the ray path with passes the farthest below the given target
 		///
-		///\param emit_depth The depth of the source in the ice, in meters
+		///\param emit_depth The vertical coordinate of the source, in meters
 		///\param target The description of the position of the target
 		///\param left The left bound of the angular search space
 		///\param right The right bound of the angular search space
@@ -667,7 +672,7 @@ namespace RayTrace{
 		///\param polarization The direction of polarization of the signal, where zero corresponds 
 		///		to polarization perpeduicular to the plane of propagation
 		///\param requiredAccuracy The maximum distance by which the result may miss the target
-		TraceRecord findUncontainedFast(Vector sourcePos, Vector targetPos, double frequency, double polarization, double requiredAccuracy) const;
+		TraceRecord findUncontainedFast(Vector sourcePos, Vector targetPos, double frequency, double polarization, double requiredAccuracy, pathRecorder<fullRayPosition>* recorder=NULL) const;
 		
 	public:
 		///The thickness of the ice sheet, in meters
@@ -703,7 +708,7 @@ namespace RayTrace{
 		///
 		///This function does not work properly for very nearly vertical paths, at the moment doVerticalTrace must be used instead. 
 		///
-		///\param depth The depth of the starting point of the path
+		///\param depth The vertical coordinate of the starting point of the path
 		///\param theta The starting angle of the path
 		///\param target The description of the position of the target
 		///\param allowedReflections Which types of reflections are allowed
@@ -731,7 +736,7 @@ namespace RayTrace{
 		///caution should be used if the callback is a stateful function object (as the accumulated state in 
 		///the copy will not be available in the calling context). 
 		///
-		///\param depth The depth of the starting point of the path
+		///\param depth The vertical coordinate of the starting point of the path
 		///\param theta The starting angle of the path
 		///\param target The description of the position of the target
 		///\param allowedReflections Which types of reflections are allowed
