@@ -616,7 +616,7 @@ namespace RayTrace{
 		///\param cTrace The trace computed at angle c
 		///\param requiredAccuracy The maximum distance by which the result may miss the target
 		///\return The initial angle of the best solution ray path
-		double traceRootImpl(double emit_depth, const rayTargetRecord& target, bool rising, unsigned short allowedReflections, double requiredAccuracy, 
+		std::pair<double,double> traceRootImpl(double emit_depth, const rayTargetRecord& target, bool rising, unsigned short allowedReflections, double requiredAccuracy, 
 							 double a, TraceRecord& aTrace, double c, TraceRecord& cTrace, double angle) const;
 		
 		///\brief Attempts to determine a path which misses the given target vertically by the smallest possible amount. 
@@ -631,7 +631,7 @@ namespace RayTrace{
 		///\param allowedReflections Which types of reflections are allowed
 		///\param requiredAccuracy The maximum distance by which the result may miss the target
 		///\return The initial angle of the best solution ray path
-		double traceRoot(double emit_depth, const rayTargetRecord& target, double minAngle, double maxAngle, bool rising, unsigned short allowedReflections, double requiredAccuracy) const;
+		std::pair<double,double> traceRoot(double emit_depth, const rayTargetRecord& target, double minAngle, double maxAngle, bool rising, unsigned short allowedReflections, double requiredAccuracy) const;
 		
 		///\brief Attempts to improve an existing estimate of a path which misses the given target vertically by the smallest possible amount. 
 		///
@@ -646,7 +646,7 @@ namespace RayTrace{
 		///\param allowedReflections Which types of reflections are allowed
 		///\param requiredAccuracy The maximum distance by which the result may miss the target
 		///\return The initial angle of the best solution ray path
-		double refineRoot(double emit_depth, const rayTargetRecord& target, const TraceRecord& seed, bool rising, unsigned short allowedReflections, double requiredAccuracy) const;
+		std::pair<double,double> refineRoot(double emit_depth, const rayTargetRecord& target, const TraceRecord& seed, bool rising, unsigned short allowedReflections, double requiredAccuracy) const;
 		
 		///\brief Attempts to locate the ray path with passes the farthest above the given target
 		///

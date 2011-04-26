@@ -678,7 +678,7 @@ namespace RayTrace{
 		return(result);
 	}
 
-	double TraceFinder::traceRootImpl(double emit_depth, const rayTargetRecord& target, bool rising, unsigned short allowedReflections, double requiredAccuracy, 
+	std::pair<double,double> TraceFinder::traceRootImpl(double emit_depth, const rayTargetRecord& target, bool rising, unsigned short allowedReflections, double requiredAccuracy, 
 									  double a, TraceRecord& aTrace, double c, TraceRecord& cTrace, double angle) const{
 		const double miss_eps=requiredAccuracy/100.0;
 		const double angle_eps=1e-10;
@@ -702,7 +702,7 @@ namespace RayTrace{
 			if(std::abs(trace.miss) < requiredAccuracy){
 				//std::cout << "traceRoot took " << steps << " steps" << std::endl;
 				//doTrace<fullRayPosition>(emit_depth,angle,target,allowedReflections,frequency,polarization)
-				return(angle);
+				return(std::make_pair(angle,trace.miss));
 			}
 			
 			//calculate the quadratic interpolation
@@ -746,7 +746,7 @@ namespace RayTrace{
 			}
 		}
 		//std::cout << "traceRoot took " << steps << " steps and bailed out" << std::endl;
-		return(angle);
+		return(std::make_pair(angle,trace.miss));
 	}
 	
 	//rough implementation of Brent's method
@@ -756,7 +756,7 @@ namespace RayTrace{
 	//best-case behavior as the full Brent's method. 
 	//This implementation is more conveniently controllable for this purpose 
 	//than NR's zbrent, with regard to the stopping conditions
-	double TraceFinder::traceRoot(double emit_depth, const rayTargetRecord& target, double minAngle, double maxAngle, bool rising, unsigned short allowedReflections, double requiredAccuracy) const{
+	std::pair<double,double> TraceFinder::traceRoot(double emit_depth, const rayTargetRecord& target, double minAngle, double maxAngle, bool rising, unsigned short allowedReflections, double requiredAccuracy) const{
 		double a=minAngle,c=maxAngle;
 		TraceRecord aTrace, cTrace;
 		//frequency and polarization are irrelevant on all traces except the final one
@@ -765,10 +765,12 @@ namespace RayTrace{
 		double angle=0.5*(minAngle+maxAngle);
 		//std::cout << "Attempting to find root in range [" << minAngle << ',' << maxAngle << ']' << std::endl;
 		//std::cout << " end point miss values are " << aTrace.miss << ',' << cTrace.miss << std::endl;
+		if((aTrace.miss>0) == (cTrace.miss>0)) //didn't bracket a root. Return a noonsense angle and a huge error
+			return(std::make_pair(-1.,1e6));
 		return(traceRootImpl(emit_depth, target, rising, allowedReflections, requiredAccuracy, a, aTrace, c, cTrace, angle));
 	}
 	
-	double TraceFinder::refineRoot(double emit_depth, const rayTargetRecord& target, const TraceRecord& seed, bool rising, unsigned short allowedReflections, double requiredAccuracy) const{
+	std::pair<double,double> TraceFinder::refineRoot(double emit_depth, const rayTargetRecord& target, const TraceRecord& seed, bool rising, unsigned short allowedReflections, double requiredAccuracy) const{
 		//bracket the root
 		//std::cout << "Attempting to refine root near theta=" << seed.launchAngle << std::endl;
 		double a, c;
@@ -790,7 +792,7 @@ namespace RayTrace{
 			aTrace=doTrace<minimalRayPosition>(emit_depth,a,target,allowedReflections,0.0,0.0);
 			//std::cout << "\t (miss=" << aTrace.miss << ")" << std::endl;
 			if(std::abs(aTrace.miss) < requiredAccuracy)
-				return(a);
+				return(std::make_pair(a,aTrace.miss));
 				//return(doTrace<fullRayPosition>(emit_depth,a,target,allowedReflections,0.0,0.0));
 			if((aTrace.miss*seed.miss)<0.0)
 				break;
@@ -851,6 +853,9 @@ namespace RayTrace{
 	}
 
 	std::vector<TraceRecord> TraceFinder::findPaths(Vector sourcePos, Vector targetPos, double frequency, double polarization, unsigned short allowedReflections, double requiredAccuracy, std::vector<traceReplayRecord>* replayBuffer) const{
+		const double initialSafety=1.e-2;
+		const double minimumSafety=1.e-5;
+		
 		std::vector<TraceRecord> results;
 		boost::scoped_ptr<pathRecorder<fullRayPosition> > recorder;
 		if(replayBuffer!=NULL)
@@ -865,7 +870,7 @@ namespace RayTrace{
 		
 		//special case for pesky near-vertical rays
 		if(dist<=requiredAccuracy){
-			//std::cout << "Computing direct ray" << std::endl;
+			//std::cout << "Computing direct ray (vertical)" << std::endl;
 			if(replayBuffer==NULL)
 				results.push_back(doVerticalTrace<fullRayPosition>(sourcePos.GetZ(), (sourcePos.GetZ()<targetPos.GetZ()?0.0:pi), target, NoReflection, frequency, polarization));
 			else{
@@ -921,7 +926,7 @@ namespace RayTrace{
 			}
 			if(std::abs(results.front().miss) > requiredAccuracy){
 				//std::cout << "Fast Solution not close enough (" << results.front().miss << "); refining" << std::endl;
-				est.angle=refineRoot(sourcePos.GetZ(), target, results.front(), false, NoReflection, requiredAccuracy);
+				est.angle=refineRoot(sourcePos.GetZ(), target, results.front(), false, NoReflection, requiredAccuracy).first;
 				if(replayBuffer==NULL)
 					results.front()=doTrace<fullRayPosition>(sourcePos.GetZ(), est.angle, target, NoReflection, frequency, polarization);
 				else{
@@ -932,22 +937,53 @@ namespace RayTrace{
 			}
 			if(allowedReflections & SurfaceReflection){
 				//std::cout << "Looking for surface reflected solution" << std::endl;
-				double angle=traceRoot(sourcePos.GetZ(),target,0.0,est.angle-1e-4,true,SurfaceReflection,requiredAccuracy);
+				//double angle=traceRoot(sourcePos.GetZ(),target,0.0,est.angle-1e-1,true,SurfaceReflection,requiredAccuracy);
+				
+				//Here, we want to find another root, potentially near the direct solution, but distinct from it. 
+				//We expect this root to be in the damain [0,est.angle], but we don't want the root finding algorithm
+				//to get distracted by the root that we know is at est.angle, so we subtract a small angle from the upper 
+				//bound. However, the roots may be arbitrarily close together, so any guess for this safety value may be too large
+				//and we may end up exlusing the part of the domain which contains the root we want. So, if the root finding
+				//doesn't manage to find a suitable root we decrease the safety value. 
+				double safety=initialSafety;
+				while(est.angle-safety < 0)
+					safety/=10.;
+				std::pair<double,double> root(-1.,10.*requiredAccuracy); //first element is the launch angle, second is miss distance
+				do{
+					root=traceRoot(sourcePos.GetZ(),target,
+								   0.0, //minimum angle
+								   est.angle-safety, //maximum angle
+								   true,SurfaceReflection,requiredAccuracy);
+					safety/=10.;
+				}while(safety>=minimumSafety && std::abs(root.second)>requiredAccuracy);
 				if(replayBuffer==NULL)
-					results.push_back(doTrace<fullRayPosition>(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization));
+					results.push_back(doTrace<fullRayPosition>(sourcePos.GetZ(),root.first,target,allowedReflections,frequency,polarization));
 				else{
-					results.push_back(doTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization,recorder.get()));
+					results.push_back(doTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(),root.first,target,allowedReflections,frequency,polarization,recorder.get()));
 					replayBuffer->push_back(recorder->getData());
 					recorder->clearData();
 				}
 			}
 			if(allowedReflections & BedrockReflection){
 				//std::cout << "Looking for bedrock reflected solution" << std::endl;
-				double angle=traceRoot(sourcePos.GetZ(),target,est.angle+1e-4,pi,true,BedrockReflection,requiredAccuracy);
+				//double angle=traceRoot(sourcePos.GetZ(),target,est.angle+1e-4,pi,true,BedrockReflection,requiredAccuracy).first;
+				
+				//this is the same logic as for the surface reflected case, but the seacrh is in the domain [est.angle,pi]
+				double safety=initialSafety;
+				while(est.angle+safety > pi)
+					safety/=10;
+				std::pair<double,double> root(-1.,10.*requiredAccuracy); //first element is the launch angle, second is miss distance
+				do{
+					root=traceRoot(sourcePos.GetZ(),target,
+								   est.angle+safety, //minimum angle
+								   pi, //maximum angle
+								   true,BedrockReflection,requiredAccuracy);
+					safety/=10.;
+				}while(safety>=minimumSafety && std::abs(root.second)>requiredAccuracy);
 				if(replayBuffer==NULL)
-					results.push_back(doTrace<fullRayPosition>(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization));
+					results.push_back(doTrace<fullRayPosition>(sourcePos.GetZ(),root.first,target,allowedReflections,frequency,polarization));
 				else{
-					results.push_back(doTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization,recorder.get()));
+					results.push_back(doTrace<positionRecordingWrapper<fullRayPosition> >(sourcePos.GetZ(),root.first,target,allowedReflections,frequency,polarization,recorder.get()));
 					replayBuffer->push_back(recorder->getData());
 					recorder->clearData();
 				}
@@ -1002,7 +1038,7 @@ namespace RayTrace{
 			
 			if(minRes.first && (allowedReflections & BedrockReflection)){
 				//std::cout << "Looking for bedrock reflected solution" << std::endl;
-				double angle=traceRoot(sourcePos.GetZ(),target,minRes.second,pi,true,BedrockReflection,requiredAccuracy);
+				double angle=traceRoot(sourcePos.GetZ(),target,minRes.second,pi,true,BedrockReflection,requiredAccuracy).first;
 				if(replayBuffer==NULL)
 					results.push_back(doTrace<fullRayPosition>(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization));
 				else{
@@ -1013,7 +1049,7 @@ namespace RayTrace{
 			}
 			if(maxRes.first && (allowedReflections & SurfaceReflection) && fullyContained && !dualDirect){ //can't reflect frpom the surface if passing through the ice or if two direct solutions exist
 				//std::cout << "Looking for surface reflected solution" << std::endl;
-				double angle=traceRoot(sourcePos.GetZ(),target,0.0,maxRes.second,true,SurfaceReflection,requiredAccuracy);
+				double angle=traceRoot(sourcePos.GetZ(),target,0.0,maxRes.second,true,SurfaceReflection,requiredAccuracy).first;
 				if(replayBuffer==NULL)
 					results.push_back(doTrace<fullRayPosition>(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization));
 				else{
@@ -1028,7 +1064,7 @@ namespace RayTrace{
 				if(maxRes.first && maxRes.second>a)
 					a=maxRes.second;
 				//std::cout << "Looking for direct solution" << std::endl;
-				double angle=traceRoot(sourcePos.GetZ(),target,a,b,false,NoReflection,requiredAccuracy);
+				double angle=traceRoot(sourcePos.GetZ(),target,a,b,false,NoReflection,requiredAccuracy).first;
 				//std::cout << "Angle for direct ray is " << angle << std::endl;
 				if(replayBuffer==NULL)
 					results.push_back(doTrace<fullRayPosition>(sourcePos.GetZ(),angle,target,allowedReflections,frequency,polarization));
@@ -1047,7 +1083,7 @@ namespace RayTrace{
 			}
 			if(dualDirect){
 				//std::cout << "Looking for secondary direct ray" << std::endl;
-				double angle=traceRoot(sourcePos.GetZ(),target,altMinRes.second,maxRes.second,true,NoReflection,requiredAccuracy);
+				double angle=traceRoot(sourcePos.GetZ(),target,altMinRes.second,maxRes.second,true,NoReflection,requiredAccuracy).first;
 				//std::cout << "Angle for second direct ray is " << angle << std::endl;
 				if(replayBuffer==NULL)
 					results.push_back(doTrace<fullRayPosition>(sourcePos.GetZ(),angle,target,NoReflection,frequency,polarization));
