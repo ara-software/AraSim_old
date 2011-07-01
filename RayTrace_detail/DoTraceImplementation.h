@@ -18,7 +18,7 @@ TraceRecord TraceFinder::doTrace(const double depth, const double theta, const r
 	const double eps=1e-10;
 	const double targetTol = 0.01; //try to get the final value of x this close to target.distance
 	
-	//std::cout << "TraceFinder::doTrace with inital angle " << theta << std::endl;
+	//std::cout << "  TraceFinder::doTrace with inital angle " << theta << std::endl;
 	
 	TraceRecord result;
 	result.launchAngle=theta;

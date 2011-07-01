@@ -765,7 +765,7 @@ namespace RayTrace{
 		double angle=0.5*(minAngle+maxAngle);
 		//std::cout << "Attempting to find root in range [" << minAngle << ',' << maxAngle << ']' << std::endl;
 		//std::cout << " end point miss values are " << aTrace.miss << ',' << cTrace.miss << std::endl;
-		if((aTrace.miss>0) == (cTrace.miss>0)) //didn't bracket a root. Return a noonsense angle and a huge error
+		if((aTrace.miss>0) == (cTrace.miss>0)) //didn't bracket a root. Return a nonsense angle and a huge error
 			return(std::make_pair(-1.,1e6));
 		return(traceRootImpl(emit_depth, target, rising, allowedReflections, requiredAccuracy, a, aTrace, c, cTrace, angle));
 	}
@@ -775,7 +775,8 @@ namespace RayTrace{
 		//std::cout << "Attempting to refine root near theta=" << seed.launchAngle << std::endl;
 		double a, c;
 		TraceRecord aTrace, cTrace;
-		double testDisp=.01;
+		double testDisp=.001; //TODO: this is a problem since there could be a second root arbitrarily close to the one we seek
+		//If we start with testDisp larger than the distance betwee these roots we can bracket them both and incorrectly conclude that we've bracketed nothing
 		const unsigned int maxTests=(unsigned int)std::ceil(0.5*(sqrt(1.0+(8*pi/testDisp))-1.0));
 		if((seed.miss>0.0)==rising)
 			testDisp*=-1;
@@ -956,6 +957,7 @@ namespace RayTrace{
 								   true,SurfaceReflection,requiredAccuracy);
 					safety/=10.;
 				}while(safety>=minimumSafety && std::abs(root.second)>requiredAccuracy);
+				//TODO: check here that root.first is within [0.0,est.angle-safety]
 				if(replayBuffer==NULL)
 					results.push_back(doTrace<fullRayPosition>(sourcePos.GetZ(),root.first,target,allowedReflections,frequency,polarization));
 				else{
@@ -1254,4 +1256,7 @@ namespace RayTrace{
 		return(sqrt(ir*accel/dist));
 	}
 	
+	//explicitly instantiate
+	template void TraceFinder::rkStepControl<minimalRayPosition>(double&, double, minimalRayPosition&, minimalRayPosition&, const minimalRayPosition&, const double, const double, double&, double&) const;
+
 } //namespace RayTrace

@@ -8,6 +8,7 @@
 #include <fstream>
 #include <cmath>
 #include <string>
+#include <cstdlib>
 #include "TRandom.h"
 using namespace std;
 
