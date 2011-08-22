@@ -1,19 +1,23 @@
-#include "EarthModel.h"
 #include "Constants.h"
-#include "Vector.h"
+#include "TRandom3.h"
+#include "Signal.h"
+#include "earthmodel.hh"
+#include "icemodel.hh"
+#include <cmath>
 #include "Tools.h"
-#include "IceModel.h"
-
+#include "vector.hh"
+#include "position.hh"
 #include <iostream>
 #include <fstream>
-#include <cmath>
-#include <string>
-#include <cstdlib>
-#include "TRandom.h"
-using namespace std;
+
+#include "signal.hh"
 
 
-double radii[3] = {1.2e13,(R_EARTH-4.0E4)*(R_EARTH-4.0E4),R_EARTH*R_EARTH}; // average radii of boundaries between earth layers
+using std::cout;
+using std::endl;
+using std::ios;
+using std::fstream;
+
 
 const double EarthModel::COASTLINE(30.);
 const double EarthModel::MAXTHETA(180.);
@@ -21,13 +25,16 @@ const int EarthModel::ILAT_MAX((int)((COASTLINE/MAXTHETA)*(double)NLAT+0.00001))
 const double EarthModel::GEOID_MAX(6.378137E6); // parameters of geoid model
 const double EarthModel::GEOID_MIN(6.356752E6); // from Geodetic Reference System 1980, Bulletin Geodesique, Vol 54:395,1980. // The previous reference gave issue number 3 instead of page number 395
 
-TRandom3 Rand3; // for generating random numbers
 
+EarthModel::EarthModel(int model,int WEIGHTABSORPTION_SETTING) {
 
-EarthModel::EarthModel(int model) {
+  radii[0]=1.2e13;
+  radii[1]=(EarthModel::R_EARTH-4.0E4)*(EarthModel::R_EARTH-4.0E4);
+  radii[2]=(EarthModel::R_EARTH*EarthModel::R_EARTH); // average radii of boundaries between earth layers
+
 
   //  cout << "In EarthModel, model is " << model << "\n";
-  weightabsorption= 1; // 1 by default
+  weightabsorption= WEIGHTABSORPTION_SETTING;
 
   CONSTANTICETHICKNESS = (int) (model / 1000);
   model -= CONSTANTICETHICKNESS * 1000;
@@ -70,7 +77,7 @@ EarthModel::EarthModel(int model) {
     Tools::Zero(middlecrustdensityarray[i],NLAT);
     Tools::Zero(lowercrustdensityarray[i],NLAT);
         
-  } //Tools::Zero Earth model arrays
+  } //Zero Earth model arrays
 
   // see monte carlo note #17
   for (int i=0;i<NLAT;i++) {
@@ -98,12 +105,8 @@ EarthModel::EarthModel(int model) {
 
 EarthModel::~EarthModel() {} //EarthModel destructor - no dynamic variables, nothing to delete
 
-void EarthModel::setWeightAbsorption(int blah) {
-  
-  weightabsorption=blah;
- 
-}
-double EarthModel::LongtoPhi_0isPrimeMeridian(double longitude) {
+
+ double EarthModel::LongtoPhi_0isPrimeMeridian(double longitude) {
 
   double phi;
   // convert longitude (-180 to 180) to phi (0 to 2pi) wrt +x
@@ -116,7 +119,7 @@ double EarthModel::LongtoPhi_0isPrimeMeridian(double longitude) {
 
   return phi;
 }
-double EarthModel::LongtoPhi_0is180thMeridian(double longitude) {
+ double EarthModel::LongtoPhi_0is180thMeridian(double longitude) {
 
   double phi;
   // convert longitude (0 to 360) to phi (0 to 2pi) wrt +x
@@ -131,7 +134,7 @@ double EarthModel::LongtoPhi_0is180thMeridian(double longitude) {
   return phi;
 }
 
-double EarthModel::Geoid(double latitude) const {
+ double EarthModel::Geoid(double latitude) const {
   // latitude here is 0 at the south pole and 180 at the north pole
  
   return (GEOID_MIN*GEOID_MAX/
@@ -139,63 +142,63 @@ double EarthModel::Geoid(double latitude) const {
 	       cos(latitude*RADDEG)*cos(latitude*RADDEG)));
 } //Geoid(lat)
 
-double EarthModel::Geoid(const Position &pos) const {
+ double EarthModel::Geoid(const Position &pos) const {
   return Geoid(pos.Lat());
 } //Geoid(Position)
 
-double EarthModel::IceThickness(double lon,double lat) const {
+ double EarthModel::IceThickness(double lon,double lat) const {
   return icethkarray[(int)(lon/2)][(int)(lat/2)]*1000.;
 } //IceThickness(lon,lat)
 
-double EarthModel::IceThickness(const Position& pos) const {
+ double EarthModel::IceThickness(const Position& pos) const {
   return IceThickness(pos.Lon(),pos.Lat());
 } //IceThickness(Position)
-int EarthModel::InFirn(const Position& pos) const {
+ int EarthModel::InFirn(const Position& pos) const {
   if (pos.Mag()-Surface(pos)<FIRNDEPTH)
     return 0;
   return 1;
 } //InFirn(Position)
-double EarthModel::SurfaceDeepIce(const Position& pos) const { // surface of the deep ice (where you reach the firn)
+ double EarthModel::SurfaceDeepIce(const Position& pos) const { // surface of the deep ice (where you reach the firn)
   return  surfacer[(int)(pos.Lon()/2)][(int)(pos.Lat()/2)] + geoid[(int)(pos.Lat()/2)] + FIRNDEPTH;
 } //Surface(lon,lat)
 
-double EarthModel::Surface(double lon,double lat) const {
+ double EarthModel::Surface(double lon,double lat) const {
   return surfacer[(int)(lon/2)][(int)(lat/2)] + geoid[(int)(lat/2)];
 } //Surface(lon,lat)
 
-double EarthModel::Surface(const Position& pos) const {
+ double EarthModel::Surface(const Position& pos) const {
   return surfacer[(int)(pos.Lon()/2)][(int)(pos.Lat()/2)] + geoid[(int)(pos.Lat()/2)];
 } //Surface(Position)
 
-double EarthModel::RockSurface(double lon,double lat) const {
+ double EarthModel::RockSurface(double lon,double lat) const {
   return (Surface(lon,lat) - IceThickness(lon,lat) - WaterDepth(lon,lat));
 } //RockSurface(lon,lat)
 
-double EarthModel::RockSurface(const Position& pos) const {
+ double EarthModel::RockSurface(const Position& pos) const {
   return RockSurface(pos.Lon(),pos.Lat());
 } //RockSurface(lon,lat)
 
-double EarthModel::SurfaceAboveGeoid(double lon,double lat) const {
+ double EarthModel::SurfaceAboveGeoid(double lon,double lat) const {
   return surfacer[(int)(lon/2)][(int)(lat/2)];
 } //SurfaceAboveGeoid(lon,lat)
 
-double EarthModel::SurfaceAboveGeoid(const Position& pos) const {
+ double EarthModel::SurfaceAboveGeoid(const Position& pos) const {
   return surfacer[(int)(pos.Lon()/2)][(int)(pos.Lat()/2)];
 } //SurfaceAboveGeoid(Position)
 
-double EarthModel::WaterDepth(double lon,double lat) const {
+ double EarthModel::WaterDepth(double lon,double lat) const {
   return waterthkarray[(int)(lon/2)][(int)(lat/2)]*1000;
 } //WaterDepth(lon,lat)
 
-double EarthModel::WaterDepth(const Position& pos) const {
+ double EarthModel::WaterDepth(const Position& pos) const {
   return WaterDepth(pos.Lon(),pos.Lat());
 } //WaterDepth(Position)
 
-double EarthModel::GetLat(double theta) const {
+ double EarthModel::GetLat(double theta) const {
   return theta*DEGRAD;
 } //GetLat
 
-double EarthModel::GetLon(double phi) const {
+ double EarthModel::GetLon(double phi) const {
   // input is phi in radians wrt +x
   double phi_deg = phi*DEGRAD; 
   if (phi_deg > 270)   
@@ -204,18 +207,19 @@ double EarthModel::GetLon(double phi) const {
   return (360.*3./4. - phi_deg); // returns 0 to 360 degrees (going from -180 to 180 deg longitude like Crust 2.0 does)
 } //GetLon
 
-int EarthModel::Getchord(double len_int_kgm2,
-				const Position &earth_in,
-				const Position &posnu,
-				
-				double& chord, 
-				double& weight1,
-				double& nearthlayers,
+ int EarthModel::Getchord(double len_int_kgm2,
+				const Position &earth_in, // place where neutrino entered the earth
+				const Position &posnu, // position of the interaction
+				int inu,
+
+				double& chord, // chord length
+				double& weight1, // weight
+				double& nearthlayers, // core, mantle, crust
 				double myair,
-				double& total_kgm2,
-				int& crust_entered,
-				int& mantle_entered,
-				int& core_entered)  const{
+				double& total_kgm2, // length in kg m^2
+				int& crust_entered, // 1 or 0
+				int& mantle_entered, // 1 or 0
+				int& core_entered)  {
 
   Vector chord3;
   Vector nchord;
@@ -239,7 +243,7 @@ int EarthModel::Getchord(double len_int_kgm2,
     return 0;
   }
   if (chord>2.*R_EARTH+1000) {
-    cout << "bad chord" << " " << chord << "\n";
+    cout << "bad chord" << " " << chord << ".  Event is " << inu << "\n";
   }
 
   Position where=earth_in;
@@ -355,11 +359,11 @@ int EarthModel::Getchord(double len_int_kgm2,
 
     double L=0;
 
-    double ddensity=RHOAIR;
+    double ddensity=Signal::RHOAIR;
     nearthlayers=1;
     
     if (where*nchord>0.)  { // look at direction of neutrino where it enters the earth.
-      cout << "This one's trouble.  Neutrino exit point looks more like an entrance point.  \n";
+      cout << "This one's trouble.  Neutrino exit point looks more like an entrance point.  Event is " << inu << "\n";
       cout << "where is " << where[0] << " " << where[1] << " " << where[2] << "\n";
       cout << "nchord is " << nchord[0] << " " << nchord[1] << " " << nchord[2] << "\n";
       cout << "dot product is " << where*nchord/sqrt(where*where) << "\n";
@@ -370,13 +374,13 @@ int EarthModel::Getchord(double len_int_kgm2,
     altitude=where.Mag()-Geoid(lat); // what is the altitude of the entrance point
       
     if(altitude>surface_elevation+0.1) // if it is above the surface, it's messed up
-      cout << "neutrino entrance point is above the surface. \n";
+      cout << "neutrino entrance point is above the surface.  Event is " << inu << "\n";
 
     while(altitude>MIN_ALTITUDE_CRUST && x<posnu.Distance(earth_in)) { // starting at earth entrance point, step toward interaction position until you've reached the interaction or you are below the crust.
       //    while(altitude>MIN_ALTITUDE_CRUST && x<dDistance(enterice,earth_in)) {
       
       // find the density of the earth at this altitude
-      ddensity=RHOAIR;
+      ddensity=Signal::RHOAIR;
       if (altitude<=surface_elevation+0.1 && altitude>(surface_elevation-local_icethickness)) // the 0.1 is just to take care of precision issues.   It could have been 0.01 or 0.001.
 	ddensity=icedensityarray[ilon][ilat]*1000;
       else if (altitude<=(surface_elevation-local_icethickness) && altitude>(surface_elevation-local_icethickness-local_waterdepth))
@@ -484,7 +488,7 @@ int EarthModel::Getchord(double len_int_kgm2,
     x=0; // this keeps track of how far you've stepped along the neutrino path, starting at the crust entrance.
     while(x<=distance_remaining) { // keep going until you have reached the interaction position
 
-      double ddensity=RHOAIR;
+      double ddensity=Signal::RHOAIR;
 
       // which layer does it go through
       if (altitude<=surface_elevation && altitude>(surface_elevation-local_icethickness))
@@ -549,7 +553,7 @@ int EarthModel::Getchord(double len_int_kgm2,
   return 1;
 } //end Getchord
 
-Vector EarthModel::GetSurfaceNormal(const Position &r_out) const
+ Vector EarthModel::GetSurfaceNormal(const Position &r_out) const
 {
   Vector n_surf = r_out.Unit();
   if (FLATSURFACE)
@@ -596,7 +600,8 @@ Vector EarthModel::GetSurfaceNormal(const Position &r_out) const
     
 } //method GetSurfaceNormal
 
-double EarthModel::SmearPhi(int ilon) const {
+ double EarthModel::SmearPhi(int ilon)  {
+
 
   double phi=((double)(360.*3./4.-((double)ilon+Rand3.Rndm())*360/180))*RADDEG;
   if (phi<0 && phi>-1*PI/2)
@@ -606,7 +611,7 @@ double EarthModel::SmearPhi(int ilon) const {
   return phi;
 } //SmearPhi
 
-double EarthModel::SmearTheta(int ilat) const {
+ double EarthModel::SmearTheta(int ilat)  {
 
   // remember that we should smear it evenly in cos(theta).
   // first get the cos(theta)'s at the boundaries.
@@ -616,6 +621,8 @@ double EarthModel::SmearTheta(int ilat) const {
  
   double costheta1=cos(theta1);
   double costheta2=cos(theta2);
+
+
 
   double costheta=Rand3.Rndm()*(costheta2-costheta1)+costheta1;
 
@@ -844,7 +851,7 @@ void EarthModel::ReadCrust(string test) {
    } //for
   } //for
   average_iceth=average_iceth/sumarea; 
-  cout << "volume is " << volume << "\n";
+
   // find the place where the crust is the deepest.
   // for finding where to start stepping in Getchord
   MIN_ALTITUDE_CRUST=1.E6;
@@ -867,18 +874,18 @@ void EarthModel::ReadCrust(string test) {
 
 }//ReadCrust
 
-double EarthModel::dGetTheta(int ilat) const {
+ double EarthModel::dGetTheta(int ilat) const {
   return (((double)ilat+0.5)/(double)NLAT*MAXTHETA)*RADDEG;
 } //dGetTheta(int)
 
-double EarthModel::dGetPhi(int ilon) const {
+ double EarthModel::dGetPhi(int ilon) const {
   // this takes as an input the crust 2.0 index 0=-180 deg longitude to 179=+180 deg longitude
   // its output is phi in radians
   // from ~ -pi/2 to 3*pi/2 
   return (double)(-1*((double)ilon+0.5)+(double)NLON)*2*PI/(double)NLON-PI/2;
 } //dGetPhi(int)
 
-void EarthModel::GetILonILat(const Position &p,int& ilon,int& ilat) const {
+ void EarthModel::GetILonILat(const Position &p,int& ilon,int& ilat) const {
   // Phi function outputs from 0 to 2*pi wrt +x
   double phi_deg=p.Phi()*DEGRAD;
 

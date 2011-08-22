@@ -1,22 +1,33 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //class Tools:
 ////////////////////////////////////////////////////////////////////////////////////////////////
-#ifndef TOOLS_H
-#define TOOLS_H
 
-#include "TSpline.h"
-#include "TRandom3.h"
-#include <vector>
-#include <string>
+#ifndef TOOLS_H_
+#define TOOLS_H_
 
-using namespace std;
+
+//#include "TSpline.h"
+//#include "TH1.h"
+/* #include "TGraph.h" */
+/* #include "TH2F.h" */
+ #include "TRandom3.h" 
+
+//using namespace std;
+using std::string;
+using std::vector;
+
+class TSpline5;
+class TH1;
+class TGraph;
+class TH2F;
+class TRandom3;
+
 
 class Tools {
 
 
 public:
-  static double distance(vector<double> vec1,vector<double> vec2);
-  static double dSquare(double*);
+
   static double dMax(double,double);
   static double dMax(const double*,int);
   static double dvMax(const vector<double>);
@@ -25,7 +36,6 @@ public:
   static double dMinNotZero(const double*,int);
   static double dMin(double,double);
   static double getMaxMagnitude(vector<double> v);
-  static int iMin(int,int);
   static int Getifreq(double freq,double freq_low,double freq_high,int n);
   static void InterpolateComplex(double *array, const int n);
 
@@ -37,11 +47,28 @@ public:
   static void NormalTimeOrdering(const int n,double *volts);
   static void ShiftLeft(double *x,const int n,int ishift);  
   static void ShiftRight(double *x,const int n,int ishift);  
+  static double GetFWHM(TH1 *h1);
+  static void  MakeGraph(int n,double *time,double *volts,TGraph *&mygraph,TH2F *&h2, double scalex,double scaley,string xaxistitle,string yaxistitle);
+  // Function declarations
+  static double dDot(double*,double*,int);
+  static void dCross(double*,double*,double*);
+  static double dSquare(double*);
+  static double Step(double x);
+  static double dGetTheta(double*);
+  static double dGetPhi(double*);
+  static int WhichIsMax(double *x,int n);
+  static int WhichIsMin(double *x,int n);
+
+  static double dSum(double*,int);
+  static int iSum(int*,int);
+  static void Print(double*,int);
+  static void Print(int*,int);
   static void Zero(double *anarray,int n);
   static void Zero(int *anarray,int n);
+  static void GetNumbersAsStringArray(ifstream& fin, ofstream& fout,vector<string>& vnumbers, int nelements);
+  static void GetNext2NumbersAsString(ifstream& fin,ofstream& fout,string& number1,string& number2, string& stherest);
+  static void GetNextNumberAsString(ifstream& fin,ofstream& fout,string& number);
 protected:
 
 };
-
-
-#endif //TOOLS_H
+#endif

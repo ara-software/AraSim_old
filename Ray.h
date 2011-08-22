@@ -3,11 +3,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 #ifndef RAY_H
 #define RAY_H
+class Event;
+class Position;
 
-#include "Event.h"
-#include "Position.h"
-#include <vector>
-using namespace std;
+using std::vector;
 
 class Position;
 

@@ -17,7 +17,7 @@ ClassImp(Detector);
 void Detector::simulateDetector(Event *event,Efficiencies *efficiencies) { // simulates the detector response, including the waveforms for analysis
   double r;
   for (int i=0;i<nRx;i++) {    
-    r=event->posnu.Distance(rxpos[i]);
+    r=event->posnu[0].Distance(rxpos[i]);
   }
   trigger->simulateTrigger(nRx,waveforms,efficiencies);
 }

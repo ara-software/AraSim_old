@@ -1,8 +1,65 @@
 #include "Tools.h"
 #include <iostream>
 #include <cmath>
+#include <vector>
+#include "TSpline.h"
+#include "TH2F.h"
+#include <fstream.h> 
 
- double Tools::getMaxMagnitude(vector<double> v) {
+
+using std::cout;
+
+
+void  Tools::MakeGraph(const int n,double *time,double *volts,TGraph *&mygraph,TH2F *&h2, double scalex,double scaley,string xaxistitle,string yaxistitle) {
+
+  double maxtime=-1.E20;
+  double maxv=-1.E20;
+  double mintime=1E20;
+  double minv=1.E20;
+
+  double timecopy[n];
+  double voltscopy[n];
+
+  for (int i=0;i<n;i++) {
+    timecopy[i]=time[i];
+    voltscopy[i]=volts[i];
+    timecopy[i]*=scalex;
+    voltscopy[i]*=scaley;
+  }
+  
+
+  for (int i=0;i<n;i++) {
+    
+    if (timecopy[i]>maxtime)
+      maxtime=timecopy[i];
+    if (timecopy[i]<mintime)
+      mintime=timecopy[i];
+    if (voltscopy[i]>maxv)
+      maxv=voltscopy[i];
+    if (voltscopy[i]<minv)
+      minv=voltscopy[i];
+  }
+
+
+  mygraph=new TGraph(n,timecopy,voltscopy);
+
+
+
+  h2=new TH2F("h2","",10*n,mintime*1.1,maxtime*1.1,100,minv*1.1,maxv*1.1);
+  h2->SetLineWidth(3);
+    h2->SetXTitle(xaxistitle.c_str());
+      h2->SetYTitle(yaxistitle.c_str());
+}
+
+int Tools::iSum(int* thisarray,int n) {
+
+  int sum=0;
+  for (int i=0;i<n;i++) {
+    sum+=thisarray[i];
+  } //for
+  return sum;
+} //iSum
+double Tools::getMaxMagnitude(vector<double> v) {
   double mag=0.;
   for (int i=0;i<(int)v.size();i++) {
     if (v[i]>mag)
@@ -12,36 +69,6 @@
   return mag;
 
 }
- double Tools::distance(vector<double> vec1,vector<double> vec2) {
-  int size;
-  if (vec1.size()!=vec2.size()) {
-    cout << "Warning!!!! Finding distance between two vectors of different sizes!!\n";
-    size=Tools::iMin((int)vec1.size(),(int)vec2.size());
-  }
-  else
-    size=vec1.size();
-  double length=0.;
-  for (int i=0;i<size;i++) {
-    length+=(vec1[i]-vec2[i])*(vec1[i]-vec2[i]);
-  }
-  return sqrt(length);
-}
-
- double Tools::dSquare(double *p) {
-  return p[0]*p[0]+p[1]*p[1]+p[2]*p[2];
-} //dSquare
-
- void Tools::Zero(int *anarray,int n) {
-  for (int i=0;i<n;i++) {
-    anarray[i]=0;
-  } //for
-} //Zero (int*,int)
-
- void Tools::Zero(double *anarray,int n) {
-  for (int i=0;i<n;i++) {
-    anarray[i]=0.;
-  } //for
-} //Zero (int*,int)
 void Tools::ShiftLeft(double *x,const int n,int ishift) {
 
   double x_temp[n];
@@ -158,7 +185,141 @@ void Tools::four1(double *data, const int isign,int nsize) {
 	}
 }
 
- double Tools::dMinNotZero(const double *x,int n) {
+double Tools::dSquare(double *p) {
+  return p[0]*p[0]+p[1]*p[1]+p[2]*p[2];
+} //dSquare
+int Tools::WhichIsMin(double *x,int n) {
+  double min=1.E22;
+  int imin=0;
+  for (int i=0;i<n;i++) {
+    if (x[i]<min) {
+      min=x[i];
+      imin=i;
+    }
+  } //for
+  return imin;
+} //WhichIsMin
+void Tools::Print(double *p,int i) {
+  for (int j=0;j<i;j++) {
+    cout << p[j] << " ";
+  } //for
+  cout << "\n";
+} //Print (double*,int)
+void Tools::Print(int *p,int i) {
+  for (int j=0;j<i;j++) {
+    cout << p[j] << " ";
+  } //for
+  cout << "\n";
+} //Print (double*,int)
+
+void Tools::GetNextNumberAsString(ifstream& fin,ofstream& fout,string& number) {
+  string temp;  
+  getline(fin,temp); // get next line of the input file 
+ 
+  fout << temp << "\n"; // output this line to the summary file
+
+  int place=0; 
+  place=temp.find_first_of(" \t"); // find where the first space or tab is
+
+  number=temp.substr(0,place); // everything up until the first space is what we're looking for
+} //GetNextNumberAsString
+void Tools::GetNumbersAsStringArray(ifstream& fin, ofstream& fout,vector<string>& vnumbers, int nelements) {
+  string temp;
+  //getline(fin,temp);
+  
+  //fout << temp << "\n";
+
+  //  int place_previous=0;
+  //int place_next;
+    vnumbers.clear();
+      string s;
+	for (int n=0;n<nelements;n++) {
+	  fin >> s;
+	    fout << s << "\t"; // output this line to the summary file
+	    vnumbers.push_back(s);
+	      //    place_next=temp.find_first_of("\t",place_previous+1); // find where first tab is
+	      //vnumbers.push_back(temp.substr(place_previous,place_next-place_previous));
+	      
+	      //place_previous=place_next;
+	      }
+	  getline(fin,temp);
+	  fout << temp << "\n";
+	  //  cout << "temp is " << temp << "\n";
+}
+void Tools::GetNext2NumbersAsString(ifstream& fin,ofstream& fout,string& number1,string& number2, string& stherest) {
+
+  string temp;  
+  getline(fin,temp); // get next line of the input file 
+ 
+  fout << temp << "\n"; // output this line to the summary file
+
+  int place=0; 
+  place=temp.find_first_of(" \t"); // find where the first space is
+
+  number1=temp.substr(0,place); // everything up until the first space is what we're looking for
+
+  temp=temp.substr(place+1,temp.size());
+ 
+
+  number2=temp.substr(0,temp.find_first_of(" "));
+
+  stherest=temp.substr(2,temp.size());
+} //GetNext2NumbersAsString
+
+double Tools::GetFWHM(TH1 *h1) {
+  
+  int imax=h1->GetMaximumBin();
+  double max=h1->GetMaximum();
+
+  //  cout << "imax, max are " << imax << " " << max << "\n";
+  int ibin_plus=0;
+  int ibin_minus=0;
+  // now step to the right until it's half
+  for (int ibin=imax;ibin<=h1->GetNbinsX();ibin++) {
+
+    if (h1->GetBinContent(ibin)<max/2.) {
+      ibin_plus=ibin;
+      ibin=h1->GetNbinsX()+1;
+      //  cout << "ibin_plus is " << ibin_plus << "\n";
+    }
+  }
+  // now step to the left
+  for (int ibin=imax;ibin>=1;ibin--) {
+
+    if (h1->GetBinContent(ibin)<max/2.) {
+      ibin_minus=ibin;
+      ibin=0;
+      //  cout << "ibin_minus is " << ibin_minus << "\n";
+    }
+  }
+  if (ibin_plus>0 && ibin_minus==0) {
+    ibin_minus=1;
+    //cout << "bin_minus is " << ibin_minus << "\n";
+  }
+  
+
+  if (ibin_plus==0 && ibin_minus==0) {
+    cout << "Found 0 FWHM.\n";
+    return 0.;
+  }
+
+  return (h1->GetBinCenter(ibin_plus)-h1->GetBinCenter(ibin_minus))/2.;
+
+}
+
+void Tools::Zero(int *anarray,int n) {
+  for (int i=0;i<n;i++) {
+    anarray[i]=0;
+  } //for
+} //Zero (int*,int)
+
+void Tools::Zero(double *anarray,int n) {
+  for (int i=0;i<n;i++) {
+    anarray[i]=0.;
+  } //for
+} //Zero (int*,int)
+
+double Tools::dMinNotZero(const double *x,int n) {
   double min=dMax(x,n);
   if (min==0)
     cout << "max is 0.\n";
@@ -169,28 +330,16 @@ void Tools::four1(double *data, const int isign,int nsize) {
   return min;
 } //dMinNotZero(double*, int)
 
- double Tools::dMin(const double *x,int n) {
+double Tools::dMin(const double *x,int n) {
   double min=x[0];
   for (int k=1;k<n;k++) {
     if (x[k]<min)
       min=x[k];
   }
   return min;
-} 
- int Tools::iMin(int x,int y) {
+} //dMin(double*, int)
 
-  int min;
-  if (x<y)
-    min=x;
-  else
-    min=y;
-  
-  return min;
-
-}
-
-
- double Tools::dMin(double x,double y) {
+double Tools::dMin(double x,double y) {
   double min=1.E22;
   if (x<y)
     min=x;
@@ -201,7 +350,7 @@ void Tools::four1(double *data, const int isign,int nsize) {
 } //dMin(double,double)
 
 
- double Tools::dMax(const double *x,int n) {
+double Tools::dMax(const double *x,int n) {
   
   double max=x[0];
   for (int k=1;k<n;k++) {
@@ -212,7 +361,7 @@ void Tools::four1(double *data, const int isign,int nsize) {
 } //dMax(double*, int)
 
 
- double Tools::dvMax(const vector<double> x) {
+double Tools::dvMax(const vector<double> x) {
   
   double max=x[0];
   for (int k=1;k<(int)x.size();k++) {
@@ -221,7 +370,7 @@ void Tools::four1(double *data, const int isign,int nsize) {
   }
   return max;
 } //dMax(double*, int)
- double Tools::dsMax(TSpline5 *sp) {
+double Tools::dsMax(TSpline5 *sp) {
   vector<double> y;
   double maxn;
  double blah1,blah2;
@@ -233,7 +382,7 @@ void Tools::four1(double *data, const int isign,int nsize) {
   return maxn;
 }
 
- double Tools::dMax(double a,double b) {
+double Tools::dMax(double a,double b) {
   if (a>b)
     return a;
   else if (a<b)
@@ -242,7 +391,7 @@ void Tools::four1(double *data, const int isign,int nsize) {
     return a;
   return 0;
 } //dMax(double,double
- int Tools::Getifreq(double freq,double freq_low,double freq_high,int n) {
+int Tools::Getifreq(double freq,double freq_low,double freq_high,int n) {
 
   if (freq>=freq_high)
     return -1;

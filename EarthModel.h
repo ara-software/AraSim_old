@@ -1,3 +1,14 @@
+#ifndef EARTHMODEL_H
+#define EARTHMODEL_H
+
+#include <string>
+class Position;
+class Vector;
+class TRandom3;
+using std::string;
+
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //class EarthModel
@@ -20,23 +31,18 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef EARTHMODEL_H
-#define EARTHMODEL_H
-
-#include "Position.h"
-#include <string>
-
-using namespace std;
-
-// properties of the Earth
-const double R_EARTH=6.378140E6;        // radius of Earth in m at bulge
-const double densities[3]={14000.,3400.,2900.}; // average density of each earth layer
-
 class EarthModel {
-public:
-  EarthModel(int model);
-  virtual ~EarthModel();
 
+public:
+  EarthModel(int model = 0,int WEIGHTABSORPTION_SETTING=1);
+  virtual ~EarthModel();
+// properties of the Earth
+  static const double R_EARTH=6.378140E6;        // radius of Earth in m at bulge
+
+  double radii[3];
+  // = {1.2e13,(EarthModel::R_EARTH-4.0E4)*(EarthModel::R_EARTH-4.0E4),EarthModel::R_EARTH*EarthModel::R_EARTH}; // average radii of boundaries between earth layers
+
+    double volume; // sums the volume of medium (ice or salt)
   virtual double Geoid(double latitude) const;
   virtual double Geoid(const Position &pos) const;
   virtual double IceThickness(double lon,double lat) const;
@@ -51,10 +57,11 @@ public:
   virtual double WaterDepth(const Position& pos) const;
   virtual double RockSurface(double lon,double lat) const;
   virtual double RockSurface(const Position& pos) const;
-  virtual int Getchord(double len_int_kgm2,
+  int Getchord(double len_int_kgm2,
 		       const Position &r_in,
 		       const Position &posnu,
-	       
+		       int inu,
+
 		       double& chord, 
 		       double& weight1,
 		       double& nearthlayers,
@@ -62,16 +69,17 @@ public:
 		       double& total_kgm2,
 		       int& crust_entered,
 		       int& mantle_entered,
-		       int& core_entered) const; 
+		       int& core_entered) ; 
 
 
   Vector GetSurfaceNormal(const Position &r_out) const;
   static double LongtoPhi_0isPrimeMeridian(double longitude); // convert longitude to phiwith 0 longitude being the prime meridian
   static double LongtoPhi_0is180thMeridian(double longitude); // convert longitude to phi with 0 longitude being at the 180th meridian
   void EarthCurvature(double *array,double depth_temp); // adjusts coordinates within the mine to account for the curvature of the earth.
-  void setWeightAbsorption(int blah);
 
-  double volume; // sums the volume of medium (ice or salt)
+private:
+  TRandom3 Rand3;
+
 
 protected:
   int EARTH_MODEL;
@@ -129,9 +137,9 @@ protected:
 
   /////////////////////////////////////
   //methods
-  void ReadCrust(string blah);
-  double SmearPhi(int ilon) const;
-  double SmearTheta(int ilat) const;
+  void ReadCrust(string);
+  double SmearPhi(int ilon);
+  double SmearTheta(int ilat) ;
   double dGetTheta(int itheta) const;
   double dGetPhi(int ilon) const;
   void GetILonILat(const Position&,int& ilon,int& ilat) const;
@@ -139,4 +147,8 @@ protected:
   double GetLon(double phi) const;
 
 }; //class EarthModel
-#endif //EARTHMODEL_H
+
+
+const double densities[3]={14000.,3400.,2900.}; // average density of each earth layer
+
+#endif

@@ -1,12 +1,20 @@
+#include "Vector.h"
+#include "Position.h"
+#include "Event.h"
+#include <vector>
+
 #include "Ray.h"
+
 #include "Tools.h"
+
+
 
 Ray::Ray() {
 
 }
 vector<double> Ray::getEField(Event *event,Position pos) {
 
-  double d=event->posnu.Distance(pos);
+  double d=event->posnu[0].Distance(pos);
   
   vector<double> efield;
   efield.push_back(event->eField1m[0]/d);

@@ -8,14 +8,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-using namespace std;
+//class Tools;
+
 
 Spectra::Spectra(int EXPONENT) {
 
 
 
-  double Emuons[12]; // E^2 dN/dE/dA/dt for neutrinos that are produced as muon neutrinos or muon antineutrinos.
-  double Eelectrons[12];// E^2 dN/dE/dA/dt for neutrinos that are produced as electron neutrinos or muon antineutrinos.
+  double Emuons[12]; // E dN/dE/dA/dt for neutrinos that are produced as muon neutrinos or muon antineutrinos.
+  double Eelectrons[12];// E dN/dE/dA/dt for neutrinos that are produced as electron neutrinos or muon antineutrinos.
   
   for (int i=0;i<12;i++) {
     energy[i]=16.+((double)i)/2.;
@@ -72,7 +73,7 @@ Spectra::Spectra(int EXPONENT) {
 	  GetFlux("berezinsky_saturate.dat");
 	  break;
 	default:
-	  cout<<"Error: Wrong input of EXPONENT"<< endl;
+	  cout<<"Error: Wrong input of EXPONENT"<<endl;
 	  
 	}
     }
@@ -162,7 +163,8 @@ Spectra::Spectra(int EXPONENT) {
       //      cout << "energy is " << energy[i] << "\n";
       //      cout << "log(EdNdEdAdt) is " << log10(EdNdEdAdt[i]) << "\n";
     }
-     
+
+
 
   } // end EXPONENT=0, baseline ES&S
 
@@ -197,7 +199,7 @@ Spectra::Spectra(int EXPONENT) {
     double E2dNdEdAdt[12]; //log(brightness)
     
     for (int i=0;i<12;i++) {
-      energy[i]=17.5+((double)i)/2.;
+      energy[i]=16.5+((double)i)/2.;
     } //for
     
     for (int i=0;i<12;i++) {
@@ -232,8 +234,8 @@ Spectra::Spectra(int EXPONENT) {
     
     //double E2dNdEdAdt[12]; //log(brightness)
     
-    double Emuons[12]; // E^2 dN/dE/dA/dt for neutrinos that are produced as muon neutrinos or muon antineutrinos.
-    double Eelectrons[12];// E^2 dN/dE/dA/dt for neutrinos that are produced as electron neutrinos or muon antineutrinos.
+    double Emuons[12]; // E dN/dE/dA/dt for neutrinos that are produced as muon neutrinos or muon antineutrinos.
+    double Eelectrons[12];// E dN/dE/dA/dt for neutrinos that are produced as electron neutrinos or muon antineutrinos.
     double emuratio[12];
     for (int i=0;i<12;i++) {
       energy[i]=16.+((double)i)/2.;
@@ -318,11 +320,14 @@ Spectra::Spectra(int EXPONENT) {
     Emuons[11]=-30.; // 21.5 punt
     
     
-    for(int i=0;i<12;i++)
+    for(int i=0;i<12;i++) {
       Eelectrons[i]=Emuons[i]*emuratio[i];
+      cout << "Eelectrons, Emuons are " << Eelectrons[i] << " " << Emuons[i] << "\n";
+    }
   
     for (int i=0;i<12;i++) {
       EdNdEdAdt[i]=pow(10.,Eelectrons[i])+pow(10.,Emuons[i]); 
+      cout << "EdNdEdAdt are " << EdNdEdAdt[i] << "\n";
     }
     
   } // end if cosmological constant
@@ -390,36 +395,62 @@ Spectra::Spectra(int EXPONENT) {
 
 
   }
-  // find the max so we can normalise it
-  maxflux=Tools::dMax(EdNdEdAdt,12);
+  if (EXPONENT<=10. || EXPONENT>=100.) {
+    gspectrum[(int)EXPONENT]=new TGraph(12,energy,EdNdEdAdt);
+    //    maxflux=gspectrum[(int)EXPONENT]->GetMaximum();
+    maxflux=Tools::dMax(EdNdEdAdt,12);
 
+    for (int i=0;i<12;i++) {
+      E2dNdEdAdt[i]=log10(EdNdEdAdt[i])+energy[i]-9.;
+    }
+    
+    spectrum=new TSpline5("spectrum",energy,EdNdEdAdt,12);
+    
+  }
+  else
+    // find the max so we can normalise it
+    maxflux=Tools::dMax(EdNdEdAdt,12);
+
+
+
+
+
+ 
+ 
 }
+
 double  Spectra::GetNuEnergy() {
   
-  TRandom3 Rand3;
-
   double thisenergy=16.; // arbitrary initialisation
   double thisflux=2.; // initialise higher than max
   double max=1.;
   int energybin=0; // arbitrary initialisation
-  for (int i=0;i<12;i++) {
-    //cout << "energy, EdNdEdAdt, flux/max are " << energy[i] << " " << EdNdEdAdt[i] << " " << EdNdEdAdt[i]/maxflux << "\n";
-  }
+  double maxenergy=Tools::dMax(energy,12);
+  double minenergy=Tools::dMin(energy,12);
+  // this uses the dartboard approach
+  //cout << "minenergy, maxenergy are " << minenergy << " " << maxenergy << "\n";
+  TRandom3 Rand3;
   while(thisflux>max) {
     // pick an energy  
-    thisenergy=Rand3.Rndm()*(Tools::dMax(energy,12)-Tools::dMin(energy,12)); // pick energy at random between the highest and lowest
+    thisenergy=Rand3.Rndm()*(maxenergy-minenergy)+minenergy; // pick energy at random between the highest and lowest
     // the energy array is actually filled with energy exponents 
     // and thisenergy starts from 0 so it has an offset
-    energybin=(int)(thisenergy/0.5); // this assumes the bins are in increments of half an order of magnitude
-    max=EdNdEdAdt[energybin]/maxflux; // this is the maximum the normalized flux can be in this bin, always less than 1
+    //cout << "thisenergy, minenergy, maxenergy are " << thisenergy << " " << minenergy << " " << maxenergy << "\n";
+    //    energybin=(int)(thisenergy/0.5); // this assumes the bins are in increments of half an order of magnitude
+    //cout << "eval, maxflux are " << gspectrum[(int)EXPONENT]->Eval(thisenergy,0,"S") << " " << maxflux << "\n";
+    energybin=Tools::Getifreq(thisenergy,minenergy,maxenergy,12);
+    //max=gspectrum[(int)EXPONENT]->Eval(thisenergy,0,"S")/maxflux; // this is the maximum the normalized flux can be in this bin, always less than 1
+    max=EdNdEdAdt[energybin]/maxflux;
+    //cout << "max is " << max << "\n";
     thisflux=Rand3.Rndm(); // pick the flux at random between 0 and 1, if it's less than max it's a winner
   } //while
+  //cout << "thisenergy is " << thisenergy << "\n";
   //cout << "energy is " << pow(10.,thisenergy+GetMin(energy,12)) << "\n";
-  return pow(10.,thisenergy+Tools::dMin(energy,12));
+  return pow(10.,thisenergy);
 	
 } //Pick Neutrino Energy
 
-void Spectra::GetFlux(string filename)
+inline void Spectra::GetFlux(string filename)
 {ifstream influx(("./fluxes/"+filename).c_str());
  const int NLINES=11;
  double flux[NLINES];//E2dNdE GeV cm^-2 s^-1 sr^-1
@@ -436,5 +467,5 @@ void Spectra::GetFlux(string filename)
    }
  // maxflux=Tools::dMax(EdNdEdAdt,12);
  // cout<<maxflux<<endl;
-
+ 
 }

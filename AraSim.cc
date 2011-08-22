@@ -54,6 +54,8 @@ using namespace std;
 
 class EarthModel; //class
 
+void test();
+
 string outputdir="outputs";
 
 int main() {
@@ -125,3 +127,7 @@ int main() {
 
 
 
+void test() {
+
+  cout << "test is " << 0 << "\n";
+}

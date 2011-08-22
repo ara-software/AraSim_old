@@ -1,6 +1,7 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+
 // constants in math
 const double TWOPI=6.2831852;
 const double PI=3.141592654;
@@ -18,6 +19,7 @@ const double DEGRAD=57.2957795;    // degree/rad
 const double CLIGHT=3.0E8;            // speed of light m/s
 const double KBOLTZ=1.38E-23;         // Boltzmann constant J/K
 const double Z0=377.;                 // resistivity of free space
+const double Zr=50.;  // radiation resistance (50 Ohms?)
 const double M_NUCL=1.66E-27;         // amu mass in kg
 const double MTAU=1.777E9;            // mass of the tau
 const double TAUDECAY_TIME=290.6E-15; // lifetime of tau
@@ -36,5 +38,7 @@ const double Z_AIR=377;            // resistance of air = sqrt(epsilon/mu)
 
 const double NFIRN=1.3250;                   // index of refraction at the very surface - Peter
 const double NICE=1.79;                      // index of refraction of ice
+
+
 
 #endif //CONSTANTS_H

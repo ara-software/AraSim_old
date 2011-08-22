@@ -6,10 +6,10 @@
 include Makefile.arch
 
 #Site Specific  Flags
-ifeq ($(strip $(BOOST_INCDIR)),)
-	BOOST_INCDIR = /usr/local/include
+ifeq ($(strip $(BOOST_ROOT)),)
+	BOOST_ROOT = /usr/local/include
 endif
-SYSINCLUDES	= -I/usr/include -I$(BOOST_INCDIR)
+SYSINCLUDES	= -I/usr/include -I$(BOOST_ROOT)
 SYSLIBS         = -L/usr/lib
 DLLSUF = ${DllSuf}
 OBJSUF = ${ObjSuf}
@@ -28,8 +28,8 @@ GLIBS         = $(ROOTGLIBS) $(SYSLIBS)
 
 ROOT_LIBRARY = libAra.${DLLSUF}
 #LIB_OBJS = AraSim.o Detector.o Event.o Efficiencies.o Trigger.o IceModel.o EarthModel.o eventDict.o
-LIB_OBJS =  Vector.o EarthModel.o IceModel.o Trigger.o Ray.o Tools.o Efficiencies.o Event.o Detector.o Position.o Spectra.o RayTrace.o RayTrace_IceModels.o eventDict.o
-CCFILE       =  Vector.cc EarthModel.cc IceModel.cc Trigger.cc Ray.cc Tools.cc Efficiencies.cc Event.cc Detector.cc Spectra.cc Position.cc RayTrace.cc RayTrace_IceModels.cc
+LIB_OBJS =  Vector.o EarthModel.o IceModel.o Trigger.o Ray.o Tools.o Efficiencies.o Event.o Detector.o Position.o Spectra.o RayTrace.o RayTrace_IceModels.o Signal.o eventDict.o
+CCFILE       =  Vector.cc EarthModel.cc IceModel.cc Trigger.cc Ray.cc Tools.cc Efficiencies.cc Event.cc Detector.cc Spectra.cc Position.cc RayTrace.cc Signal.cc RayTrace_IceModels.cc
 CLASS_HEADERS = Trigger.h Detector.h
 
 PROGRAMS = araSim

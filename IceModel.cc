@@ -1,7 +1,9 @@
+#include "TRandom3.h"
 #include "IceModel.h"
 #include "EarthModel.h"
 #include "Constants.h"
 #include "Vector.h"
+
 
 #include <iostream>
 #include <fstream>
@@ -30,13 +32,13 @@ int NODATA=-9999;
 //Variables for conversion between BEDMAP polar stereographic coordinates and lat/lon.  Conversion equations from ftp://164.214.2.65/pub/gig/tm8358.2/TM8358_2.pdf
 const double scale_factor=0.97276901289;  //scale factor at pole corresponding to 71 deg S latitude of true scale (used in BEDMAP)
 const double ellipsoid_inv_f = 298.257223563; //of Earth
-const double ellipsoid_b = R_EARTH*(1-(1/ellipsoid_inv_f));
+const double ellipsoid_b = EarthModel::R_EARTH*(1-(1/ellipsoid_inv_f));
 const double eccentricity = sqrt((1/ellipsoid_inv_f)*(2-(1/ellipsoid_inv_f)));
 const double bedmap_a_bar = pow(eccentricity,2)/2 + 5*pow(eccentricity,4)/24 + pow(eccentricity,6)/12 + 13*pow(eccentricity,8)/360;
 const double bedmap_b_bar = 7*pow(eccentricity,4)/48 + 29*pow(eccentricity,6)/240 + 811*pow(eccentricity,8)/11520;
 const double bedmap_c_bar = 7*pow(eccentricity,6)/120 + 81*pow(eccentricity,8)/1120;
 const double bedmap_d_bar = 4279*pow(eccentricity,8)/161280;
-const double bedmap_c_0 = (2*R_EARTH / sqrt(1-pow(eccentricity,2))) * pow(( (1-eccentricity) / (1+eccentricity) ),eccentricity/2);
+const double bedmap_c_0 = (2*EarthModel::R_EARTH / sqrt(1-pow(eccentricity,2))) * pow(( (1-eccentricity) / (1+eccentricity) ),eccentricity/2);
 double bedmap_R = scale_factor*bedmap_c_0 * pow(( (1 + eccentricity*sin(71*RADDEG)) / (1 - eccentricity*sin(71*RADDEG)) ),eccentricity/2) * tan((PI/4) - (71*RADDEG)/2); //varies with latitude, defined here for 71 deg S latitude
 const double bedmap_nu = bedmap_R / cos(71*RADDEG);
 
