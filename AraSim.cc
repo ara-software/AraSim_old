@@ -48,7 +48,7 @@ using namespace std;
 #include "Event.h"
 #include "Trigger.h"
 #include "Detector.h"
-
+#include "Settings.h"
 
 #include "Ray.h"
 
@@ -59,7 +59,10 @@ void test();
 string outputdir="outputs";
 
 int main() {
-  
+
+
+    // below is replace by Settings class Initialize() member.
+/*    
   const int NNU=100;
 
   // NEED TO FIGURE OUT A GOOD WAY TO READ THIS IN AND STORE THEM.
@@ -72,14 +75,42 @@ int main() {
   int FIXEDELEVATION=0; // fix the elevation to the thickness of ice.
   int MOOREBAY=0; //1=use Moore's Bay measured ice field attenuation length for the west land, otherwise use South Pole data
   double EXPONENT=19.; // 10^19 eV neutrinos only
-  
+*/  
 
-  IceModel *icemodel=new IceModel(ICE_MODEL + NOFZ*10,CONSTANTICETHICKNESS * 1000 + CONSTANTCRUST * 100 + FIXEDELEVATION * 10 + 0,MOOREBAY);// creates Antarctica ice model
+  Settings *settings1 = new Settings();
+
+
+  cout<<"\n\tDefault values!"<<endl;
+  cout<<"NNU : "<<settings1->NNU<<endl;
+  cout<<"ICE_MODEL : "<<settings1->ICE_MODEL<<endl;
+  cout<<"NOFZ : "<<settings1->NOFZ<<endl;
+  cout<<"CONSTANTICETHICKNESS : "<<settings1->CONSTANTICETHICKNESS<<endl;
+  cout<<"FIXEDELEVATION : "<<settings1->FIXEDELEVATION<<endl;
+  cout<<"MOOREBAY : "<<settings1->MOOREBAY<<endl;
+  cout<<"EXPONENT : "<<settings1->EXPONENT<<endl;
+
+  string setupfile = "setup.txt";
+
+  settings1->ReadFile(setupfile);
+
+  cout<<"\n\tNew values!"<<endl;
+  cout<<"NNU : "<<settings1->NNU<<endl;
+  cout<<"ICE_MODEL : "<<settings1->ICE_MODEL<<endl;
+  cout<<"NOFZ : "<<settings1->NOFZ<<endl;
+  cout<<"CONSTANTICETHICKNESS : "<<settings1->CONSTANTICETHICKNESS<<endl;
+  cout<<"FIXEDELEVATION : "<<settings1->FIXEDELEVATION<<endl;
+  cout<<"MOOREBAY : "<<settings1->MOOREBAY<<endl;
+  cout<<"EXPONENT : "<<settings1->EXPONENT<<endl;
+
+
+//  IceModel *icemodel=new IceModel(ICE_MODEL + NOFZ*10,CONSTANTICETHICKNESS * 1000 + CONSTANTCRUST * 100 + FIXEDELEVATION * 10 + 0,MOOREBAY);// creates Antarctica ice model
+  IceModel *icemodel=new IceModel(settings1->ICE_MODEL + settings1->NOFZ*10,settings1->CONSTANTICETHICKNESS * 1000 + settings1->CONSTANTCRUST * 100 + settings1->FIXEDELEVATION * 10 + 0,settings1->MOOREBAY);// creates Antarctica ice model
   //IceModel inherits from EarthModel  
   Detector *detector=new Detector(); // builds antenna array
   //  Trigger *trigger=new Trigger(detector); // builds the trigger  
   Efficiencies *efficiencies=new Efficiencies(detector->getnRx(),outputdir); // keeps track of efficiencies at each stage of the simulation
-  Spectra *spectra=new Spectra(EXPONENT); // gets library (or whatever) of neutrino spectra
+//  Spectra *spectra=new Spectra(EXPONENT); // gets library (or whatever) of neutrino spectra
+  Spectra *spectra=new Spectra(settings1->EXPONENT); // gets library (or whatever) of neutrino spectra
 
   
   TFile *AraFile=new TFile((outputdir+"/AraOut.root").c_str(),"RECREATE","ara");
@@ -87,7 +118,8 @@ int main() {
   AraTree->Branch("detector",&detector);
 
 
-  for (int inu=0;inu<NNU;inu++) { // loop over neutrinos
+//  for (int inu=0;inu<NNU;inu++) { // loop over neutrinos
+  for (int inu=0;inu<settings1->NNU;inu++) { // loop over neutrinos
 
     
     detector->resetDetector(); // set all signals on antennas to zero
@@ -119,6 +151,7 @@ int main() {
  
  delete detector;
 
+ test();
  
 
  return 0;

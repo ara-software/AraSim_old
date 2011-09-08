@@ -2,3 +2,29 @@ This is a log file for documenting changes to AraSim.
 Enter the date, your name, and comments about the changes you have made.
 8/25/10	Connolly   Committed first version to be released to RadioSim group, tagged Release_Connolly_082510.  This version compiles and runs without errors but does not actually calculate anything.
 
+9/8/11 E. Hong  Modified few files to work compiling on ubuntu. Below are modified things
+
+EarthModel.cc : as there are no "Signal.h" file, copied signal.hh and signal.cc files from icemc and added.
+EarthModel.cc : changed #include "earthmodel.hh" to "EarthModel.h"
+EarthModel.cc : changed #include "icemodel.hh" to "IceModel.h"
+EarthModel.cc : changed #include "vector.hh" to "Vector.h"
+EarthModel.cc : changed #include "position.hh" to "Position.h"
+EarthModel.cc : added #include <cstdlib>
+
+Tools.cc : changed #include <fstream.h> to <fstream>
+
+signal.cc : changed #include "vector.hh" to "Vector.h"
+signal.cc : changed #include "position.hh" to "Position.h"
+
+Added Settings.h and Settings.cc for set variables and initialize them.
+
+AraSim.cc : added #include "Settings.h"
+AraSim.cc : modified variable settings. Now Settings class will define and read variables from file.
+AraSim.cc : print variable values to check initialize works fine and read file works fine.
+
+Added setup.txt file to set variable vales. For more detail, read setup.txt file.
+
+Makefile : added Settings.cc to CCFILE
+Makefile : changed CCFILE -> Signal.cc to signal.cc
+
+

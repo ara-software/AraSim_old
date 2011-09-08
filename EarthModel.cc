@@ -1,14 +1,20 @@
 #include "Constants.h"
 #include "TRandom3.h"
-#include "Signal.h"
-#include "earthmodel.hh"
-#include "icemodel.hh"
+//#include "Signal.h"
+#include "signal.hh"
+//#include "earthmodel.hh"
+#include "EarthModel.h"
+//#include "icemodel.hh"
+#include "IceModel.h"
 #include <cmath>
 #include "Tools.h"
-#include "vector.hh"
-#include "position.hh"
+//#include "vector.hh"
+#include "Vector.h"
+//#include "position.hh"
+#include "Position.h"
 #include <iostream>
 #include <fstream>
+#include <cstdlib>
 
 #include "signal.hh"
 
