@@ -28,3 +28,26 @@ Makefile : added Settings.cc to CCFILE
 Makefile : changed CCFILE -> Signal.cc to signal.cc
 
 
+9/16/11 E. Hong; Modified Detector.cc, Detector.h, AraSim.cc.
+
+Detector class : removed original parts
+                 defined 3 different modes for Detector class.
+                 mode 0 : use testbed antenna infomation
+                 mode 1 : small number of stations (1 ~ 7). Array increase as pentagon shape
+                 mode 2 : pentagon shape station arrays.
+
+Above, in mode 1 and 2, each station will contain 4 strings and 4 surface antennas. The map of single station is shown in "ARADetailMap.pdf" file.
+We can change the distance between center of station and strings (R_string),
+Distance between center of station and surface antennas (R_surf),
+Maximum depth of string (z_max), distance between antennas on the string (z_btw), etc.
+
+Also, we can change the center of pentagon array (core_x, core_y),
+distance between stations (station_spacing)
+
+In mode 1 : total number of stations (number_of_stations)
+            
+In mode 2 : number of stations on the side (stations_per_side)
+
+More detail will be shown on AraSim_doc.pdf file.
+
+

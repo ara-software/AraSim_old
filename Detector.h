@@ -13,42 +13,74 @@
 using namespace std;
 
 //#include "Trigger.h"
-class Event;
-class Efficiencies;
-class Position;
+//class Event;
+//class Efficiencies;
+//class Position;
 
-class Detector : public TObject {
+struct Surf_antenna {
+    float x, y;
+    int model;
+};
 
-  //const std::auto_ptr<Trigger> trigger;
+struct Antenna {
+    float z;
+    int model;  // model 0 : v-pol (bicone), model 1 : h-pol (bowtie)
+    //add more later
+};
 
-  int nRx; // number of antennas
-  Trigger *trigger;
-  int nSamples; // number of samples in waveforms for analysis
-  vector< Position > rxpos; // position of antennas 
-  vector< vector<double> > waveforms;// waveforms for analysis 
-  vector<int> rxtype; // antenna types (0=dipole, 1=slot) 
-  
-  
+struct Antenna_string {
+    float x, y;
+//    int number_of_antennas;
+    vector <Antenna> antennas;
+};
+
+struct ARA_station {
+    float x, y;
+    vector <Antenna_string> ARA_strings;
+    vector <Surf_antenna> surfs;
+};
+
+/*
+struct Parameters {
+    int number_of_strings;
+    int number_of_antennas;
+} params;
+*/
+
+struct Parameters {
+
+    int stations_per_side;           //number of stations on one side of pentagon.
+    float station_spacing;          // space between stations.
+
+    int number_of_stations;         //total stations
+    int number_of_strings_station;  // strings per station
+    int number_of_antennas_string;  //antennas per string
+    int number_of_surfs_station;    //surface antennas per station
+
+    int number_of_strings;
+    int number_of_antennas;
+};
+/*
+struct Event {
+    // add more later
+};
+*/
+//        vector <Antenna_string> strings;
+
+class Detector {
+    private:
 
 
-
-
- public:
- Detector(): nRx(100), trigger(new Trigger(nRx)),  nSamples(128), rxpos(nRx,Position()), waveforms(nRx,vector<double>(nSamples)), rxtype(nRx)  {} 
-  void simulateDetector(Event *event,Efficiencies *efficiencies); // simulates the detector response, including the waveforms at each antenna for analysis
-  void resetDetector();
-  int getnRx();
-  Trigger* getTrigger();
-  ~Detector();
-
- protected:
-  
-
-			   
-    ClassDef(Detector,1);
-
-
+    public:
+        Detector (int mode);
+        vector <ARA_station> stations;
+        vector <Antenna_string> strings;
+        Parameters params;
+        ~Detector();
+        
 
 };
+
+
 
 #endif //DETECTOR_H

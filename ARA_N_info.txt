@@ -1,0 +1,3 @@
+// test file
+
+number_of_stations=6
