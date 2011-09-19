@@ -51,3 +51,10 @@ In mode 2 : number of stations on the side (stations_per_side)
 More detail will be shown on AraSim_doc.pdf file.
 
 
+9/19/11 E. Hong; Modified AraSim.cc, added testbed_info.txt file.
+
+AraSim.cc : added one more plot in pdf file output. Added plot is for borehole antenna layout.
+testbed_info.txt : file added. This file should have added in previous version.
+AraSim_doc.pdf : fixed some typos.
+
+

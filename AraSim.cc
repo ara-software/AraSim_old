@@ -203,8 +203,8 @@ cout<<"total number of strings : "<<(int)detector->params.number_of_strings<<end
 cout<<"total number of antennas : "<<(int)detector->params.number_of_antennas<<endl;
 
 
-TCanvas *c1 = new TCanvas("c1","A Simple Graph Example",200,10,1400,700);
-c1->Divide(2,1);
+TCanvas *c1 = new TCanvas("c1","A Simple Graph Example",200,10,2100,700);
+c1->Divide(3,1);
 
 float x[(int)detector->params.number_of_stations], y[(int)detector->params.number_of_stations];
 
@@ -269,6 +269,35 @@ Leg_string_surf -> AddEntry(gr_surface, "Surface antennas");
 Leg_string_surf -> Draw();
 
 
+c1->cd(3);
+
+int string_choice = 0;
+//int station_choice = (int)detector->params.number_of_stations - 1;
+
+float antenna_x[4], antenna_y[4];   // use x as x, y as z to see the depth layout
+
+for (int i=0;i<4;i++) {
+    antenna_x[i] = (float)detector->stations[station_choice].ARA_strings[string_choice].x;
+    antenna_y[i] = (float)detector->stations[station_choice].ARA_strings[string_choice].antennas[i].z;
+}
+
+TGraph *gr_antenna;
+gr_antenna = new TGraph(4,antenna_x,antenna_y);
+
+gr_antenna->SetTitle("Borehole antenna layout for each string");
+//gr_string->GetHistogram()->SetMaximum(5300);
+//gr_string->GetHistogram()->SetMinimum(5100);
+//gr_string->GetXaxis()->SetLimits(-3100,-2900);
+gr_antenna->GetHistogram()->SetMaximum( 0. );
+gr_antenna->GetHistogram()->SetMinimum( (int)detector->stations[station_choice].ARA_strings[string_choice].antennas[0].z - 20);
+gr_antenna->GetXaxis()->SetLimits( (int)detector->stations[station_choice].x - 100, (int)detector->stations[station_choice].x + 100 );
+gr_antenna->GetYaxis()->SetTitle("z (depth)");
+gr_antenna->SetMarkerColor(4);
+gr_antenna->SetMarkerSize(2);
+gr_antenna->SetMarkerStyle(20);
+gr_antenna->Draw("ap");
+
+
 c1->Print("ARA-37_station_layout.pdf");
 
 
@@ -297,8 +326,8 @@ cout<<"total number of strings : "<<(int)detector->params.number_of_strings<<end
 cout<<"total number of antennas : "<<(int)detector->params.number_of_antennas<<endl;
 
 
-TCanvas *c1 = new TCanvas("c1","A Simple Graph Example",200,10,1400,700);
-c1->Divide(2,1);
+TCanvas *c1 = new TCanvas("c1","A Simple Graph Example",200,10,2100,700);
+c1->Divide(3,1);
 
 float x[(int)detector->params.number_of_stations], y[(int)detector->params.number_of_stations];
 
@@ -360,6 +389,40 @@ TLegend *Leg_string_surf = new TLegend(1., 0.95, 0.5,0.8);
 Leg_string_surf -> AddEntry(gr_string, "Strings");
 Leg_string_surf -> AddEntry(gr_surface, "Surface antennas");
 Leg_string_surf -> Draw();
+
+
+
+c1->cd(3);
+
+int string_choice = 0;
+//int station_choice = (int)detector->params.number_of_stations - 1;
+
+float antenna_x[4], antenna_y[4];   // use x as x, y as z to see the depth layout
+
+for (int i=0;i<4;i++) {
+    antenna_x[i] = (float)detector->stations[station_choice].ARA_strings[string_choice].x;
+    antenna_y[i] = (float)detector->stations[station_choice].ARA_strings[string_choice].antennas[i].z;
+}
+
+TGraph *gr_antenna;
+gr_antenna = new TGraph(4,antenna_x,antenna_y);
+
+gr_antenna->SetTitle("Borehole antenna layout for each string");
+//gr_string->GetHistogram()->SetMaximum(5300);
+//gr_string->GetHistogram()->SetMinimum(5100);
+//gr_string->GetXaxis()->SetLimits(-3100,-2900);
+gr_antenna->GetHistogram()->SetMaximum( 0. );
+gr_antenna->GetHistogram()->SetMinimum( (int)detector->stations[station_choice].ARA_strings[string_choice].antennas[0].z - 20);
+gr_antenna->GetXaxis()->SetLimits( (int)detector->stations[station_choice].x - 100, (int)detector->stations[station_choice].x + 100 );
+gr_antenna->GetYaxis()->SetTitle("z (depth)");
+gr_antenna->SetMarkerColor(4);
+gr_antenna->SetMarkerSize(2);
+gr_antenna->SetMarkerStyle(20);
+gr_antenna->Draw("ap");
+
+
+
+
 
 
 c1->Print("ARA-37_station_layout.pdf");
