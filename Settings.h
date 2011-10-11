@@ -28,6 +28,8 @@ class Settings
         int MOOREBAY; //1=use Moore's Bay measured ice field attenuation length for the west land, otherwise use South Pole data
         double EXPONENT; // 10^19 eV neutrinos only
 
+        int DETECTOR;   // choose detector layout
+
 };
 #endif
 

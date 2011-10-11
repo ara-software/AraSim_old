@@ -58,3 +58,14 @@ testbed_info.txt : file added. This file should have added in previous version.
 AraSim_doc.pdf : fixed some typos.
 
 
+10/11/11 E. Hong; Modified Detector.cc, Detector.h, Settings.cc, Settings.h, AraSim.cc, added flux models for Spectra class.
+
+Detector class : added reading nec2 antenna property (gain). Currently V-pol (6in bicone) and H-pol (23in QSC) borehole antennas' gain are available. Read by GetGain or GetG function.
+
+Settings class : added DETECTOR parameter which decide the mode of detector layout.
+
+Spectra class : copied from icemc. Information on README_EXPONENT and fluxes/README.
+
+More detail, see AraSim_doc.pdf file.
+
+

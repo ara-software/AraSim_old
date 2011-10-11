@@ -88,6 +88,7 @@ int main() {
   cout<<"FIXEDELEVATION : "<<settings1->FIXEDELEVATION<<endl;
   cout<<"MOOREBAY : "<<settings1->MOOREBAY<<endl;
   cout<<"EXPONENT : "<<settings1->EXPONENT<<endl;
+  cout<<"DETECTOR : "<<settings1->DETECTOR<<endl;
 
   string setupfile = "setup.txt";
 
@@ -101,24 +102,68 @@ int main() {
   cout<<"FIXEDELEVATION : "<<settings1->FIXEDELEVATION<<endl;
   cout<<"MOOREBAY : "<<settings1->MOOREBAY<<endl;
   cout<<"EXPONENT : "<<settings1->EXPONENT<<endl;
+  cout<<"DETECTOR : "<<settings1->DETECTOR<<endl;
 
 
 //  IceModel *icemodel=new IceModel(ICE_MODEL + NOFZ*10,CONSTANTICETHICKNESS * 1000 + CONSTANTCRUST * 100 + FIXEDELEVATION * 10 + 0,MOOREBAY);// creates Antarctica ice model
   IceModel *icemodel=new IceModel(settings1->ICE_MODEL + settings1->NOFZ*10,settings1->CONSTANTICETHICKNESS * 1000 + settings1->CONSTANTCRUST * 100 + settings1->FIXEDELEVATION * 10 + 0,settings1->MOOREBAY);// creates Antarctica ice model
   //IceModel inherits from EarthModel  
 
-    int mode = 2;
 
 //  Detector *detector=new Detector(); // builds antenna array
-  Detector *detector=new Detector(mode); // builds antenna array, 0 for testbed
+  Detector *detector=new Detector(settings1->DETECTOR); // builds antenna array, 0 for testbed
 //  Detector *detector=new Detector(1); // builds antenna array, 0 for testbed
+
+
+
+    double gain_return;
+
+  gain_return = detector->stations[0].strings[0].antennas[0].GetG(detector,1067.0, 20, 50);
+//  cout<<"testG_new : "<<*testG_new<<endl;
+//    gain_return = *test2;
+
+    cout<<"\n";
+    cout<<"test gain_return : "<<gain_return<<endl;
+    cout<<"\n";
+
+
+//    gain_return = detector->GetGain(711, 27, 357, 0);
+
+//    cout<<"Gain for vpol @ 711MHz, theta 27, phi 357 is : "<<gain_return<<endl;
+
+//    gain_return = detector->GetGain(231, 151, 73, 1);
+
+//    cout<<"Gain for hpol @ 231MHz, theta 151, phi 73 is : "<<gain_return<<endl;
+
+
+    int k = 0;
+
+    cout<<"k%2 = "<<k%2<<endl;
+    
+    k = 1;
+    cout<<"k%2 = "<<k%2<<endl;
+    k = 2;
+    cout<<"k%2 = "<<k%2<<endl;
+    k = 3;
+    cout<<"k%2 = "<<k%2<<endl;
+
+
+
+
+
+
+
+
+
+
+
 
   //  Trigger *trigger=new Trigger(detector); // builds the trigger  
 //  Efficiencies *efficiencies=new Efficiencies(detector->getnRx(),outputdir); // keeps track of efficiencies at each stage of the simulation
   Efficiencies *efficiencies=new Efficiencies(100,outputdir); // keeps track of efficiencies at each stage of the simulation
 //  Spectra *spectra=new Spectra(EXPONENT); // gets library (or whatever) of neutrino spectra
   
-//  Spectra *spectra=new Spectra(settings1->EXPONENT); // gets library (or whatever) of neutrino spectra
+  Spectra *spectra=new Spectra(settings1->EXPONENT); // gets library (or whatever) of neutrino spectra
 
   
   TFile *AraFile=new TFile((outputdir+"/AraOut.root").c_str(),"RECREATE","ara");
@@ -158,35 +203,35 @@ int main() {
 //  test Detector class
 ///////////////////////////////////////////
 
-if ( mode == 0 ) {
+if ( settings1->DETECTOR == 0 ) {
 
 cout<<"\n\t Test reading antenna array infomation !"<<endl;
 //cout<<"total number of strings : "<<(int)detector->Detector.params.number_of_strings<<endl;
 cout<<"total number of strings : "<<(int)detector->params.number_of_strings<<endl;
 cout<<"total number of antennas : "<<(int)detector->params.number_of_antennas<<endl;
 cout<<"\nantenna0 position is"<<endl;
-cout<<"x : "<<(float)detector->strings[0].x<<endl;
-cout<<"y : "<<(float)detector->strings[0].y<<endl;
-cout<<"z1 : "<<(float)detector->strings[0].antennas[0].z<<" model : "<<(int)detector->strings[0].antennas[0].model<<endl;
-cout<<"z2 : "<<(float)detector->strings[0].antennas[1].z<<" model : "<<(int)detector->strings[0].antennas[1].model<<endl;
+cout<<"x : "<<(double)detector->strings[0].x<<endl;
+cout<<"y : "<<(double)detector->strings[0].y<<endl;
+cout<<"z1 : "<<(double)detector->strings[0].antennas[0].z<<" type : "<<(int)detector->strings[0].antennas[0].type<<endl;
+cout<<"z2 : "<<(double)detector->strings[0].antennas[1].z<<" type : "<<(int)detector->strings[0].antennas[1].type<<endl;
 
 cout<<"\nantenna1 position is"<<endl;
-cout<<"x : "<<(float)detector->strings[1].x<<endl;
-cout<<"y : "<<(float)detector->strings[1].y<<endl;
-cout<<"z1 : "<<(float)detector->strings[1].antennas[0].z<<" model : "<<(int)detector->strings[1].antennas[0].model<<endl;
-cout<<"z2 : "<<(float)detector->strings[1].antennas[1].z<<" model : "<<(int)detector->strings[1].antennas[1].model<<endl;
+cout<<"x : "<<(double)detector->strings[1].x<<endl;
+cout<<"y : "<<(double)detector->strings[1].y<<endl;
+cout<<"z1 : "<<(double)detector->strings[1].antennas[0].z<<" type : "<<(int)detector->strings[1].antennas[0].type<<endl;
+cout<<"z2 : "<<(double)detector->strings[1].antennas[1].z<<" type : "<<(int)detector->strings[1].antennas[1].type<<endl;
 
 cout<<"\nantenna2 position is"<<endl;
-cout<<"x : "<<(float)detector->strings[2].x<<endl;
-cout<<"y : "<<(float)detector->strings[2].y<<endl;
-cout<<"z1 : "<<(float)detector->strings[2].antennas[0].z<<" model : "<<(int)detector->strings[2].antennas[0].model<<endl;
-cout<<"z2 : "<<(float)detector->strings[2].antennas[1].z<<" model : "<<(int)detector->strings[2].antennas[1].model<<endl;
+cout<<"x : "<<(double)detector->strings[2].x<<endl;
+cout<<"y : "<<(double)detector->strings[2].y<<endl;
+cout<<"z1 : "<<(double)detector->strings[2].antennas[0].z<<" type : "<<(int)detector->strings[2].antennas[0].type<<endl;
+cout<<"z2 : "<<(double)detector->strings[2].antennas[1].z<<" type : "<<(int)detector->strings[2].antennas[1].type<<endl;
 
 cout<<"\nantenna3 position is"<<endl;
-cout<<"x : "<<(float)detector->strings[3].x<<endl;
-cout<<"y : "<<(float)detector->strings[3].y<<endl;
-cout<<"z1 : "<<(float)detector->strings[3].antennas[0].z<<" model : "<<(int)detector->strings[3].antennas[0].model<<endl;
-cout<<"z2 : "<<(float)detector->strings[3].antennas[1].z<<" model : "<<(int)detector->strings[3].antennas[1].model<<endl;
+cout<<"x : "<<(double)detector->strings[3].x<<endl;
+cout<<"y : "<<(double)detector->strings[3].y<<endl;
+cout<<"z1 : "<<(double)detector->strings[3].antennas[0].z<<" type : "<<(int)detector->strings[3].antennas[0].type<<endl;
+cout<<"z2 : "<<(double)detector->strings[3].antennas[1].z<<" type : "<<(int)detector->strings[3].antennas[1].type<<endl;
 
 }
 
@@ -195,7 +240,7 @@ cout<<"z2 : "<<(float)detector->strings[3].antennas[1].z<<" model : "<<(int)dete
 
 
 
-else if ( mode == 1 ) {
+else if ( settings1->DETECTOR == 1 ) {
 
 cout<<"\n\t Test ARA-N array setting !"<<endl;
 //cout<<"total number of strings : "<<(int)detector->Detector.params.number_of_strings<<endl;
@@ -206,11 +251,11 @@ cout<<"total number of antennas : "<<(int)detector->params.number_of_antennas<<e
 TCanvas *c1 = new TCanvas("c1","A Simple Graph Example",200,10,2100,700);
 c1->Divide(3,1);
 
-float x[(int)detector->params.number_of_stations], y[(int)detector->params.number_of_stations];
+double x[(int)detector->params.number_of_stations], y[(int)detector->params.number_of_stations];
 
 for (int i=0;i<(int)detector->params.number_of_stations;i++) {
-    x[i] = (float)detector->stations[i].x;
-    y[i] = (float)detector->stations[i].y;
+    x[i] = (double)detector->stations[i].x;
+    y[i] = (double)detector->stations[i].y;
 }
 
 TGraph *gr;
@@ -229,15 +274,15 @@ c1->cd(2);
 int station_choice = 0;
 //int station_choice = (int)detector->params.number_of_stations - 1;
 
-float string_x[4], string_y[4];
-float surface_x[4], surface_y[4];
+double string_x[4], string_y[4];
+double surface_x[4], surface_y[4];
 
 for (int i=0;i<4;i++) {
-    string_x[i] = (float)detector->stations[station_choice].ARA_strings[i].x;
-    string_y[i] = (float)detector->stations[station_choice].ARA_strings[i].y;
+    string_x[i] = (double)detector->stations[station_choice].strings[i].x;
+    string_y[i] = (double)detector->stations[station_choice].strings[i].y;
 
-    surface_x[i] = (float)detector->stations[station_choice].surfs[i].x;
-    surface_y[i] = (float)detector->stations[station_choice].surfs[i].y;
+    surface_x[i] = (double)detector->stations[station_choice].surfaces[i].x;
+    surface_y[i] = (double)detector->stations[station_choice].surfaces[i].y;
 }
 
 TGraph *gr_string;
@@ -263,10 +308,10 @@ gr_surface->SetMarkerStyle(21);
 gr_surface->Draw("p");
 
 
-TLegend *Leg_string_surf = new TLegend(1., 0.95, 0.5,0.8);
-Leg_string_surf -> AddEntry(gr_string, "Strings");
-Leg_string_surf -> AddEntry(gr_surface, "Surface antennas");
-Leg_string_surf -> Draw();
+TLegend *Leg_string_surface = new TLegend(1., 0.95, 0.5,0.8);
+Leg_string_surface -> AddEntry(gr_string, "Strings");
+Leg_string_surface -> AddEntry(gr_surface, "Surface antennas");
+Leg_string_surface -> Draw();
 
 
 c1->cd(3);
@@ -274,11 +319,11 @@ c1->cd(3);
 int string_choice = 0;
 //int station_choice = (int)detector->params.number_of_stations - 1;
 
-float antenna_x[4], antenna_y[4];   // use x as x, y as z to see the depth layout
+double antenna_x[4], antenna_y[4];   // use x as x, y as z to see the depth layout
 
 for (int i=0;i<4;i++) {
-    antenna_x[i] = (float)detector->stations[station_choice].ARA_strings[string_choice].x;
-    antenna_y[i] = (float)detector->stations[station_choice].ARA_strings[string_choice].antennas[i].z;
+    antenna_x[i] = (double)detector->stations[station_choice].strings[string_choice].x;
+    antenna_y[i] = (double)detector->stations[station_choice].strings[string_choice].antennas[i].z;
 }
 
 TGraph *gr_antenna;
@@ -289,7 +334,7 @@ gr_antenna->SetTitle("Borehole antenna layout for each string");
 //gr_string->GetHistogram()->SetMinimum(5100);
 //gr_string->GetXaxis()->SetLimits(-3100,-2900);
 gr_antenna->GetHistogram()->SetMaximum( 0. );
-gr_antenna->GetHistogram()->SetMinimum( (int)detector->stations[station_choice].ARA_strings[string_choice].antennas[0].z - 20);
+gr_antenna->GetHistogram()->SetMinimum( (int)detector->stations[station_choice].strings[string_choice].antennas[0].z - 20);
 gr_antenna->GetXaxis()->SetLimits( (int)detector->stations[station_choice].x - 100, (int)detector->stations[station_choice].x + 100 );
 gr_antenna->GetYaxis()->SetTitle("z (depth)");
 gr_antenna->SetMarkerColor(4);
@@ -318,7 +363,7 @@ c1->Print("ARA-37_station_layout.pdf");
 
 
 
-else if ( mode == 2 ) {
+else if ( settings1->DETECTOR == 2 ) {
 
 cout<<"\n\t Test ARA-37 array setting !"<<endl;
 //cout<<"total number of strings : "<<(int)detector->Detector.params.number_of_strings<<endl;
@@ -329,11 +374,11 @@ cout<<"total number of antennas : "<<(int)detector->params.number_of_antennas<<e
 TCanvas *c1 = new TCanvas("c1","A Simple Graph Example",200,10,2100,700);
 c1->Divide(3,1);
 
-float x[(int)detector->params.number_of_stations], y[(int)detector->params.number_of_stations];
+double x[(int)detector->params.number_of_stations], y[(int)detector->params.number_of_stations];
 
 for (int i=0;i<(int)detector->params.number_of_stations;i++) {
-    x[i] = (float)detector->stations[i].x;
-    y[i] = (float)detector->stations[i].y;
+    x[i] = (double)detector->stations[i].x;
+    y[i] = (double)detector->stations[i].y;
 }
 
 TGraph *gr;
@@ -351,15 +396,15 @@ c1->cd(2);
 
 int station_choice = 0;
 
-float string_x[4], string_y[4];
-float surface_x[4], surface_y[4];
+double string_x[4], string_y[4];
+double surface_x[4], surface_y[4];
 
 for (int i=0;i<4;i++) {
-    string_x[i] = (float)detector->stations[station_choice].ARA_strings[i].x;
-    string_y[i] = (float)detector->stations[station_choice].ARA_strings[i].y;
+    string_x[i] = (double)detector->stations[station_choice].strings[i].x;
+    string_y[i] = (double)detector->stations[station_choice].strings[i].y;
 
-    surface_x[i] = (float)detector->stations[station_choice].surfs[i].x;
-    surface_y[i] = (float)detector->stations[station_choice].surfs[i].y;
+    surface_x[i] = (double)detector->stations[station_choice].surfaces[i].x;
+    surface_y[i] = (double)detector->stations[station_choice].surfaces[i].y;
 }
 
 TGraph *gr_string;
@@ -385,10 +430,10 @@ gr_surface->SetMarkerStyle(21);
 gr_surface->Draw("p");
 
 
-TLegend *Leg_string_surf = new TLegend(1., 0.95, 0.5,0.8);
-Leg_string_surf -> AddEntry(gr_string, "Strings");
-Leg_string_surf -> AddEntry(gr_surface, "Surface antennas");
-Leg_string_surf -> Draw();
+TLegend *Leg_string_surface = new TLegend(1., 0.95, 0.5,0.8);
+Leg_string_surface -> AddEntry(gr_string, "Strings");
+Leg_string_surface -> AddEntry(gr_surface, "Surface antennas");
+Leg_string_surface -> Draw();
 
 
 
@@ -397,11 +442,11 @@ c1->cd(3);
 int string_choice = 0;
 //int station_choice = (int)detector->params.number_of_stations - 1;
 
-float antenna_x[4], antenna_y[4];   // use x as x, y as z to see the depth layout
+double antenna_x[4], antenna_y[4];   // use x as x, y as z to see the depth layout
 
 for (int i=0;i<4;i++) {
-    antenna_x[i] = (float)detector->stations[station_choice].ARA_strings[string_choice].x;
-    antenna_y[i] = (float)detector->stations[station_choice].ARA_strings[string_choice].antennas[i].z;
+    antenna_x[i] = (double)detector->stations[station_choice].strings[string_choice].x;
+    antenna_y[i] = (double)detector->stations[station_choice].strings[string_choice].antennas[i].z;
 }
 
 TGraph *gr_antenna;
@@ -412,7 +457,7 @@ gr_antenna->SetTitle("Borehole antenna layout for each string");
 //gr_string->GetHistogram()->SetMinimum(5100);
 //gr_string->GetXaxis()->SetLimits(-3100,-2900);
 gr_antenna->GetHistogram()->SetMaximum( 0. );
-gr_antenna->GetHistogram()->SetMinimum( (int)detector->stations[station_choice].ARA_strings[string_choice].antennas[0].z - 20);
+gr_antenna->GetHistogram()->SetMinimum( (int)detector->stations[station_choice].strings[string_choice].antennas[0].z - 20);
 gr_antenna->GetXaxis()->SetLimits( (int)detector->stations[station_choice].x - 100, (int)detector->stations[station_choice].x + 100 );
 gr_antenna->GetYaxis()->SetTitle("z (depth)");
 gr_antenna->SetMarkerColor(4);
@@ -440,6 +485,46 @@ c1->Print("ARA-37_station_layout.pdf");
 
 
 
+double *energy = spectra->Getenergy();
+int Ebin = spectra->GetE_bin();
+
+cout<<"\n";
+for (int i=0;i<Ebin;i++) {
+    cout<<"energy["<<i<<"] : "<<energy[i]<<endl;
+}
+
+///////////////////////////////////////////////////
+
+double E = 19.0;
+cout<<"\n";
+cout<<"Flux at 19 is : "<<spectra->GetEdNdEdAdt(E)<<endl;
+
+///////////////////////////////////////////////////
+
+
+TSpline3 *sp1;
+sp1 = spectra->GetSEdNdEdAdt();
+
+///////////////////////////////////////////////////
+
+
+
+
+
+TGraph *GEdN;
+GEdN = spectra->GetGEdNdEdAdt();
+
+TCanvas *c2 = new TCanvas("c2","A Simple Graph Example",200,10,1000,700);
+c2 -> cd();
+GEdN->Draw("al");
+
+sp1->SetLineColor(2);
+sp1->Draw("c same");
+c2 -> Print("GEdN.pdf");
+
+//////////////////////////////////////////////////
+
+
 
 
 
@@ -448,6 +533,8 @@ c1->Print("ARA-37_station_layout.pdf");
  delete efficiencies;
  
  delete detector;
+
+ delete spectra;
 
  test();
 

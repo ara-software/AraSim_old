@@ -28,6 +28,7 @@ void Settings::Initialize() {
   
   EXPONENT=19.; // 10^19 eV neutrinos only
 
+  DETECTOR=1;   //ARA layout with small number of stations
     
 
 }
@@ -68,6 +69,9 @@ void Settings::ReadFile(string setupfile) {
               }
               else if (label == "EXPONENT") {
                   EXPONENT = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "DETECTOR") {
+                  DETECTOR = atof( line.substr(line.find_first_of("=") + 1).c_str() );
               }
           }
       }
