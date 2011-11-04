@@ -14,6 +14,23 @@ Settings::Settings() {
 
 void Settings::Initialize() {
 
+
+// below : values from icemc Settings class
+  NDISCONES_PASS=3;
+
+  DEBUG=false;                   // debugging option
+outputdir="outputs"; // directory where outputs go
+ FREQ_LOW_SEAVEYS=200.E6;
+ FREQ_HIGH_SEAVEYS=1200.E6;
+ BW_SEAVEYS=FREQ_HIGH_SEAVEYS-FREQ_LOW_SEAVEYS;
+ SIGMAPARAM=1;  // Connolly et al. 2011 default cross section parametrization
+ YPARAM=1;  // Connolly et al. 2011 default y parametrization
+ UNBIASED_SELECTION=1.; // (0) pick neutrino interaction in the ice and neutrino from any direction or (1) choose neutrino interaction point in the horizon on the balloon in the ice and neutrino direction on the cerenkov cone
+
+// end of values from icemc
+
+
+
   NNU=100;
 
   // NEED TO FIGURE OUT A GOOD WAY TO READ THIS IN AND STORE THEM.

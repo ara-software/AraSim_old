@@ -2,6 +2,7 @@
 #define POSITION_H
 
 #include "Vector.h"
+//#include "TObject.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //class Position:
@@ -24,6 +25,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+//class Position : public Vector, public TObject {
 class Position : public Vector {
 public:
   Position();
@@ -57,6 +59,8 @@ public:
   //is the the length of arc between two positions.
   //Altitude (i.e. length of the position vector) is irrelevant; only angle
   //between the two position vectors is considered.
+
+  ClassDef(Position,1);
 
 }; //class Position
 

@@ -13,9 +13,33 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
-#include <ostream>
+#include "TObject.h"
+#include <iostream>
 
 class Vector {
+//class Vector : public TObject {
+
+protected:
+  //Class variables
+  double x; //x component of vector
+  double y; //y component of vector
+  double z; //z component of vector
+  double theta;  //theta component of vector in radians
+  double phi; //phi component of vector in radians
+
+  double r; //r component of vector
+
+  //Class private functions
+  void UpdateThetaPhi(); 
+  void UpdateXYZ(); 
+  //This method finds theta and phi from the x,y,z Cartesian coordinates.  
+  //It should be called at any time that the x,y,z components are modified,
+  //so that the theta and phi components are current at all times.
+
+
+
+
+
 public:
   friend Vector operator +(const Vector& vector1, const Vector& vector2);
   //Add two vectors component by component
@@ -58,7 +82,7 @@ public:
   //theta, phi direction.
   //theta and phi must be in RADIANS!
   //Accepts theta from 0 to PI, and any phi.
-
+  
   Vector();
   //Default constructor: Initialize a unit vector in the z direction.
 
@@ -108,30 +132,25 @@ public:
   double GetX() const;
   double GetY() const;
   double GetZ() const;
+  double R() const;
   double Theta() const;
   double Phi() const;
   void Print() const;
+  void PrintSp() const;
 
   //Mutator functions
   void SetX(double inp);
   void SetY(double inp);
   void SetZ(double inp);
   void SetXYZ(double inpx,double inpy,double inpz);
+  
+  void SetR(double inpr);
+  void SetThetaPhi(double inptheta,double inpphi);
+  void SetRThetaPhi(double inpr,double inptheta,double inpphi);
+
   void Reset(double x_inp, double y_inp, double z_inp);
 
-protected:
-  //Class variables
-  double x; //x component of vector
-  double y; //y component of vector
-  double z; //z component of vector
-  double theta;  //theta component of vector in radians
-  double phi; //phi component of vector in radians
-
-  //Class private functions
-  void UpdateThetaPhi(); 
-  //This method finds theta and phi from the x,y,z Cartesian coordinates.  
-  //It should be called at any time that the x,y,z components are modified,
-  //so that the theta and phi components are current at all times.
+  ClassDef(Vector,1);
 
 }; //class Vector
 

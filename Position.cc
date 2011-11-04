@@ -4,6 +4,7 @@
 #include "Constants.h"
 #include <cmath>
 
+ClassImp(Position);
 
 // Vector Constants
 static Vector x_axis = Vector(1,0,0);

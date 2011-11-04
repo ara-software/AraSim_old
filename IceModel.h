@@ -6,7 +6,9 @@
 #include "Constants.h"
 #include "Vector.h"
 #include "Position.h"
+//#include "Primaries.h"
 
+class Interaction;
 
 //Constants relating to all ice models
 const double FIRNDEPTH=-150.;                // depth of the firn, in meters: currently a constant over all ice
@@ -72,6 +74,19 @@ public:
 		     int& n_coord) const;
 
   //  void FillArraysforTree(double lon_ground[1068][869],double lat_ground[1068][869],double lon_ice[1200][1000],double lat_ice[1200][1000],double lon_water[1200][1000],double lat_water[1200][1000]);
+
+  // below three members are copied from icemc icemodel.
+  int PickUnbiased(int inu, Interaction *interaction1, IceModel *antarctica);
+  int WhereDoesItEnterIce(const Position &posnu,
+			       const Vector &nnu,
+			       double stepsize,
+			       Position &r_enterice);
+
+  int WhereDoesItExitIce(int inu,const Position &posnu,
+			 const Vector &nnu,
+			 double stepsize,
+			 Position &r_enterice);
+  // end three copied members from icemc icemodel.
 
 
 protected:

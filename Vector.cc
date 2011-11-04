@@ -5,6 +5,10 @@
 #include "TRotation.h"
 #include <cmath>
 #include <iostream>
+
+ClassImp(Vector);
+
+
 using namespace std;
 
  Vector::Vector(double x_inp,double y_inp,double z_inp) {
@@ -17,6 +21,7 @@ using namespace std;
   x=xarray[0];
   y=xarray[1];
   z=xarray[2];
+  UpdateThetaPhi();
 }
  Vector::Vector(double theta_inp, double phi_inp) {
 
@@ -36,6 +41,7 @@ using namespace std;
 
   UpdateThetaPhi();
 } //Constructor Vector(theta,phi)
+
 
  Vector::Vector() {
   x = 0.; 
@@ -120,6 +126,12 @@ double Vector::Dot(const Vector &vec) const
 void Vector::Print() const {
   cout << x << " " << y << " " << z << "\n";
 }
+
+
+void Vector::PrintSp() const {
+  cout << r << " " << theta << " " << phi << "\n";
+}
+
  double Vector::GetX() const {
   return x;
 } //Vector::GetX
@@ -131,6 +143,11 @@ void Vector::Print() const {
  double Vector::GetZ() const {
   return z;
 } //Vector::GetZ
+
+
+ double Vector::R() const {
+  return r;
+} //Vector::R
 
  double Vector::Theta() const {
   return theta;
@@ -161,6 +178,28 @@ void Vector::Print() const {
   z = inpz;
   UpdateThetaPhi();
 } //Vector::SetXYZ
+
+
+ void Vector::SetR(double inpr) {
+  r = inpr;
+  UpdateXYZ();
+} //Vector::SetRThetaPhi
+
+
+ void Vector::SetThetaPhi(double inptheta,double inpphi) {
+  theta = inptheta;
+  phi = inpphi;
+  UpdateXYZ();
+} //Vector::SetRThetaPhi
+
+
+ void Vector::SetRThetaPhi(double inpr,double inptheta,double inpphi) {
+  r = inpr;
+  theta = inptheta;
+  phi = inpphi;
+  UpdateXYZ();
+} //Vector::SetRThetaPhi
+
 
  void Vector::Reset(double x_inp, double y_inp, double z_inp) {
   x = x_inp;
@@ -222,11 +261,24 @@ void Vector::Print() const {
  
   phi=atan2(y,x);
 
+  r = sqrt(x*x + y*y + z*z);
+
   if (phi<0)
     phi+=2*PI;
   // phi is now from 0 to 2*pi wrt +x
   
 } //UpdateThetaPhi
+
+void Vector::UpdateXYZ() {
+    
+  x = r * sin(theta) * cos(phi);
+  y = r * sin(theta) * sin(phi);
+  z = r * cos(theta);
+
+
+}
+
+
  Vector Vector::Zero() {
   //Zero the vector
    

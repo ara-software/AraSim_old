@@ -2,9 +2,10 @@
 #define EARTHMODEL_H
 
 #include <string>
+#include "TRandom3.h"
 class Position;
 class Vector;
-class TRandom3;
+//class TRandom3;
 using std::string;
 
 

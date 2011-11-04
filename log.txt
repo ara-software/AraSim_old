@@ -68,4 +68,37 @@ Spectra class : copied from icemc. Information on README_EXPONENT and fluxes/REA
 
 More detail, see AraSim_doc.pdf file.
 
+=============================================================================
 
+11/03/11 E. Hong; Two main things!.
+
+1) added PickUnbiased function in IceModel class (copy from icemc).
+    PickUnbiased function can pick any random unbiased posnu (interaction point of neutrino inside the antarctic ice) and nnu (direction of neutrino propagation).
+
+2) outputs/AraOut.root has detector class as a branch.
+    For this, class Detector (including ARA_station, Antenna_string, Antenna, Surface_antenna, Parameters classes) added to ROOT class. Method is shown in http://www.phys.ufl.edu/LIGO/wavelet/root_shared_lib.html
+    Also sub-classes of Detector (Vector and Position) are added to ROOT class with same method.
+    Parameters class in Detector -> some values (static const) changed to int or double.
+    GetGain function in Detector -> use freq_step, ang_step, freq_width, freq_init in Detector instead of same values in Parameters class (it causes returning wrong vales... and I don't understand why)
+
+
+3) some other minor changes : 
+    Ray class : added WhereDoesItLeave function from icemc ray class
+    EarthModel class : added TRandom3.h header file
+    counting class : add from icemc (need for Primaries class)
+    Settings class : add many variable from icemc Settings class (need for Primaries class)
+
+
+4) minor thing added: added Makefile.org, M.readTree and readTree.cc file.
+    after compile AraSim and run arasim (which produces outputs/AraOut.root file), we can use compile readTree.cc and test if we can read outputs/AraOut.root file correctly.
+    method I did : cp M.readTree Makefile
+                    make clean all
+                    make clean readTree
+                    ./readTree
+    way to comeback AraSim compile:
+                    cp Makefile.org Makefile
+                    make clean all
+                    make clean araSim
+                    ./araSim
+
+===============================================================================

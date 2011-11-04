@@ -26,19 +26,19 @@ LIBS          = $(ROOTLIBS) -lMinuit $(SYSLIBS)
 #LIBS          = $(ROOTLIBS) -lgsl -lMinuit $(SYSLIBS) 
 GLIBS         = $(ROOTGLIBS) $(SYSLIBS)
 
-ROOT_LIBRARY = libAra.${DLLSUF}
-#LIB_OBJS = AraSim.o Detector.o Event.o Efficiencies.o Trigger.o IceModel.o EarthModel.o eventDict.o
-LIB_OBJS =  Vector.o EarthModel.o IceModel.o Trigger.o Ray.o Tools.o Efficiencies.o Event.o Detector.o Position.o Spectra.o RayTrace.o RayTrace_IceModels.o signal.o eventDict.o Settings.o Primaries.o counting.o
-CCFILE       =  Vector.cc EarthModel.cc IceModel.cc Trigger.cc Ray.cc Tools.cc Efficiencies.cc Event.cc Detector.cc Spectra.cc Position.cc RayTrace.cc signal.cc RayTrace_IceModels.cc Settings.cc Primaries.cc counting.cc
+ROOT_LIBRARY = libReadTree.${DLLSUF}
+#LIB_OBJS = readTree.o Detector.o Event.o Efficiencies.o Trigger.o IceModel.o EarthModel.o eventDict.o
+LIB_OBJS =  Vector.o EarthModel.o IceModel.o Trigger.o Ray.o Tools.o Efficiencies.o Event.o Detector.o Position.o Spectra.o RayTrace.o RayTrace_IceModels.o signal.o eventDict.o Settings.o Primaries.o
+CCFILE       =  Vector.cc EarthModel.cc IceModel.cc Trigger.cc Ray.cc Tools.cc Efficiencies.cc Event.cc Detector.cc Spectra.cc Position.cc RayTrace.cc signal.cc RayTrace_IceModels.cc Settings.cc Primaries.cc
 CLASS_HEADERS = Trigger.h Detector.h
 
-PROGRAMS = araSim
+PROGRAMS = readTree
 
-all : $(ROOT_LIBRARY) araSim
+all : $(ROOT_LIBRARY) readTree
 
-araSim : $(ROOT_LIBRARY) AraSim.$(SRCSUF)
+readTree : $(ROOT_LIBRARY) readTree.$(SRCSUF)
 	@echo "<**Compiling**> "  
-	$(LD) $(CXXFLAGS) $(LDFLAGS) AraSim.$(SRCSUF) $(ROOT_LIBRARY) $(LIBS) -o $@
+	$(LD) $(CXXFLAGS) $(LDFLAGS) readTree.$(SRCSUF) $(ROOT_LIBRARY) $(LIBS) -o $@
 
 #The library
 $(ROOT_LIBRARY) : $(LIB_OBJS) 

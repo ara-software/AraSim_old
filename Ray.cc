@@ -1,6 +1,7 @@
 #include "Vector.h"
 #include "Position.h"
 #include "Event.h"
+#include "IceModel.h"
 #include <vector>
 
 #include "Ray.h"
