@@ -162,7 +162,7 @@ class Detector {
         double GetGain(double freq, double theta, double phi, int ant_m, int ant_o);    //read antenna gain at certain angle, certain type, and certain orientation
         double GetGain(double freq, double theta, double phi, int ant_m);   //read antenna gain at certain angle, certain type. (orientation : default)
         
-        double GetFreqStepMax() {return freq_step_max;}
+        double Getfreq_init() {return freq_init;}
 
         ~Detector();    //destructor
 

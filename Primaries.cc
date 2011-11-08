@@ -24,6 +24,38 @@
 #include "TH2D.h"
 #include "TCanvas.h"
 
+
+ClassImp(Y);
+ClassImp(Primaries);
+ClassImp(Interaction);
+
+const double Y::miny_low(0.00002);
+const double Y::maxy_low(0.001);
+const double Y::miny_high(0.001);
+const double Y::maxy_high(1.);
+
+const double Interaction::nu_banana_theta_angle(-0.413 * 3.14159/180.);// don't let me use RADDEG which is annoying 
+const double Interaction::altitude_nu_banana(-400.);//Depth of interaction of banana neutrino
+const double Interaction::lat_nu_banana(0.); 
+const double Interaction::lon_nu_banana(0.);
+const double Interaction::banana_slopey(0.);//Turn slopyness off for banana plots (SLOPEY)
+const double Interaction::nu_banana_phi_angle(0. * 3.14159/180.); 
+const double Interaction::phi_nu_banana(3.14159/4); //Location in phi
+const double Interaction::banana_observation_distance(600000.);//How far from the surface above the interaction are we when we measure the voltages? (meters) Note: Should be at least 100000 for best results.
+const double Interaction::theta_nu_banana(170.*3.14159/180.);//Location of banana neutrino in theta
+const double Interaction::pnu_banana(2.00E19);
+const double Interaction::banana_y(0.2);//Elasticity.  0.2 is an average number.
+const double Interaction::banana_signal_fluct(0.);//Turn off noise for banana plots (settings1->SIGNAL_FLUCT) (shouldn't matter)
+const double Interaction::banana_sigma(0.);//NSIGMA in the case of a banana plot
+
+
+
+
+
+
+
+
+
 Primaries::Primaries(){//constructor
 
   // This is for parametrizations in Connolly et al. 2011  
@@ -337,6 +369,11 @@ string Primaries::GetNuFlavor() {
     cout << "unable to pick nu flavor\n";
   return nuflavor;
 } //GetNuFlavor
+
+Interaction::Interaction() {
+    //default constructor
+}
+
 
 Interaction::Interaction(string inttype,Primaries *primary1,Settings *settings1,int whichray,Counting *count1) : banana_flavor("numu"), banana_current("nc"),  nu_banana(Position(theta_nu_banana,phi_nu_banana)) {
 

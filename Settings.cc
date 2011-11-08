@@ -4,6 +4,8 @@
 #include <cstdlib>
 #include "Settings.h"
 
+ClassImp(Settings);
+
 using namespace std;
 
 Settings::Settings() {

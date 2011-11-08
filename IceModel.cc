@@ -15,6 +15,9 @@
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
+
+ClassImp(IceModel);
+
 using namespace std;
 
 //class Interaction;
@@ -50,6 +53,11 @@ const double bedmap_c_0 = (2*EarthModel::R_EARTH / sqrt(1-pow(eccentricity,2))) 
 double bedmap_R = scale_factor*bedmap_c_0 * pow(( (1 + eccentricity*sin(71*RADDEG)) / (1 - eccentricity*sin(71*RADDEG)) ),eccentricity/2) * tan((PI/4) - (71*RADDEG)/2); //varies with latitude, defined here for 71 deg S latitude
 const double bedmap_nu = bedmap_R / cos(71*RADDEG);
 
+/*
+IceModel::IceModel() {
+    //default constructor
+}
+*/
 
 IceModel::IceModel(int model,int earth_model,int moorebay) : EarthModel(earth_model),mooreBayFlag(moorebay) {
 
@@ -215,6 +223,7 @@ Position thisr_enterice_tmp;
     if (thisr_in.Lat()>COASTLINE && cos(interaction1->nnu.Theta())<0) {
       interaction1->noway=1;
 
+      interaction1->pickunbiased=0;
       return 0; // there is no way it's going through the ice
     }
 
@@ -276,6 +285,7 @@ Position thisr_enterice_tmp;
 	  }
 	  else {
 	    interaction1->neverseesice=1;
+            interaction1->pickunbiased = 0;
 	    return 0;
 	  }
 	}
@@ -333,6 +343,7 @@ Position thisr_enterice_tmp;
     } // end wheredoesitleave
     else {
       interaction1->wheredoesitleave_err=1;
+      interaction1->pickunbiased = 0;
       return 0;
     }
     // end finding where it leaves ice
@@ -365,6 +376,7 @@ Position thisr_enterice_tmp;
     else {
       thisr_enterice=thisr_in;
       interaction1->wheredoesitenterice_err=1;
+      interaction1->pickunbiased = 0;
       return 0;
     }
     interaction1->nuexitice=thisnuexitice;
@@ -373,13 +385,16 @@ Position thisr_enterice_tmp;
     if (interaction1->posnu.Mag()-Surface(interaction1->posnu)>0) {
       interaction1->toohigh=1;
       //cout << "inu, toohigh is " << inu << " " << interaction1->toohigh << "\n";
+      interaction1->pickunbiased = 0;
       return 0;
     }
     if (interaction1->posnu.Mag()-Surface(interaction1->posnu)+IceThickness(interaction1->posnu)<0) {
       interaction1->toolow=1;
       //cout << "inu, toolow is " << inu << " " << interaction1->toolow << "\n";
+      interaction1->pickunbiased = 0;
       return 0;
     }    
+    interaction1->pickunbiased = 1;
     return 1;
 
 }

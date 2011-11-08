@@ -1,6 +1,7 @@
 #ifndef SPECTRA_H_
 #define SPECTRA_H_
 
+#include "TObject.h"
 #include "TSpline.h"
 #include <string>
 #include "TRandom3.h"
@@ -38,6 +39,7 @@ public:
   double EdNdEdAdt[E_bin_max]; //flux of incident neutrinos vs. energy E*dN/dE/dA/dt
   double E2dNdEdAdt[E_bin_max]; //flux of incident neutrinos vs. energy E^2*dN/dE/dA/dt
   
+  Spectra();    // default constructor
   Spectra(int EXPONENT); // constructor  
   
   double GetNuEnergy(); // get the neutrino energy which follows neutrino flux. 
@@ -62,6 +64,9 @@ public:
   int IsMonoenergetic();    // return 1 or 0 depend of EXPONENT value
 
   // destructor
+
+
+  ClassDef(Spectra,1);
 
 }; //class Spectra
 

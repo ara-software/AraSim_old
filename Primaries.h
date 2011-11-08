@@ -5,8 +5,9 @@
 #ifndef PRIMARIES_H_
 #define PRIMARIES_H_
 
- #include "TRandom3.h" 
+#include "TRandom3.h" 
 #include <iostream>
+#include "TObject.h"
 
 #include "TH1.h"
 #include "TH2.h"
@@ -18,9 +19,13 @@
 #include "Vector.h"
 #include "Position.h"
 
-class Interaction;
-class Primaries;
-class IceModel;
+//--------------------------------------------------
+// class Interaction;
+// class Primaries;
+//-------------------------------------------------- 
+//--------------------------------------------------
+// class IceModel;
+//-------------------------------------------------- 
 class Counting;
 class Settings;
 
@@ -51,10 +56,21 @@ class Y {
 		double pickY(int NU,int CURRENT,double e); // pick an inelasticity
 		// NU=0: nubar, NU=1: nu
 		// CURRENT=0: CC, CURRENT-1: NC
+
+/*
 		const static double miny_low=0.00002;//2.E-5
 		const static double maxy_low=0.001;
 		const static double miny_high=0.001;
 		const static double maxy_high=1.;
+*/
+		static const double miny_low;//2.E-5
+		static const double maxy_low;
+		static const double miny_high;
+		static const double maxy_high;
+
+
+                ClassDef(Y,1);
+
 };//Y
 
 class Primaries {
@@ -100,7 +116,10 @@ public:
 	double Getyweight(double pnu,double y,int nu_nubar,int currentint);
 	string GetCurrent();
 	string GetNuFlavor();
-protected:
+
+
+        ClassDef(Primaries,1);
+
 };//Primaries
 
 class Interaction  {
@@ -114,29 +133,30 @@ class Interaction  {
   //For banana plot
  
  // static const double RADDEG_TMP=3.14159/180.;
- static const double nu_banana_theta_angle=-0.413 * 3.14159/180.;// don't let me use RADDEG which is annoying 
+ static const double nu_banana_theta_angle;// don't let me use RADDEG which is annoying 
  
 
- static const double altitude_nu_banana=-400.;//Depth of interaction of banana neutrino
+ static const double altitude_nu_banana;//Depth of interaction of banana neutrino
  
 
- static const double lat_nu_banana=0.; 
- static const double lon_nu_banana=0.;
+ static const double lat_nu_banana; 
+ static const double lon_nu_banana;
  
 
- static const double banana_slopey=0.;//Turn slopyness off for banana plots (SLOPEY)
- static const double nu_banana_phi_angle=0. * 3.14159/180.; 
+ static const double banana_slopey;//Turn slopyness off for banana plots (SLOPEY)
+ static const double nu_banana_phi_angle; 
  
 
 
  public:
 
- static const double phi_nu_banana=3.14159/4; //Location in phi
+ static const double phi_nu_banana; //Location in phi
 
- static const double banana_observation_distance=600000.;//How far from the surface above the interaction are we when we measure the voltages? (meters) Note: Should be at least 100000 for best results.
- static const double theta_nu_banana=170.*3.14159/180.;//Location of banana neutrino in theta
+ static const double banana_observation_distance;//How far from the surface above the interaction are we when we measure the voltages? (meters) Note: Should be at least 100000 for best results.
+ static const double theta_nu_banana;//Location of banana neutrino in theta
  double banana_phi_obs;
  Vector banana_obs; //Vector from the neutrino interaction to the observation point
+ Interaction(); // default constructor
  Interaction(string inttype,Primaries *primary1,Settings *settings1,int whichray,Counting *count1);
  void PickAnyDirection();
 
@@ -146,6 +166,10 @@ class Interaction  {
   int wheredoesitenterice_err;
   int toohigh;
   int toolow;
+
+  // Eugene added IceModel::PickUnbiased result
+  int pickunbiased;
+  //
 
   double pathlength_inice;
 
@@ -166,13 +190,13 @@ Position nuexitice; // place where neutrino would have left the ice
   double d2;  // ice-rock boundary to interaction point in m
 
 
-static const double pnu_banana=2.00E19;
-static const double banana_y=0.2;//Elasticity.  0.2 is an average number.
+static const double pnu_banana;
+static const double banana_y;//Elasticity.  0.2 is an average number.
 double banana_weight;//Weight measurement locations to account for phase space
  double banana_theta_obs;
  double banana_volts;//Total voltage measured at a spot on the sky
-static const double banana_signal_fluct=0.;//Turn off noise for banana plots (settings1->SIGNAL_FLUCT) (shouldn't matter)
- static const double banana_sigma=0.;//NSIGMA in the case of a banana plot
+static const double banana_signal_fluct;//Turn off noise for banana plots (settings1->SIGNAL_FLUCT) (shouldn't matter)
+ static const double banana_sigma;//NSIGMA in the case of a banana plot
  
 
   void  setNuFlavor(Primaries *primary1,Settings *settings1,int whichray,Counting *count1);
@@ -210,7 +234,8 @@ double dnutries; //product of dtryingdirection and dtryingposition
  double r_exit2bn_measured; // exit to balloon deduced from measured theta
  int iceinteraction;// whether or not there is an interaction in the ice
 
+ ClassDef(Interaction,1);
 
- protected:
+
 };//Interaction
 #endif

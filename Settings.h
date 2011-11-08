@@ -2,12 +2,14 @@
 #define SETTINGS_H_
 
 #include <string>
+#include "TObject.h"
 
 using namespace std;
 //using std::string;
 
 class Settings 
 {
+    protected:
 
     public:
 
@@ -137,10 +139,12 @@ int MAXRAY;
 int horizontal_banana_points;
   int vertical_banana_points;
 
-protected:
 
 
  // end of values from icemc
+
+
+  ClassDef(Settings,1);
 
 
 };

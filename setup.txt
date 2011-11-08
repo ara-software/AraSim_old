@@ -1,11 +1,5 @@
-//////////////////////////////
 //This is a test setup file.
 //The values which set in this file will be changed from default value.
-//The line starts with "/" will ignored when Settings class read this file.
-
-///////////////////////////////
-
-// default values below.
 
 //  NNU=100  // number of neutrinos
 
@@ -23,6 +17,8 @@
   
 //EXPONENT=19.; // 10^19 eV neutrinos only
 
+//DETECTOR=2;   // Detector mode; 0 : testbed, 1 : ARA 1~7 stations, 2 : ARA hexagon layout
+
 //
 // Above are default values!
 //
@@ -33,7 +29,7 @@
 // order is not important.
 // Make sure the name of variable is correct.
 
-EXPONENT=10
+EXPONENT=30
 
 NNU=1000
-
+DETECTOR=2

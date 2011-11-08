@@ -102,3 +102,13 @@ More detail, see AraSim_doc.pdf file.
                     ./araSim
 
 ===============================================================================
+
+11/08/11 E. Hong; add more classed for ROOT. (IceModel, EarthModel, Interaction, Spectra, Settings)
+
+1) Primaries : added variable int pickunbiased to store IceModel::PickUnbiased return value.
+
+2) making plots codes move from AraSim.cc to readTree.cc
+
+3) some other minor changes...
+
+===============================================================================

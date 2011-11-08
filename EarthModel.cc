@@ -17,6 +17,8 @@
 
 #include "signal.hh"
 
+ClassImp(EarthModel);
+
 
 using std::cout;
 using std::endl;
@@ -29,6 +31,9 @@ const double EarthModel::MAXTHETA(180.);
 const int EarthModel::ILAT_MAX((int)((COASTLINE/MAXTHETA)*(double)NLAT+0.00001)); // corresponding latitude bin to "coastline"
 const double EarthModel::GEOID_MAX(6.378137E6); // parameters of geoid model
 const double EarthModel::GEOID_MIN(6.356752E6); // from Geodetic Reference System 1980, Bulletin Geodesique, Vol 54:395,1980. // The previous reference gave issue number 3 instead of page number 395
+
+// test ClassDef works with static const double
+const double EarthModel::R_EARTH(6.378140E6);
 
 
 EarthModel::EarthModel(int model,int WEIGHTABSORPTION_SETTING) {

@@ -48,6 +48,7 @@ Detector::Detector(int mode, IceModel *icesurface) {
     params.number_of_strings = 0;
     params.number_of_antennas = 0;
 
+    
     //initialize few params values.
     params.freq_step = 60;
     params.ang_step = 2664;
@@ -55,12 +56,14 @@ Detector::Detector(int mode, IceModel *icesurface) {
     params.freq_init = 83.333;
     //end initialize
 
+
     //copy freq_width, freq_init in params to Detector freq_width, freq_init
     freq_step = params.freq_step;
     ang_step = params.ang_step;
     freq_width = params.freq_width;
     freq_init = params.freq_init;
     //end copy
+
 
     string testbed_file = "testbed_info.txt";
     string ARA_N_file = "ARA_N_info.txt";

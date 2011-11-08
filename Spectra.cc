@@ -8,8 +8,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+ClassImp(Spectra);
+
 //class Tools;
 
+Spectra::Spectra() {
+    // default constructor
+}
 
 Spectra::Spectra(int EXPONENT) {
 
