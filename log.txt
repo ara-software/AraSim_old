@@ -112,3 +112,14 @@ More detail, see AraSim_doc.pdf file.
 3) some other minor changes...
 
 ===============================================================================
+
+11/09/11 E. Hong; fixed ray_solver_makefile
+
+Simply removed two lines and added Makefile.arch.
+It fixed compiling bug in my (Ubuntu) machine.
+
+Also added README_ray_solver for simple instruction.
+
+===============================================================================
+
+

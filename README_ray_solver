@@ -1,0 +1,15 @@
+From the conversation between Amy Connolly and Christopher Weaver,
+
+     to compile,
+
+     make -f ray_solver_makefile
+
+
+     to run,
+
+     ./ray_solver 0 0 100 100 0 100
+
+     which means rays between the points (0,0,100) and (100,0,100).
+     I believe first point is for source and second is for target.
+
+
