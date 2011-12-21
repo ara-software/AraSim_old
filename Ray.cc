@@ -2,6 +2,9 @@
 #include "Position.h"
 #include "Event.h"
 #include "IceModel.h"
+#include "Primaries.h"
+#include "Detector.h"
+#include "Constants.h"
 #include <vector>
 
 #include "Ray.h"
@@ -25,3 +28,8 @@ vector<double> Ray::getEField(Event *event,Position pos) {
   return efield;
   
 }
+
+  
+
+
+

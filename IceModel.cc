@@ -170,6 +170,9 @@ void IceModel::setUpIceModel(int model) {
 
  }
 
+int IceModel::Getice_model() {
+    return ice_model;
+}
 
  //constructor IceModel(int model)
 Position IceModel::PickBalloonPosition() const {
@@ -179,225 +182,233 @@ Position IceModel::PickBalloonPosition() const {
 }
 
 
-int IceModel::PickUnbiased(int inu, Interaction *interaction1, IceModel *antarctica) {
-    
-
-  interaction1->PickAnyDirection(); // first pick the neutrino direction
-
-  double mincos=cos(COASTLINE*RADDEG);
-  double maxcos=cos(0.);
-  double minphi=0.;
-  double maxphi=2.*PI;
-  double thisphi,thiscos,thissin;
-  double theta=0.;
-  double phi=0.;
-
-  int ilon,ilat;    
-  int e_coord,n_coord;
-  double vol_thisbin=0.;
-  double lon=0.;
-  double lat=0.;
-  
- 
-    thisphi=gRandom->Rndm()*(maxphi-minphi)+minphi;
-    thiscos=gRandom->Rndm()*(maxcos-mincos)+mincos;
-    thissin=sqrt(1.-thiscos*thiscos);
-    Position thisr_in;// entrance point
-    Position thisr_enterice;
-Position thisr_enterice_tmp;
-    Position thisnuexitearth;
-    Position thisnuexitice;
-    Position thisr_exitice;
-    interaction1->noway=0;
-    interaction1->wheredoesitleave_err=0;
-    interaction1->neverseesice=0;
-    interaction1->wheredoesitenterice_err=0;
-    interaction1->toohigh=0;
-    interaction1->toolow=0;
-
-    thisr_in.SetXYZ(R_EARTH*thissin*cos(thisphi),R_EARTH*thissin*sin(thisphi),R_EARTH*thiscos);
-    if (thisr_in.Dot(interaction1->nnu)>0)
-      interaction1->nnu=-1.*interaction1->nnu;
-    // does this intersect any ice
-    //cout << "lat, coastline, cos are " << thisr_in.Lat() << " " << COASTLINE << " " << cos(interaction1->nnu.Theta()) << "\n";
-    if (thisr_in.Lat()>COASTLINE && cos(interaction1->nnu.Theta())<0) {
-      interaction1->noway=1;
-
-      interaction1->pickunbiased=0;
-      return 0; // there is no way it's going through the ice
-    }
-
-    int count1=0;
-    int count2=0;
-
-   
-    if (Ray::WhereDoesItLeave(0,thisr_in,interaction1->nnu,antarctica,thisnuexitearth)) { // where does it leave Earth
-      // really want to find where it leaves ice
-      int err;
-      // Does it leave in an ice bin
-      if (IceThickness(thisnuexitearth) && thisnuexitearth.Lat()<COASTLINE) { // if this is an ice bin in the Antarctic
-	//cout << "inu is " << inu << " it's in ice.\n";
-	//cout << "this is an ice bin.\n";
-	thisnuexitice=thisnuexitearth;
-	thisr_exitice=thisnuexitearth;
-	if (thisnuexitice.Mag()>Surface(thisnuexitice)) { // if the exit point is above the surface
-	  if ((thisnuexitice.Mag()-Surface(thisnuexitice))/cos(interaction1->nnu.Theta())>5.E3) { 
-	    WhereDoesItExitIce(inu,thisnuexitearth,interaction1->nnu,5.E3, // then back up and find it more precisely
-			       thisr_exitice);
-	    thisnuexitice=(5000.)*interaction1->nnu;
-	    thisnuexitice+=thisr_exitice;
-	    count1++;
-	  }
-	  if ((thisnuexitice.Mag()-Surface(thisnuexitice))/cos(interaction1->nnu.Theta())>5.E2) {
-	    
-	    WhereDoesItExitIce(inu,thisnuexitice,interaction1->nnu,5.E2, // then back up and find it more precisely
-			       thisr_exitice);
-	    thisnuexitice=5.E2*interaction1->nnu;
-	    thisnuexitice+=thisr_exitice;
-	    count1++;
-	  }
-	  if ((thisnuexitice.Mag()-Surface(thisnuexitice))/cos(interaction1->nnu.Theta())>50.) {
-
-	    WhereDoesItExitIce(inu,thisnuexitice,interaction1->nnu,50., // then back up and find it more precisely
-			     thisr_exitice);
-	    count1++;
-	  } // end third wheredoesitexit
-	  thisnuexitice=thisr_exitice;
-	} // if the exit point overshoots
-	else
-	  thisnuexitice=thisnuexitearth;
-
-	// should also correct for undershooting
-    if (count1>10)
-      cout << "count1 is " << count1 << "\n";	  
-      } // if it's an Antarctic ice bin
-      else { // it leaves a rock bin so back up and find where it leaves ice
-	//cout << "inu is " << inu << " it's in rock.\n";
-	if (thisr_in.Distance(thisnuexitearth)>5.E4) {
-	  count2++;
-	  if (WhereDoesItExitIce(inu,thisnuexitearth,interaction1->nnu,5.E4, // then back up and find it more precisely
-				 thisr_exitice)) {
-	    
-	    thisnuexitice=(5.E4)*interaction1->nnu;
-	    thisnuexitice+=thisr_exitice;
-	    //cout << "inu is " << inu << " I'm here 1.\n";
-
-	  }
-	  else {
-	    interaction1->neverseesice=1;
-            interaction1->pickunbiased = 0;
-	    return 0;
-	  }
-	}
-	else
-	  thisnuexitice=thisnuexitearth;
-	//   WhereDoesItExitIce(inu,thisnuexit,interaction1->nnu,5.E4, // then back up and find it more precisely
+//--------------------------------------------------
+// int IceModel::PickUnbiased(int inu, Interaction *interaction1, IceModel *antarctica) {
+//     
+// 
+//   interaction1->PickAnyDirection(); // first pick the neutrino direction
+// 
+//   double mincos=cos(COASTLINE*RADDEG);
+//   double maxcos=cos(0.);
+//   double minphi=0.;
+//   double maxphi=2.*PI;
+//   double thisphi,thiscos,thissin;
+//   double theta=0.;
+//   double phi=0.;
+// 
+//   int ilon,ilat;    
+//   int e_coord,n_coord;
+//   double vol_thisbin=0.;
+//   double lon=0.;
+//   double lat=0.;
+//   
+//  
+//     thisphi=gRandom->Rndm()*(maxphi-minphi)+minphi;
+//     thiscos=gRandom->Rndm()*(maxcos-mincos)+mincos;
+//     thissin=sqrt(1.-thiscos*thiscos);
+//     Position thisr_in;// entrance point
+//     Position thisr_enterice;
+// Position thisr_enterice_tmp;
+//     Position thisnuexitearth;
+//     Position thisnuexitice;
+//     Position thisr_exitice;
+//     interaction1->noway=0;
+//     interaction1->wheredoesitleave_err=0;
+//     interaction1->neverseesice=0;
+//     interaction1->wheredoesitenterice_err=0;
+//     interaction1->toohigh=0;
+//     interaction1->toolow=0;
+// 
+//     thisr_in.SetXYZ(R_EARTH*thissin*cos(thisphi),R_EARTH*thissin*sin(thisphi),R_EARTH*thiscos);
+//     if (thisr_in.Dot(interaction1->nnu)>0)
+//       interaction1->nnu=-1.*interaction1->nnu;
+//     // does this intersect any ice
+//     //cout << "lat, coastline, cos are " << thisr_in.Lat() << " " << COASTLINE << " " << cos(interaction1->nnu.Theta()) << "\n";
+//     if (thisr_in.Lat()>COASTLINE && cos(interaction1->nnu.Theta())<0) {
+//       interaction1->noway=1;
+// 
+//       interaction1->pickunbiased=0;
+//       return 0; // there is no way it's going through the ice
+//     }
+// 
+//     int count1=0;
+//     int count2=0;
+// 
+//    
+//     if (Ray::WhereDoesItLeave(0,thisr_in,interaction1->nnu,antarctica,thisnuexitearth)) { // where does it leave Earth
+//       // really want to find where it leaves ice
+//       int err;
+//       // Does it leave in an ice bin
+//       if (IceThickness(thisnuexitearth) && thisnuexitearth.Lat()<COASTLINE) { // if this is an ice bin in the Antarctic
+// 	//cout << "inu is " << inu << " it's in ice.\n";
+// 	//cout << "this is an ice bin.\n";
+// 	thisnuexitice=thisnuexitearth;
+// 	thisr_exitice=thisnuexitearth;
+// 	if (thisnuexitice.Mag()>Surface(thisnuexitice)) { // if the exit point is above the surface
+// 	  if ((thisnuexitice.Mag()-Surface(thisnuexitice))/cos(interaction1->nnu.Theta())>5.E3) { 
+// 	    WhereDoesItExitIce(inu,thisnuexitearth,interaction1->nnu,5.E3, // then back up and find it more precisely
+// 			       thisr_exitice);
+// 	    thisnuexitice=(5000.)*interaction1->nnu;
+// 	    thisnuexitice+=thisr_exitice;
+// 	    count1++;
+// 	  }
+// 	  if ((thisnuexitice.Mag()-Surface(thisnuexitice))/cos(interaction1->nnu.Theta())>5.E2) {
+// 	    
+// 	    WhereDoesItExitIce(inu,thisnuexitice,interaction1->nnu,5.E2, // then back up and find it more precisely
+// 			       thisr_exitice);
+// 	    thisnuexitice=5.E2*interaction1->nnu;
+// 	    thisnuexitice+=thisr_exitice;
+// 	    count1++;
+// 	  }
+// 	  if ((thisnuexitice.Mag()-Surface(thisnuexitice))/cos(interaction1->nnu.Theta())>50.) {
+// 
+// 	    WhereDoesItExitIce(inu,thisnuexitice,interaction1->nnu,50., // then back up and find it more precisely
 // 			     thisr_exitice);
-// 	  thisnuexit=5.E4*interaction1->nnu;
-// 	  thisnuexit+=thisr_exitice;
-	if (thisr_in.Distance(thisnuexitice)>5.E3) {
-
-	  
-	  if (WhereDoesItExitIce(inu,thisnuexitice,interaction1->nnu,5.E3, // then back up and find it more precisely
-				  thisr_exitice)) {
-	    count2++;
-	    //interaction1->neverseesice=1;
-	    thisnuexitice=5.E3*interaction1->nnu;
-	    thisnuexitice+=thisr_exitice;
-	    //cout << "inu is " << inu << " I'm here 2\n";
-	    //return 0;
-	    
-	  }
-	}
-	if (thisr_in.Distance(thisnuexitice)>5.E2) {
-
-
-	  if (WhereDoesItExitIce(inu,thisnuexitice,interaction1->nnu,5.E2, // then back up and find it more precisely
-				  thisr_exitice)) {
-	    count2++;
-	    //interaction1->neverseesice=1;
-
-	    thisnuexitice=5.E2*interaction1->nnu;
-	    thisnuexitice+=thisr_exitice;
-	    //cout << "inu is " << inu << " I'm here 3\n";
-	    //return 0;
-	  }
-	
-	}
-	if (thisr_in.Distance(thisnuexitice)>50.) {
-
-
-	  if (WhereDoesItExitIce(inu,thisnuexitice,interaction1->nnu,50., // then back up and find it more precisely
-				  thisr_exitice)) {
-	    //interaction1->neverseesice=1;
-	    count2++;
-	    //cout << "inu is " << inu << " I'm here 4\n";
-	    //return 0;
-	  }
-	}
-	thisnuexitice=thisr_exitice;
-	if (count2>10)
-	  cout << "count1 is " << count2 << "\n";
-	//	else return 0;  // never reaches any ice or is it because our step is too big
-      } // if the nu leaves a rock bin
-    } // end wheredoesitleave
-    else {
-      interaction1->wheredoesitleave_err=1;
-      interaction1->pickunbiased = 0;
-      return 0;
-    }
-    // end finding where it leaves ice
-
-// 	if (thisnuexit.Mag()<Surface(thisnuexit)) { // if the exit point is below the surface
-// 	  WhereDoesItExitIceForward(thisnuexit,interaction1->nnu,20., // then find it more finely
-// 			     thisr_exitice);
-// 	  thisnuexit=thisr_enterice;
-// 	  // then back up and find it more precisely
+// 	    count1++;
+// 	  } // end third wheredoesitexit
+// 	  thisnuexitice=thisr_exitice;
+// 	} // if the exit point overshoots
+// 	else
+// 	  thisnuexitice=thisnuexitearth;
+// 
+// 	// should also correct for undershooting
+//     if (count1>10)
+//       cout << "count1 is " << count1 << "\n";	  
+//       } // if it's an Antarctic ice bin
+//       else { // it leaves a rock bin so back up and find where it leaves ice
+// 	//cout << "inu is " << inu << " it's in rock.\n";
+// 	if (thisr_in.Distance(thisnuexitearth)>5.E4) {
+// 	  count2++;
+// 	  if (WhereDoesItExitIce(inu,thisnuexitearth,interaction1->nnu,5.E4, // then back up and find it more precisely
+// 				 thisr_exitice)) {
+// 	    
+// 	    thisnuexitice=(5.E4)*interaction1->nnu;
+// 	    thisnuexitice+=thisr_exitice;
+// 	    //cout << "inu is " << inu << " I'm here 1.\n";
+// 
+// 	  }
+// 	  else {
+// 	    interaction1->neverseesice=1;
+//             interaction1->pickunbiased = 0;
+// 	    return 0;
+// 	  }
 // 	}
+// 	else
+// 	  thisnuexitice=thisnuexitearth;
+// 	//   WhereDoesItExitIce(inu,thisnuexit,interaction1->nnu,5.E4, // then back up and find it more precisely
+// // 			     thisr_exitice);
+// // 	  thisnuexit=5.E4*interaction1->nnu;
+// // 	  thisnuexit+=thisr_exitice;
+// 	if (thisr_in.Distance(thisnuexitice)>5.E3) {
+// 
+// 	  
+// 	  if (WhereDoesItExitIce(inu,thisnuexitice,interaction1->nnu,5.E3, // then back up and find it more precisely
+// 				  thisr_exitice)) {
+// 	    count2++;
+// 	    //interaction1->neverseesice=1;
+// 	    thisnuexitice=5.E3*interaction1->nnu;
+// 	    thisnuexitice+=thisr_exitice;
+// 	    //cout << "inu is " << inu << " I'm here 2\n";
+// 	    //return 0;
+// 	    
+// 	  }
+// 	}
+// 	if (thisr_in.Distance(thisnuexitice)>5.E2) {
+// 
+// 
+// 	  if (WhereDoesItExitIce(inu,thisnuexitice,interaction1->nnu,5.E2, // then back up and find it more precisely
+// 				  thisr_exitice)) {
+// 	    count2++;
+// 	    //interaction1->neverseesice=1;
+// 
+// 	    thisnuexitice=5.E2*interaction1->nnu;
+// 	    thisnuexitice+=thisr_exitice;
+// 	    //cout << "inu is " << inu << " I'm here 3\n";
+// 	    //return 0;
+// 	  }
+// 	
+// 	}
+// 	if (thisr_in.Distance(thisnuexitice)>50.) {
+// 
+// 
+// 	  if (WhereDoesItExitIce(inu,thisnuexitice,interaction1->nnu,50., // then back up and find it more precisely
+// 				  thisr_exitice)) {
+// 	    //interaction1->neverseesice=1;
+// 	    count2++;
+// 	    //cout << "inu is " << inu << " I'm here 4\n";
+// 	    //return 0;
+// 	  }
+// 	}
+// 	thisnuexitice=thisr_exitice;
+// 	if (count2>10)
+// 	  cout << "count1 is " << count2 << "\n";
+// 	//	else return 0;  // never reaches any ice or is it because our step is too big
+//       } // if the nu leaves a rock bin
+//     } // end wheredoesitleave
+//     else {
+//       interaction1->wheredoesitleave_err=1;
+//       interaction1->pickunbiased = 0;
+//       return 0;
+//     }
+//     // end finding where it leaves ice
+// 
+// // 	if (thisnuexit.Mag()<Surface(thisnuexit)) { // if the exit point is below the surface
+// // 	  WhereDoesItExitIceForward(thisnuexit,interaction1->nnu,20., // then find it more finely
+// // 			     thisr_exitice);
+// // 	  thisnuexit=thisr_enterice;
+// // 	  // then back up and find it more precisely
+// // 	}
+// 
+//     if (WhereDoesItEnterIce(thisnuexitearth,interaction1->nnu,5.E3, // first pass with sort of course binning
+// 			    thisr_enterice)) {
+//       thisr_enterice_tmp=thisr_enterice+5.E3*interaction1->nnu;
+//       //cout << "inu is " << inu << " thisr_enterice is ";thisr_enterice.Print();
+//       if (WhereDoesItEnterIce(thisr_enterice_tmp,interaction1->nnu,20., // second pass with finer binning
+// 			      thisr_enterice)) {
+// 	//cout << "inu is " << inu << " thisr_enterice is ";thisr_enterice.Print();
+// 	//cout << "entersice is ";thisr_enterice.Print();
+// 	//cout << "thisnuexitice is ";thisnuexitice.Print();
+// 	interaction1->pathlength_inice=thisr_enterice.Distance(thisnuexitice);
+// 	//cout << "distance is " << distance << "\n";
+// 	//cout << "inu " << inu << " thisr_enterice, thisnuexitice are ";thisr_enterice.Print();thisnuexitice.Print();
+// 	interaction1->posnu=interaction1->pathlength_inice*gRandom->Rndm()*interaction1->nnu;
+// 	interaction1->posnu=interaction1->posnu+thisr_enterice;
+// 	//cout << "inu" << inu << " thisr_enterice, thisnuexitice are ";thisr_enterice.Print();thisnuexitice.Print();
+// 	//cout << "inu " << inu << " distance is " << distance << "\n";
+//       }
+//     }
+//     else {
+//       thisr_enterice=thisr_in;
+//       interaction1->wheredoesitenterice_err=1;
+//       interaction1->pickunbiased = 0;
+//       return 0;
+//     }
+//     interaction1->nuexitice=thisnuexitice;
+//     interaction1->r_enterice=thisr_enterice;
+//     
+//     if (interaction1->posnu.Mag()-Surface(interaction1->posnu)>0) {
+//       interaction1->toohigh=1;
+//       //cout << "inu, toohigh is " << inu << " " << interaction1->toohigh << "\n";
+//       interaction1->pickunbiased = 0;
+//       return 0;
+//     }
+//     if (interaction1->posnu.Mag()-Surface(interaction1->posnu)+IceThickness(interaction1->posnu)<0) {
+//       interaction1->toolow=1;
+//       //cout << "inu, toolow is " << inu << " " << interaction1->toolow << "\n";
+//       interaction1->pickunbiased = 0;
+//       return 0;
+//     }    
+//     interaction1->pickunbiased = 1;
+//     return 1;
+// 
+// }
+//-------------------------------------------------- 
 
-    if (WhereDoesItEnterIce(thisnuexitearth,interaction1->nnu,5.E3, // first pass with sort of course binning
-			    thisr_enterice)) {
-      thisr_enterice_tmp=thisr_enterice+5.E3*interaction1->nnu;
-      //cout << "inu is " << inu << " thisr_enterice is ";thisr_enterice.Print();
-      if (WhereDoesItEnterIce(thisr_enterice_tmp,interaction1->nnu,20., // second pass with finer binning
-			      thisr_enterice)) {
-	//cout << "inu is " << inu << " thisr_enterice is ";thisr_enterice.Print();
-	//cout << "entersice is ";thisr_enterice.Print();
-	//cout << "thisnuexitice is ";thisnuexitice.Print();
-	interaction1->pathlength_inice=thisr_enterice.Distance(thisnuexitice);
-	//cout << "distance is " << distance << "\n";
-	//cout << "inu " << inu << " thisr_enterice, thisnuexitice are ";thisr_enterice.Print();thisnuexitice.Print();
-	interaction1->posnu=interaction1->pathlength_inice*gRandom->Rndm()*interaction1->nnu;
-	interaction1->posnu=interaction1->posnu+thisr_enterice;
-	//cout << "inu" << inu << " thisr_enterice, thisnuexitice are ";thisr_enterice.Print();thisnuexitice.Print();
-	//cout << "inu " << inu << " distance is " << distance << "\n";
-      }
-    }
-    else {
-      thisr_enterice=thisr_in;
-      interaction1->wheredoesitenterice_err=1;
-      interaction1->pickunbiased = 0;
-      return 0;
-    }
-    interaction1->nuexitice=thisnuexitice;
-    interaction1->r_enterice=thisr_enterice;
-    
-    if (interaction1->posnu.Mag()-Surface(interaction1->posnu)>0) {
-      interaction1->toohigh=1;
-      //cout << "inu, toohigh is " << inu << " " << interaction1->toohigh << "\n";
-      interaction1->pickunbiased = 0;
-      return 0;
-    }
-    if (interaction1->posnu.Mag()-Surface(interaction1->posnu)+IceThickness(interaction1->posnu)<0) {
-      interaction1->toolow=1;
-      //cout << "inu, toolow is " << inu << " " << interaction1->toolow << "\n";
-      interaction1->pickunbiased = 0;
-      return 0;
-    }    
-    interaction1->pickunbiased = 1;
-    return 1;
 
-}
+//--------------------------------------------------
+// int IceModel::PickNear() {
+// }
+//-------------------------------------------------- 
 
 
 
@@ -586,200 +597,202 @@ Position IceModel::WhereDoesItEnterIce(const Position &posnu,
 
 
 // Below WhereDoesItEnterIce is from icemodel in icemc.
-int IceModel::WhereDoesItEnterIce(const Position &posnu,
-				       const Vector &nnu,
-				       double stepsize,
-				       Position &r_enterice) {
-  // now get exit point...
-  //   see my geometry notes.
-  // parameterize the neutrino trajectory and just see where it
-  // crosses the earth radius.
-
-  //  Position r_enterice;
-  double distance=0;
-  int left_edge=0;
-  Position x = posnu;
-  double x2;
-  
-  Position x_previous = posnu;
-
-  double x_previous2= x_previous * x_previous;
-  x2=x_previous2;
-  
-  double lon = x.Lon(),lat = x.Lat();
-  double lon_old = lon,lat_old = lat;
-  double local_surface = Surface(lon,lat);
-  double rock_previous2= pow((local_surface - IceThickness(lon,lat) - WaterDepth(lon,lat)),2);
-  double surface_previous2=pow(local_surface,2);
-
-  double rock2=rock_previous2;
-  double surface2=surface_previous2;
-  int foundit=0;  // keeps track of whether you found an ice entrance point
-
-  //  cout << "lon, lat are " << posnu.Lon() << " " << posnu.Lat() << "\n";
-  //cout << "x2 at start is " << x2 << "\n";
-  while (distance<2*local_surface+1000) {
-
-    distance+=stepsize;
-
-    x -= stepsize*nnu;
-    x2=x*x;
-    //cout << "x2 is " << x2 << "\n";
-    lon = x.Lon();
-    lat = x.Lat();
-
-      double ice_thickness=IceThickness(lon,lat);
-    if (lon!=lon_old || lat!=lat_old) {
-      local_surface = Surface(lon,lat);
-
-      //if (lat>COASTLINE) 
-      //left_edge=1;
-
-      rock2=pow((local_surface - IceThickness(lon,lat) - WaterDepth(lon,lat)),2);
-      surface2=pow(local_surface,2);    
-
-      if (ice_model==0) {
-	if ((int)(lat)==COASTLINE && rock_previous2 < x2 && surface2 > x2)
-	  left_edge=1;
-      } //if (Crust 2.0)
-    } //if (neutrino has stepped into new lon/lat bin)
-
-    if ((((x_previous2>rock_previous2 && x2<rock2) // crosses rock boundary from above
-	 || (x_previous2<surface_previous2 && x2>surface2)) && ice_thickness>0 && lat<COASTLINE) // crosses surface boundary from below
-	|| left_edge) {
-      //  cout << "lat, COASTLINE, left_edge is " << lat << " " << COASTLINE<< " " << left_edge << "\n";
-      //cout << "x_previous2, surface_previous, x2, surface2 are " << x_previous2 << " " << surface_previous2 << " " << x2 << " " << surface2 << "\n";
-      r_enterice = x;
-      // this gets you out of the loop.
-      //continue;
-      distance=3*Geoid(lat);
-      foundit=1;
-      //cout << "foundit is " << foundit << "\n";
-      //cout << "r_enterice is ";r_enterice.Print();
-      //continue;
-    } //if
-
-    x_previous = x;
-    x_previous2 = x2;
-    //cout << "x_previous, x_previous2 " << x << " " << x2 << "\n";
-
-    if (lon!=lon_old || lat!=lat_old) {
-      rock_previous2 = rock2;
-      surface_previous2 = surface2;
-      lat_old = lat;
-      lon_old = lon;
-    } //if
-
-  } //while
-
-  return foundit;
-}//WhereDoesItEnterIce
-
-
-
-
-int IceModel::WhereDoesItExitIce(int inu,const Position &posnu,
-				       const Vector &nnu,
-				       double stepsize,
-				       Position &r_enterice) {
-  // now get exit point...
-  //   see my geometry notes.
-  // parameterize the neutrino trajectory and just see where it
-  // crosses the earth radius.
-
-  //  Position r_enterice;
-  double distance=0;
-  int left_edge=0;
-  Position x = posnu;
-  double x2;
-  
-  if (inu==1491) {
-   
-    cout << "posnu is";posnu.Print();
-    cout << "nnu is ";nnu.Print();
-  }
-   
-
-  Position x_previous = posnu;
-
-  double x_previous2= x_previous * x_previous;
-  x2=x_previous2;
-  
-  double lon = x.Lon(),lat = x.Lat();
-  double lon_old = lon,lat_old = lat;
-  double local_surface = Surface(lon,lat);
-  double rock_previous2= pow((local_surface - IceThickness(lon,lat) - WaterDepth(lon,lat)),2);
-  double surface_previous2=pow(local_surface,2);
-
-  double rock2=rock_previous2;
-  double surface2=surface_previous2;
-  int foundit=0;  // keeps track of whether you found an ice entrance point
-
- 
-
-  //  cout << "lon, lat are " << posnu.Lon() << " " << posnu.Lat() << "\n";
-  //cout << "x2 at start is " << x2 << "\n";
-  int nsteps=0;
-  while (distance<2*local_surface+1000) {
-    //cout << "another step.\n";
-    distance+=stepsize;
-    nsteps++;
-    //    cout << "inu, nsteps is " << inu << " " << nsteps << "\n";
-    x -= stepsize*nnu;
-    x2=x*x;
-    //cout << "x2 is " << x2 << "\n";
-    lon = x.Lon();
-    lat = x.Lat();
-
-      double ice_thickness=IceThickness(lon,lat);
-    if (lon!=lon_old || lat!=lat_old) {
-      local_surface = Surface(lon,lat);
-
-      //if (lat>COASTLINE) 
-      //left_edge=1;
-
-      rock2=pow((local_surface - IceThickness(lon,lat) - WaterDepth(lon,lat)),2);
-      surface2=pow(local_surface,2);    
-
-      if (ice_model==0) {
-	if ((int)(lat)==COASTLINE && rock_previous2 < x2 && surface2 > x2)
-	  left_edge=1;
-      } //if (Crust 2.0)
-    } //if (neutrino has stepped into new lon/lat bin)
-
-    if (inu==1491 && nsteps<10)
-      cout << "inu, x_previous2, rock_previous2, x2, rock2 are " << inu << " " << x_previous2 << " " << rock_previous2 << " " << x2 << " " << rock2 << "\n";
-
-    if ((((x_previous2<rock_previous2 && x2>rock2) // crosses rock boundary from above
-	 || (x_previous2>surface_previous2 && x2<surface2)) && ice_thickness>0 && lat<COASTLINE) // crosses surface boundary from above
-	|| left_edge) {
-      //  cout << "lat, COASTLINE, left_edge is " << lat << " " << COASTLINE<< " " << left_edge << "\n";
-      //cout << "x_previous2, surface_previous, x2, surface2 are " << x_previous2 << " " << surface_previous2 << " " << x2 << " " << surface2 << "\n";
-      r_enterice = x;
-      // this gets you out of the loop.
-      //continue;
-      distance=3*Geoid(lat);
-      foundit=1;
-      //cout << "foundit is " << foundit << "\n";
-      //continue;
-    } //if
-
-    x_previous = x;
-    x_previous2 = x2;
-    //cout << "x_previous, x_previous2 " << x << " " << x2 << "\n";
-
-    if (lon!=lon_old || lat!=lat_old) {
-      rock_previous2 = rock2;
-      surface_previous2 = surface2;
-      lat_old = lat;
-      lon_old = lon;
-    } //if
-
-  } //while
-  if (inu==0) {
-    cout << "r_enterice is ";r_enterice.Print();}
-  return foundit;
-}//WhereDoesItExitIce
+//--------------------------------------------------
+// int IceModel::WhereDoesItEnterIce(const Position &posnu,
+// 				       const Vector &nnu,
+// 				       double stepsize,
+// 				       Position &r_enterice) {
+//   // now get exit point...
+//   //   see my geometry notes.
+//   // parameterize the neutrino trajectory and just see where it
+//   // crosses the earth radius.
+// 
+//   //  Position r_enterice;
+//   double distance=0;
+//   int left_edge=0;
+//   Position x = posnu;
+//   double x2;
+//   
+//   Position x_previous = posnu;
+// 
+//   double x_previous2= x_previous * x_previous;
+//   x2=x_previous2;
+//   
+//   double lon = x.Lon(),lat = x.Lat();
+//   double lon_old = lon,lat_old = lat;
+//   double local_surface = Surface(lon,lat);
+//   double rock_previous2= pow((local_surface - IceThickness(lon,lat) - WaterDepth(lon,lat)),2);
+//   double surface_previous2=pow(local_surface,2);
+// 
+//   double rock2=rock_previous2;
+//   double surface2=surface_previous2;
+//   int foundit=0;  // keeps track of whether you found an ice entrance point
+// 
+//   //  cout << "lon, lat are " << posnu.Lon() << " " << posnu.Lat() << "\n";
+//   //cout << "x2 at start is " << x2 << "\n";
+//   while (distance<2*local_surface+1000) {
+// 
+//     distance+=stepsize;
+// 
+//     x -= stepsize*nnu;
+//     x2=x*x;
+//     //cout << "x2 is " << x2 << "\n";
+//     lon = x.Lon();
+//     lat = x.Lat();
+// 
+//       double ice_thickness=IceThickness(lon,lat);
+//     if (lon!=lon_old || lat!=lat_old) {
+//       local_surface = Surface(lon,lat);
+// 
+//       //if (lat>COASTLINE) 
+//       //left_edge=1;
+// 
+//       rock2=pow((local_surface - IceThickness(lon,lat) - WaterDepth(lon,lat)),2);
+//       surface2=pow(local_surface,2);    
+// 
+//       if (ice_model==0) {
+// 	if ((int)(lat)==COASTLINE && rock_previous2 < x2 && surface2 > x2)
+// 	  left_edge=1;
+//       } //if (Crust 2.0)
+//     } //if (neutrino has stepped into new lon/lat bin)
+// 
+//     if ((((x_previous2>rock_previous2 && x2<rock2) // crosses rock boundary from above
+// 	 || (x_previous2<surface_previous2 && x2>surface2)) && ice_thickness>0 && lat<COASTLINE) // crosses surface boundary from below
+// 	|| left_edge) {
+//       //  cout << "lat, COASTLINE, left_edge is " << lat << " " << COASTLINE<< " " << left_edge << "\n";
+//       //cout << "x_previous2, surface_previous, x2, surface2 are " << x_previous2 << " " << surface_previous2 << " " << x2 << " " << surface2 << "\n";
+//       r_enterice = x;
+//       // this gets you out of the loop.
+//       //continue;
+//       distance=3*Geoid(lat);
+//       foundit=1;
+//       //cout << "foundit is " << foundit << "\n";
+//       //cout << "r_enterice is ";r_enterice.Print();
+//       //continue;
+//     } //if
+// 
+//     x_previous = x;
+//     x_previous2 = x2;
+//     //cout << "x_previous, x_previous2 " << x << " " << x2 << "\n";
+// 
+//     if (lon!=lon_old || lat!=lat_old) {
+//       rock_previous2 = rock2;
+//       surface_previous2 = surface2;
+//       lat_old = lat;
+//       lon_old = lon;
+//     } //if
+// 
+//   } //while
+// 
+//   return foundit;
+// }//WhereDoesItEnterIce
+// 
+// 
+// 
+// 
+// int IceModel::WhereDoesItExitIce(int inu,const Position &posnu,
+// 				       const Vector &nnu,
+// 				       double stepsize,
+// 				       Position &r_enterice) {
+//   // now get exit point...
+//   //   see my geometry notes.
+//   // parameterize the neutrino trajectory and just see where it
+//   // crosses the earth radius.
+// 
+//   //  Position r_enterice;
+//   double distance=0;
+//   int left_edge=0;
+//   Position x = posnu;
+//   double x2;
+//   
+//   if (inu==1491) {
+//    
+//     cout << "posnu is";posnu.Print();
+//     cout << "nnu is ";nnu.Print();
+//   }
+//    
+// 
+//   Position x_previous = posnu;
+// 
+//   double x_previous2= x_previous * x_previous;
+//   x2=x_previous2;
+//   
+//   double lon = x.Lon(),lat = x.Lat();
+//   double lon_old = lon,lat_old = lat;
+//   double local_surface = Surface(lon,lat);
+//   double rock_previous2= pow((local_surface - IceThickness(lon,lat) - WaterDepth(lon,lat)),2);
+//   double surface_previous2=pow(local_surface,2);
+// 
+//   double rock2=rock_previous2;
+//   double surface2=surface_previous2;
+//   int foundit=0;  // keeps track of whether you found an ice entrance point
+// 
+//  
+// 
+//   //  cout << "lon, lat are " << posnu.Lon() << " " << posnu.Lat() << "\n";
+//   //cout << "x2 at start is " << x2 << "\n";
+//   int nsteps=0;
+//   while (distance<2*local_surface+1000) {
+//     //cout << "another step.\n";
+//     distance+=stepsize;
+//     nsteps++;
+//     //    cout << "inu, nsteps is " << inu << " " << nsteps << "\n";
+//     x -= stepsize*nnu;
+//     x2=x*x;
+//     //cout << "x2 is " << x2 << "\n";
+//     lon = x.Lon();
+//     lat = x.Lat();
+// 
+//       double ice_thickness=IceThickness(lon,lat);
+//     if (lon!=lon_old || lat!=lat_old) {
+//       local_surface = Surface(lon,lat);
+// 
+//       //if (lat>COASTLINE) 
+//       //left_edge=1;
+// 
+//       rock2=pow((local_surface - IceThickness(lon,lat) - WaterDepth(lon,lat)),2);
+//       surface2=pow(local_surface,2);    
+// 
+//       if (ice_model==0) {
+// 	if ((int)(lat)==COASTLINE && rock_previous2 < x2 && surface2 > x2)
+// 	  left_edge=1;
+//       } //if (Crust 2.0)
+//     } //if (neutrino has stepped into new lon/lat bin)
+// 
+//     if (inu==1491 && nsteps<10)
+//       cout << "inu, x_previous2, rock_previous2, x2, rock2 are " << inu << " " << x_previous2 << " " << rock_previous2 << " " << x2 << " " << rock2 << "\n";
+// 
+//     if ((((x_previous2<rock_previous2 && x2>rock2) // crosses rock boundary from above
+// 	 || (x_previous2>surface_previous2 && x2<surface2)) && ice_thickness>0 && lat<COASTLINE) // crosses surface boundary from above
+// 	|| left_edge) {
+//       //  cout << "lat, COASTLINE, left_edge is " << lat << " " << COASTLINE<< " " << left_edge << "\n";
+//       //cout << "x_previous2, surface_previous, x2, surface2 are " << x_previous2 << " " << surface_previous2 << " " << x2 << " " << surface2 << "\n";
+//       r_enterice = x;
+//       // this gets you out of the loop.
+//       //continue;
+//       distance=3*Geoid(lat);
+//       foundit=1;
+//       //cout << "foundit is " << foundit << "\n";
+//       //continue;
+//     } //if
+// 
+//     x_previous = x;
+//     x_previous2 = x2;
+//     //cout << "x_previous, x_previous2 " << x << " " << x2 << "\n";
+// 
+//     if (lon!=lon_old || lat!=lat_old) {
+//       rock_previous2 = rock2;
+//       surface_previous2 = surface2;
+//       lat_old = lat;
+//       lon_old = lon;
+//     } //if
+// 
+//   } //while
+//   if (inu==0) {
+//     cout << "r_enterice is ";r_enterice.Print();}
+//   return foundit;
+// }//WhereDoesItExitIce
+//-------------------------------------------------- 
 
 
 

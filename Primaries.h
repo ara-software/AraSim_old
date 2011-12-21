@@ -17,17 +17,20 @@
 #include "TF3.h"
 #include "TH2D.h"
 #include "Vector.h"
+#include <vector>
 #include "Position.h"
 
 //--------------------------------------------------
 // class Interaction;
 // class Primaries;
 //-------------------------------------------------- 
-//--------------------------------------------------
-// class IceModel;
-//-------------------------------------------------- 
+class IceModel;
 class Counting;
 class Settings;
+class Detector;
+class Ray;
+class Primaries;
+class Spectra;
 
 //using namespace std;
 using std::string;
@@ -158,6 +161,12 @@ class Interaction  {
  Vector banana_obs; //Vector from the neutrino interaction to the observation point
  Interaction(); // default constructor
  Interaction(string inttype,Primaries *primary1,Settings *settings1,int whichray,Counting *count1);
+
+ Interaction (IceModel *antarctica, Detector *detector, Settings *settings1, int whichray, Counting *count1, Primaries *primary1, Spectra *spectra); // constructor for setting posnu, nnu, etc
+//--------------------------------------------------
+//  Interaction (int mode, Ray *ray, Interaction *interaction1, IceModel *antarctica, Detector *detector); // constructor for setting posnu, nnu, etc
+//-------------------------------------------------- 
+
  void PickAnyDirection();
 
   int noway;
@@ -167,9 +176,30 @@ class Interaction  {
   int toohigh;
   int toolow;
 
-  // Eugene added IceModel::PickUnbiased result
-  int pickunbiased;
+  // Eugene added PickUnbiased result
+//--------------------------------------------------
+//   int pickunbiased;
+//-------------------------------------------------- 
+        
+  int pickposnu;    // : 0 for fail picking posnu, nnu  : 1 sucess picking posnu, nnu
+  
+  // Eugene added for test ray solver result store
   //
+  int ray_solver_toggle;    // : 0 no solution, : 1 solution exists
+  std::vector < std::vector <double> > ray_outputs; // array of results. path length, view angle, receipt angle
+
+  //
+  //
+  // calculating posnu part moved from IceModel
+  int PickUnbiased (IceModel *antarctica);
+  int WhereDoesItLeave( const Position &posnu, const Vector &ntemp, IceModel *antarctica, Position &r_out);
+  int WhereDoesItEnterIce ( const Position &posnu, const Vector &nnu, double stepsize, Position &r_enterice, IceModel *antarctica);
+  int WhereDoesItExitIce ( const Position &posnu, const Vector &nnu, double stepsize, Position &r_enterice, IceModel *antarctica);
+  void FlattoEarth ( IceModel *antarctica, double X, double Y, double D);
+  void PickNear(IceModel *antarctica, Detector *detector, Settings *settings1);
+  // end move from IceModel
+  //
+
 
   double pathlength_inice;
 
@@ -198,6 +228,7 @@ double banana_weight;//Weight measurement locations to account for phase space
 static const double banana_signal_fluct;//Turn off noise for banana plots (settings1->SIGNAL_FLUCT) (shouldn't matter)
  static const double banana_sigma;//NSIGMA in the case of a banana plot
  
+ double pnu;    // energy of neutrino
 
   void  setNuFlavor(Primaries *primary1,Settings *settings1,int whichray,Counting *count1);
  void setCurrent(Primaries *primary1);

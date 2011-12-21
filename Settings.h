@@ -32,6 +32,14 @@ class Settings
 
         int DETECTOR;   // choose detector layout
 
+        int INTERACTION_MODE;   // method to choose interaction point posnu. 0 : PickUnbiased, 1 : PickNear
+
+        double POSNU_RADIUS;    //PickNear radius in meter
+
+        int WHICHPARAMETERIZATION;  //
+
+        int SIMULATION_MODE;    // 0 : old freq domain mode, 1: new time domain mode
+
 
  // below : values from icemc
 

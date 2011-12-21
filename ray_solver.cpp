@@ -2,7 +2,6 @@
 #include <fstream>
 #include <iomanip>
 #include <boost/lexical_cast.hpp>
-//#include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
 #include "RayTrace.h"
 #include "RayTrace_IceModels.h"
@@ -58,7 +57,7 @@ int main(int argc, char* argv[]){
 		("show_paths,p","show paths; print out x and z coordinates of points visited along each path. Suppresses ordinary output")
 		("n_s",boost::program_options::value<double>(&ns)->default_value(1.35),"surface index of refraction")
 		("n_d",boost::program_options::value<double>(&nd)->default_value(1.78),"deep index of refraction")
-		("n_c",boost::program_options::value<double>(&nc)->default_value(-.0132),"index of refraction transition coefficient")
+		("n_c",boost::program_options::value<double>(&nc)->default_value(.0132),"index of refraction transition coefficient")
 		("reflect_surface",boost::program_options::value<bool>(&surface_reflect)->default_value(true),"whether to search for surface\nreflected solutions")
 		("reflect_bedrock",boost::program_options::value<bool>(&bedrock_reflect)->default_value(false),"whether to search for bedrock\nreflected solutions")
 		("accuracy",boost::program_options::value<double>(&requiredAccuracy)->default_value(0.1),"the maximum acceptable vertical miss distance in meters")
@@ -176,8 +175,8 @@ int main(int argc, char* argv[]){
 			std::cout << std::left << std::fixed 
 			<< std::setprecision(2) << std::setw(15) << it->pathLen << ' '
 			<< std::setprecision(2) << std::setw(14) << 1e9*it->pathTime << ' '
-			<< std::setprecision(3) << std::setw(12) << it->launchAngle << ' '
-			<< std::setprecision(3) << std::setw(12) << it->receiptAngle << ' '
+			<< std::setprecision(4) << std::setw(12) << it->launchAngle << ' '
+			<< std::setprecision(4) << std::setw(12) << it->receiptAngle << ' '
 			<< std::setprecision(3) << std::setw(13) << it->reflectionAngle << ' '
 			<< std::setprecision(2) << std::setw(10) << it->miss << ' ' 
 			<< std::scientific << std::setprecision(4) << std::setw(11) << it->attenuation << ' '
@@ -193,6 +192,5 @@ int main(int argc, char* argv[]){
 			std::cout << "\n\n";
 		}
 	}
-	
 	return(0);
 }

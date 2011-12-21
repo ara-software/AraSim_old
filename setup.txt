@@ -19,6 +19,14 @@
 
 //DETECTOR=2;   // Detector mode; 0 : testbed, 1 : ARA 1~7 stations, 2 : ARA hexagon layout
 
+//INTERACTION_MODE=1;   // method to choose interaction point posnu. mode 0 : PickUnbiased (randomly in Antarctic ice), mode 1 : PickNear (randomly near by detectors)
+
+//POSNU_RADIUS=2000;     // when above INTERACTION_MODE = 1, the radius of randomly selected position of interaction in meter.
+
+//WHICHPARAMETERIZATION=0;  //
+
+//SIMULATION_MODE=0;    // 0 for freq domain simulation (old method) 1 for time domain (new method). time domain currently not available
+
 //
 // Above are default values!
 //
@@ -31,5 +39,5 @@
 
 EXPONENT=30
 
-NNU=1000
-DETECTOR=2
+NNU=10
+DETECTOR=1

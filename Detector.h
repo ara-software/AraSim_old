@@ -42,6 +42,9 @@ class Parameters {
 
     int number_of_strings;
     int number_of_antennas;
+
+    double core_x;
+    double core_y;
         
 //    static const int freq_step = 60;
 //    static const int ang_step = 2664;
@@ -141,7 +144,7 @@ class Detector {
         static const int ang_step_max = 2664;
         void ReadVgain(string filename);
         void ReadHgain(string filename);
-//        double Vgain[freq_step_max][ang_step_max];
+        double Vgain[freq_step_max][ang_step_max];
         double Hgain[freq_step_max][ang_step_max];
         double Freq[freq_step_max];
 
@@ -151,9 +154,9 @@ class Detector {
         int ang_step;
         double freq_width;
         double freq_init;
+        int Detector_mode;
 
     public:
-        double Vgain[freq_step_max][ang_step_max];
         Parameters params;
         Detector ();    //default constructor
         Detector (int mode, IceModel *icesurface);
@@ -163,6 +166,12 @@ class Detector {
         double GetGain(double freq, double theta, double phi, int ant_m);   //read antenna gain at certain angle, certain type. (orientation : default)
         
         double Getfreq_init() {return freq_init;}
+
+        int Get_mode() {return Detector_mode;}
+
+        int GetFreqBin() {return freq_step;}
+        double GetFreq(int bin) {return Freq[bin];}
+
 
         ~Detector();    //destructor
 

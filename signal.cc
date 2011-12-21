@@ -6,6 +6,7 @@
 #include "Vector.h"
 //#include "position.hh"
 #include "Position.h"
+#include "Settings.h"
 
 
 
@@ -60,6 +61,18 @@ Signal::Signal() : N_DEPTH(1.79) {
 
   Initialize();
 }
+
+
+
+Signal::Signal(Settings *settings1) : N_DEPTH(1.79) {
+
+  Initialize();
+  SetParameterization(settings1->WHICHPARAMETERIZATION);
+
+}
+
+
+
  void Signal::InitializeMedium() {
   if (MEDIUM==1) {
     SetKelvins(KELVINS_SALT);
@@ -152,6 +165,9 @@ Signal::Signal() : N_DEPTH(1.79) {
     vmmhz1m_reference*=1./(1.+pow(freq_reference/nu_r,ALPHAMEDIUM));
 
   }
+  else {
+      cout<<"whichparameterization : "<<WHICHPARAMETERIZATION<<"\n";
+  }
 
   
 
@@ -237,9 +253,12 @@ void Signal::GetSpread(double pnu,
 //   cout << RHOSALT << " " << RHOICE << " " << RM_ICE << " " << RM_SALT << " " << KR_SALT << " " << KR_ICE << " " << X0SALT << " " << ECSALT << " " << X0ICE << " " << ECICE << " " << AEX_ICE << "\n";  
 //   cout << ALPHAICE << " " << AEX_SALT << " " << ALPHASALT << " " << KE_SALT << " " << KL_SALT << " " << KDELTA_SALT << " " << KE_ICE << " " << KL_ICE << " " << KDELTA_ICE << " " << KELVINS_SALT << " " << BETAICE << " " << BETASALT << "\n";
 
-  double elpm=GetLPM();
+//--------------------------------------------------
+//   double elpm=GetLPM();
+//-------------------------------------------------- 
+  double elpm=GetELPM();
 
-  //  cout << "elpm is " << elpm << "\n";
+    cout << "elpm is " << elpm << "\n";
 
 
   //  cout << "elpm is " << elpm << "\n";
@@ -286,6 +305,7 @@ void Signal::GetSpread(double pnu,
       // note that 12.32/sqrt(pow(n_depth,2)-1)*RADDEG/showerlength=2.7 degrees.
       // remember that Jaime has a factor of ln2 in the exponential here which we'll have to correct for further down
       deltheta_em_max=12.32/sqrt(pow(N_DEPTH,2)-1)*(nu0/freq)*RADDEG/showerlength;
+      cout<<"1) daltheta_em_max : "<<deltheta_em_max<<endl;
 
       if (hadfrac>0.00001) { // if there is a hadronic component
 	
@@ -319,6 +339,7 @@ void Signal::GetSpread(double pnu,
 	deltheta_had_max=1.E-10;
 
       deltheta_em_max/=sqrt(log(2.)); // in astro-ph/9706064, Jaime uses exp(-0.5 (theta-theta_c)^2/delta_had^2)
+      cout<<"2) daltheta_em_max : "<<deltheta_em_max<<endl;
 
     }
     else if (WHICHPARAMETERIZATION==1) {

@@ -35,6 +35,9 @@ const double EarthModel::GEOID_MIN(6.356752E6); // from Geodetic Reference Syste
 // test ClassDef works with static const double
 const double EarthModel::R_EARTH(6.378140E6);
 
+double EarthModel::GetCOASTLINE() {
+    return COASTLINE;
+}
 
 EarthModel::EarthModel(int model,int WEIGHTABSORPTION_SETTING) {
 
@@ -143,6 +146,14 @@ EarthModel::~EarthModel() {} //EarthModel destructor - no dynamic variables, not
 
   return phi;
 }
+
+ double EarthModel::GetGeoid(double latitude) {
+
+  return (GEOID_MIN*GEOID_MAX/
+	  sqrt(GEOID_MIN*GEOID_MIN-(GEOID_MIN*GEOID_MIN-GEOID_MAX*GEOID_MAX)*
+	       cos(latitude*RADDEG)*cos(latitude*RADDEG)));
+ }
+
 
  double EarthModel::Geoid(double latitude) const {
   // latitude here is 0 at the south pole and 180 at the north pole

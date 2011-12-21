@@ -151,6 +151,9 @@ public:
   static double LongtoPhi_0is180thMeridian(double longitude); // convert longitude to phi with 0 longitude being at the 180th meridian
   void EarthCurvature(double *array,double depth_temp); // adjusts coordinates within the mine to account for the curvature of the earth.
 
+  static double GetGeoid(double latitude);
+  static double GetCOASTLINE();
+
   ClassDef(EarthModel,1);
 
 

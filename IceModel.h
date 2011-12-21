@@ -149,20 +149,24 @@ public:
 		     
 		     int& e_coord, 
 		     int& n_coord) const;
+  int Getice_model();
 
   //  void FillArraysforTree(double lon_ground[1068][869],double lat_ground[1068][869],double lon_ice[1200][1000],double lat_ice[1200][1000],double lon_water[1200][1000],double lat_water[1200][1000]);
 
   // below three members are copied from icemc icemodel.
-  int PickUnbiased(int inu, Interaction *interaction1, IceModel *antarctica);
-  int WhereDoesItEnterIce(const Position &posnu,
-			       const Vector &nnu,
-			       double stepsize,
-			       Position &r_enterice);
-
-  int WhereDoesItExitIce(int inu,const Position &posnu,
-			 const Vector &nnu,
-			 double stepsize,
-			 Position &r_enterice);
+//--------------------------------------------------
+//   int PickUnbiased(int inu, Interaction *interaction1, IceModel *antarctica);
+//   int PickNear(int inu, Interaction *interaction1, IceModel *antarctica);
+//   int WhereDoesItEnterIce(const Position &posnu,
+// 			       const Vector &nnu,
+// 			       double stepsize,
+// 			       Position &r_enterice);
+// 
+//   int WhereDoesItExitIce(int inu,const Position &posnu,
+// 			 const Vector &nnu,
+// 			 double stepsize,
+// 			 Position &r_enterice);
+//-------------------------------------------------- 
   // end three copied members from icemc icemodel.
 
 

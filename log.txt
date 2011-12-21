@@ -122,4 +122,29 @@ Also added README_ray_solver for simple instruction.
 
 ===============================================================================
 
+12/21/11 E. Hong;
+
+Main changes : added fortran codes for time domain Askaryan radiation simulation (this is not complete as we still need more codes from Jaime)
+
+    use signal, secondaries files from icemc for frequency domain ray simulation.
+
+Without any changes of setup.txt and ARA_N_info.txt files, AraSim will run frequency domain simulation with 60 frequency bin (same with antenna frequency domain), only one ARA station, only 10 neutrino events.
+
+Currently AraSim will printout detailed informations about ray signal (V/m/MHz @1m for every freq bin, all antennas) so, you better make them written in log file such as
+
+./araSim > log_file
+
+AraSim doesn't save V/m/MHz information in output root file yet.
+However, it only needs to add parts to apply 1/r, ice attenuation factor and other antenna responses.
+
+
+setup.txt -> SIMULATION_MODE    0 for freq domain, 1 for time domain simulation
+
+setup.txt -> INTERACTION_MODE   0 : use PickUnbiased (randomly choose position of interaction inside all Antarctic ice)
+                                1 : use PickNear (randomly choose position of interaction near by stations)
+
+setup.txt -> POSNU_RADIUS       2000 : for PickNear, boundary radius for position of interaction defualt 2000m
+
+===============================================================================
+
 

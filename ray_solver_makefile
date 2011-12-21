@@ -1,7 +1,9 @@
 
 include Makefile.arch
 
-LIBDIR = /net/user/cweaver/tools/$(OS_ARCH)
+#--------------------------------------------------
+# LIBDIR = /net/user/cweaver/tools/$(OS_ARCH)
+#-------------------------------------------------- 
 
 #--------------------------------------------------
 #    below two lines commented: CXX and CXXFLAGS will set from Makefile.arch

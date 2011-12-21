@@ -48,6 +48,14 @@ outputdir="outputs"; // directory where outputs go
   EXPONENT=19.; // 10^19 eV neutrinos only
 
   DETECTOR=1;   //ARA layout with small number of stations
+
+  INTERACTION_MODE=1;   //PickNear mode
+
+  POSNU_RADIUS=2000;    //radius for PickNear method
+
+  WHICHPARAMETERIZATION=0;  //
+
+  SIMULATION_MODE=0;    // default freq domain simulation
     
 
 }
@@ -91,6 +99,18 @@ void Settings::ReadFile(string setupfile) {
               }
               else if (label == "DETECTOR") {
                   DETECTOR = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "INTERACTION_MODE") {
+                  INTERACTION_MODE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "POSNU_RADIUS") {
+                  POSNU_RADIUS = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "WHICHPARAMETERIZATION") {
+                  WHICHPARAMETERIZATION = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "SIMULATION_MODE") {
+                  SIMULATION_MODE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
               }
           }
       }

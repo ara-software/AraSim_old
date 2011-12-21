@@ -31,6 +31,7 @@ Detector::Detector(int mode, IceModel *icesurface) {
     // mode 1 = ARA_1
     // mode 2 = ARA_2
     // mode 3 = ARA_37
+    Detector_mode = mode;
 
     int string_id = -1;
 //    int string_id = 0;
@@ -142,7 +143,7 @@ Detector::Detector(int mode, IceModel *icesurface) {
         // testbed version of FlattoEarth_ARA 
         // strings and antennas on the strings use geoid surface!
         double Dist = 0.;   //for sqrt(x^2 + y^2)
-        double R1 = icesurface->Geoid(0.); // from core of earth to surface at theta, phi = 0.
+        double R1 = icesurface->Surface(0.,0.); // from core of earth to surface at theta, phi = 0.
         double theta_tmp;
         double phi_tmp;
                     
@@ -150,7 +151,7 @@ Detector::Detector(int mode, IceModel *icesurface) {
         for (int i=0; i<params.number_of_strings; i++) {
 
             Dist = sqrt( pow(strings[i].GetX(),2) + pow(strings[i].GetY(),2) );
-            theta_tmp = Dist/R1;
+            theta_tmp = Dist/R1;    // assume R1 is constant (which is not)
             phi_tmp = atan2(strings[i].GetY(),strings[i].GetX());
 
             if (phi_tmp<0.) phi_tmp += 2.*PI;
@@ -158,7 +159,7 @@ Detector::Detector(int mode, IceModel *icesurface) {
             // set theta, phi for strings.
             strings[i].SetThetaPhi(theta_tmp, phi_tmp);
             //set R for strings.
-            strings[i].SetR( icesurface->Geoid( strings[i].Lat()) );
+            strings[i].SetR( icesurface->Surface( strings[i].Lon(), strings[i].Lat()) );
 
             cout<<"R, Theta, Phi : "<<strings[i].R()<<" "<<strings[i].Theta()<<" "<<strings[i].Phi()<<endl;
 
@@ -192,9 +193,11 @@ Detector::Detector(int mode, IceModel *icesurface) {
         params.number_of_antennas_string = 4; // 4 antennas on each strings
         params.number_of_surfaces_station = 4;
 
-        double core_x = 0.;  // all units are in meter
-        double core_y = 0.;
-        double R_string = 10.;
+        //double core_x = 0.; 
+        //double core_y = 0.;
+        params.core_x = 0.; 
+        params.core_y = 0.;
+        double R_string = 10.;  // all units are in meter
         double R_surface = 60.;
         double z_max = 200.;
         double z_btw = 20.;
@@ -218,11 +221,11 @@ Detector::Detector(int mode, IceModel *icesurface) {
                     label = line.substr(0, line.find_first_of("=") );
 
                     if (label == "core_x") {
-                        core_x = atof( line.substr( line.find_first_of("=") + 1).c_str() );
+                        params.core_x = atof( line.substr( line.find_first_of("=") + 1).c_str() );
                         cout<<"read core_x"<<endl;
                     }
                     else if (label == "core_y") {
-                        core_y = atof( line.substr( line.find_first_of("=") + 1).c_str() );
+                        params.core_y = atof( line.substr( line.find_first_of("=") + 1).c_str() );
                         cout<<"read core_y"<<endl;
                     }
                     else if (label == "R_string") {
@@ -308,15 +311,15 @@ Detector::Detector(int mode, IceModel *icesurface) {
             if (station_count < (int)params.number_of_stations - 1) {
                     //stations[station_count].x = core_x + (double)params.station_spacing * cos( (PI/3.) * (double)station_count );
                     //stations[station_count].y = core_y + (double)params.station_spacing * sin( (PI/3.) * (double)station_count );
-                    stations[station_count].SetX( core_x + (double)params.station_spacing * cos( (PI/3.) * (double)station_count ) );
-                    stations[station_count].SetY( core_y + (double)params.station_spacing * sin( (PI/3.) * (double)station_count ) );
+                    stations[station_count].SetX( params.core_x + (double)params.station_spacing * cos( (PI/3.) * (double)station_count ) );
+                    stations[station_count].SetY( params.core_y + (double)params.station_spacing * sin( (PI/3.) * (double)station_count ) );
                     station_count++;
             }
             else if (station_count < (int)params.number_of_stations) {
                     //stations[station_count].x = core_x;
                     //stations[station_count].y = core_y;
-                    stations[station_count].SetX( core_x );
-                    stations[station_count].SetY( core_y );
+                    stations[station_count].SetX( params.core_x );
+                    stations[station_count].SetY( params.core_y );
                     station_count++;
             }
             else {
@@ -445,8 +448,10 @@ Detector::Detector(int mode, IceModel *icesurface) {
         params.number_of_antennas_string = 4; // 4 antennas on each strings
         params.number_of_surfaces_station = 4;
 
-        double core_x = 0.;  // all units are in meter
-        double core_y = 0.;
+        //double core_x = 0.;  // all units are in meter
+        //double core_y = 0.;
+        params.core_x = 0.;  // all units are in meter
+        params.core_y = 0.;
         double R_string = 10.;
         double R_surface = 60.;
         double z_max = 200.;
@@ -471,11 +476,11 @@ Detector::Detector(int mode, IceModel *icesurface) {
                     label = line.substr(0, line.find_first_of("=") );
 
                     if (label == "core_x") {
-                        core_x = atof( line.substr( line.find_first_of("=") + 1).c_str() );
+                        params.core_x = atof( line.substr( line.find_first_of("=") + 1).c_str() );
                         cout<<"read core_x"<<endl;
                     }
                     else if (label == "core_y") {
-                        core_y = atof( line.substr( line.find_first_of("=") + 1).c_str() );
+                        params.core_y = atof( line.substr( line.find_first_of("=") + 1).c_str() );
                         cout<<"read core_y"<<endl;
                     }
                     else if (label == "R_string") {
@@ -566,13 +571,13 @@ Detector::Detector(int mode, IceModel *icesurface) {
         int station_count = 0;
 
         for (int irow = 0; irow < ((int)params.stations_per_side * 2)-1; irow++) {
-            double current_y = y_offset * ( (double)params.stations_per_side - 1 - irow) + core_y;
+            double current_y = y_offset * ( (double)params.stations_per_side - 1 - irow) + params.core_y;
             int stations_this_row = (2 * (int)params.stations_per_side - 1) - abs((int)params.stations_per_side - 1 - irow);
 
             for (int istation = 0; istation < stations_this_row; istation++) {
                 if (station_count < (int)params.number_of_stations) {
                     stations[station_count].SetY( current_y );
-                    stations[station_count].SetX( (double)params.station_spacing * ((double)istation - ((double)stations_this_row - 1.) / 2.) + core_x );
+                    stations[station_count].SetX( (double)params.station_spacing * ((double)istation - ((double)stations_this_row - 1.) / 2.) + params.core_x );
                     station_count++;
                 }
                 else {
@@ -710,14 +715,14 @@ inline void Detector::ReadVgain(string filename) {
                 getline (NecOut, line);
                 if ( line.substr(0, line.find_first_of(":")) == "freq ") {
                     Freq[i] = atof( line.substr(6, line.find_first_of("M")).c_str() );
-                    cout<<"freq["<<i<<"] = "<<Freq[i]<<" MHz"<<endl;
+//                    cout<<"freq["<<i<<"] = "<<Freq[i]<<" MHz"<<endl;
                     getline (NecOut, line); //read SWR
                     getline (NecOut, line); //read names
 
                     for (int j=0; j<ang_step; j++) {
                         getline (NecOut, line); //read data line
                         Vgain[i][j] = atof( line.substr( 18 ).c_str() );  // read gain (not dB)
-                        cout<<"Gain : "<<Vgain[i][j]<<endl;
+//                        cout<<"Gain : "<<Vgain[i][j]<<endl;
 
                     }// end ang_step
 
@@ -745,14 +750,14 @@ inline void Detector::ReadHgain(string filename) {
                 getline (NecOut, line);
                 if ( line.substr(0, line.find_first_of(":")) == "freq ") {
                     Freq[i] = atof( line.substr(6, line.find_first_of("M")).c_str() );
-                    cout<<"freq["<<i<<"] = "<<Freq[i]<<" MHz"<<endl;
+//                    cout<<"freq["<<i<<"] = "<<Freq[i]<<" MHz"<<endl;
                     getline (NecOut, line); //read SWR
                     getline (NecOut, line); //read names
 
                     for (int j=0; j<ang_step; j++) {
                         getline (NecOut, line); //read data line
                         Hgain[i][j] = atof( line.substr( 20 ).c_str() );  // read gain (not dB)
-                        cout<<"Gain : "<<Hgain[i][j]<<endl;
+//                        cout<<"Gain : "<<Hgain[i][j]<<endl;
 
                     }// end ang_step
 
@@ -1040,7 +1045,10 @@ double Surface_antenna::GetG(Detector *D, double freq, double theta, double phi)
 inline void Detector::FlattoEarth_ARA(IceModel *icesurface) {
     
     double Dist = 0.;   //for sqrt(x^2 + y^2)
-    double R1 = icesurface->Geoid(0.); // from core of earth to surface at theta, phi = 0.
+    double R1 = icesurface->Surface(0.,0.); // from core of earth to surface at theta, phi = 0.
+//--------------------------------------------------
+//     double R1 = icesurface->Geoid(0.); // from core of earth to surface at theta, phi = 0.
+//-------------------------------------------------- 
     double theta_tmp;
     double phi_tmp;
 
@@ -1057,7 +1065,7 @@ inline void Detector::FlattoEarth_ARA(IceModel *icesurface) {
             // set theta, phi for stations.
             stations[i].SetThetaPhi(theta_tmp, phi_tmp);
             //set R for stations.
-            stations[i].SetR( icesurface->Geoid( stations[i].Lat()) );
+            stations[i].SetR( icesurface->Surface( stations[i].Lon(), stations[i].Lat()) );
 
 
             // strings
@@ -1070,7 +1078,7 @@ inline void Detector::FlattoEarth_ARA(IceModel *icesurface) {
 
                 stations[i].strings[j].SetThetaPhi(theta_tmp, phi_tmp);
                 // string Vector points the position where string meets the ice surface!
-                stations[i].strings[j].SetR( icesurface->Geoid( stations[i].strings[j].Lat()) );
+                stations[i].strings[j].SetR( icesurface->Surface( stations[i].strings[j].Lon(), stations[i].strings[j].Lat()) );
                 
                 
 
