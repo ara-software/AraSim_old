@@ -147,4 +147,60 @@ setup.txt -> POSNU_RADIUS       2000 : for PickNear, boundary radius for positio
 
 ===============================================================================
 
+12/22/11 E. Hong;
+
+Forgot to mention that from this version, you need g77 to compile fortran codes.
+In Ubuntu, I did
+
+Edit your /etc/apt/sources.list to add:
+deb http://cz.archive.ubuntu.com/ubuntu hardy-updates main universe
+
+Then use:
+sudo apt-get update
+sudo apt-get install g77
+
+===============================================================================
+
+
+01/23/12 E. Hong;
+
+Temperary removed Fortran part. (confliction between different os systems and can't solve the problem yet)
+Added Report class which designed to contain all valuable information about interaction and signal for each antennas.
+
+Report has similar structure as Detector ( report->stations[i].strings[j].antennas[k] )
+Each antenna has number of raysolver solutions (ray_sol_cnt),
+     information about whether the antenna triggered for each raysolver solutions (trg[i])
+    view angle for each raysolver solutions ( view_ang[i] )
+    antenna receive angle for each raysolver solutions (rec_ang[i])
+    travel distance between the source and the antenna for each raysolver solutions ( Dist[i] )
+    signal V/m/MHz for each frequency bin (same freq bin with Detector antenna) for each raysolver solutions ( vmmhz[i][j] )
+
+vmmhz in Report has 1/R and ice attenuation factor in it. (maybe need revision later)
+ice attenuation factor is calculated by IceMocel -> EffectiveAttenuationLength (attenuation length depend on depth of ice)
+
+
+Also removed all TGraph, TSpline classes in Spectra class which caused readTree segmentation violation.
+Spectra class should be fixed later for better neutrino flux interpolation.
+
+Makefile modified.
+Removed Fortran code part, simplified by Paul Schellin
+
+There are also some minor changes in IceModel, AraSim.cc, Detector.
+
+Like previous version, running araSim will print out (cout) lots of information to trace bugs.
+I highly recommend to run araSim with saving the outputs in log file such as
+
+./araSim > log
+
+After compiling AraSim and run correctly, it will create output root file at /outputs/AraOut.root
+You can compile readTree.cc file and run it to make plots from AraOut.root file
+
+make -f M.readTree
+
+./readTree
+
+For example, ARA-37_station_layout.pdf will show you the layout of ARA detector (as you set by setup.txt),
+    GEdN.pdf will show you the EdNdEdAdt neutrino flux (as you set by setup.txt)
+
+===============================================================================
 

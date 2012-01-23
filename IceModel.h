@@ -9,6 +9,7 @@
 //#include "Primaries.h"
 
 class Interaction;
+class Settings;
 
 //Constants relating to all ice models
 const double FIRNDEPTH=-150.;                // depth of the firn, in meters: currently a constant over all ice
@@ -143,6 +144,7 @@ public:
   double GetN(double depth) const;
   double GetN(const Position &pos) const;
   double EffectiveAttenuationLength(const Position &pos, const int &whichray) const;
+  double EffectiveAttenuationLength(Settings *settings1, const Position &pos, const int &whichray) const;
   
   void IceLonLattoEN(double lon, 
 		     double lat,

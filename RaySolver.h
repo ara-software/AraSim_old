@@ -14,20 +14,21 @@
 
 class Position;
 class IceModel;
-class Interaction;
 
-struct underline{
-	static char esc;
-	const std::string& str;
-	underline(const std::string& s):str(s){}
-	friend std::ostream& operator<<(std::ostream& os, const underline& u);
-};
-
-char underline::esc=0x1B;
-
-std::ostream& operator<<(std::ostream& os, const underline& u){
-	return(os << underline::esc << "[4m" << u.str << underline::esc << "[0m");
-}
+//--------------------------------------------------
+// struct underline{
+// 	static char esc;
+// 	const std::string& str;
+// 	underline(const std::string& s):str(s){}
+// 	friend std::ostream& operator<<(std::ostream& os, const underline& u);
+// };
+// 
+// char underline::esc=0x1B;
+// 
+// std::ostream& operator<<(std::ostream& os, const underline& u){
+// 	return(os << underline::esc << "[4m" << u.str << underline::esc << "[0m");
+// }
+//-------------------------------------------------- 
 
 template<typename positionType>
 
@@ -50,8 +51,8 @@ class RaySolver {
 //        RaySolver(int argc, char* argv[]);
 
         void test1();
+        void Solve_Ray_org(Position &source, Position &target, std::vector < std::vector <double> > &outputs);
         void Solve_Ray(Position &source, Position &target, IceModel *antarctica, std::vector < std::vector <double> > &outputs);
-        void Solve_Ray(Interaction *Evt, Position &target, IceModel *antarctica, std::vector < std::vector <double> > &outputs);
 
         int source_over_surface;
         int solution_toggle;    // no solution : 0  solution exist : 1

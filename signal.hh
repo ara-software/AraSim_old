@@ -111,6 +111,7 @@ public:
   double GetVmMHz1m(double pnu,double freq); // constructor
   void GetVmMHz(double vmmhz_max,double vmmhz1m_max,double pnu,double *freq,double notch_min,double notch_max,double *vmmhz,int nfreq);
   void Initialize();
+  void Initialize(Settings *settings1);
   
   void SetParameterization(int whichparameterization);
   double vmmhz1m_max; // V/m/MHz at 1m

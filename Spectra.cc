@@ -327,11 +327,13 @@ Spectra::Spectra(int EXPONENT) {
 //      E2dNdEdAdt[i]=log10(EdNdEdAdt[i])+energy[i]-9.;
   }
 
-  gEdNdEdAdt = new TGraph(E_bin, energy, EdNdEdAdt);
-  gE2dNdEdAdt = new TGraph(E_bin, energy, E2dNdEdAdt);
-
-  sEdNdEdAdt = new TSpline3("sEdNdEdAdt", gEdNdEdAdt);
-  sE2dNdEdAdt = new TSpline3("sE2dNdEdAdt", gE2dNdEdAdt);
+//--------------------------------------------------
+//   gEdNdEdAdt = new TGraph(E_bin, energy, EdNdEdAdt);
+//   gE2dNdEdAdt = new TGraph(E_bin, energy, E2dNdEdAdt);
+// 
+//   sEdNdEdAdt = new TSpline3("sEdNdEdAdt", gEdNdEdAdt);
+//   sE2dNdEdAdt = new TSpline3("sE2dNdEdAdt", gE2dNdEdAdt);
+//-------------------------------------------------- 
 
   maxflux=Tools::dMax(EdNdEdAdt,E_bin);
 
@@ -391,21 +393,23 @@ inline void Spectra::GetFlux(string filename)
 }
 
 
-TGraph *Spectra::GetGEdNdEdAdt() {
-    return gEdNdEdAdt;
-}
-
-TGraph *Spectra::GetGE2dNdEdAdt() {
-    return gE2dNdEdAdt;
-}
-
-TSpline3 *Spectra::GetSEdNdEdAdt() {
-    return sEdNdEdAdt;
-}
-
-TSpline3 *Spectra::GetSE2dNdEdAdt() {
-    return sE2dNdEdAdt;
-}
+//--------------------------------------------------
+// TGraph *Spectra::GetGEdNdEdAdt() {
+//     return gEdNdEdAdt;
+// }
+// 
+// TGraph *Spectra::GetGE2dNdEdAdt() {
+//     return gE2dNdEdAdt;
+// }
+// 
+// TSpline3 *Spectra::GetSEdNdEdAdt() {
+//     return sEdNdEdAdt;
+// }
+// 
+// TSpline3 *Spectra::GetSE2dNdEdAdt() {
+//     return sE2dNdEdAdt;
+// }
+//-------------------------------------------------- 
 
 double *Spectra::Getenergy() {
     return energy;
@@ -424,15 +428,18 @@ double Spectra::GetEdNdEdAdt(double E_val) {
     if (E_val < energy[0]) {
         cout<<"Energy value is smaller than the energy boundary!\n";
         cout<<"Energy value is replaced to minimum value of energy bound : "<<energy[0]<<"\n";
-        tmp_Get = sEdNdEdAdt->Eval(energy[0]);
+        //tmp_Get = sEdNdEdAdt->Eval(energy[0]);
+        tmp_Get = EdNdEdAdt[0];
     }
     else if (E_val > energy[E_bin-1]) {
         cout<<"Energy value is bigger than the energy boundary!\n";
         cout<<"Energy value is replaced to maximum value of energy bound : "<<energy[E_bin-1]<<"\n";
-        tmp_Get = sEdNdEdAdt->Eval(energy[E_bin-1]);
+        //tmp_Get = sEdNdEdAdt->Eval(energy[E_bin-1]);
+        tmp_Get = EdNdEdAdt[E_bin-1];
     }
     else {
-        tmp_Get = sEdNdEdAdt->Eval(E_val);
+        //tmp_Get = sEdNdEdAdt->Eval(E_val);
+        tmp_Get = EdNdEdAdt[ Tools::Getifreq( E_val, energy[0], energy[E_bin-1], E_bin ) ];
     }
     return tmp_Get;
 }
@@ -442,15 +449,18 @@ double Spectra::GetE2dNdEdAdt(double E_val) {
     if (E_val < energy[0]) {
         cout<<"Energy value is smaller than the energy boundary!\n";
         cout<<"Energy value is replaced to minimum value of energy bound : "<<energy[0]<<"\n";
-        tmp_Get = sE2dNdEdAdt->Eval(energy[0]);
+        //tmp_Get = sE2dNdEdAdt->Eval(energy[0]);
+        tmp_Get = E2dNdEdAdt[0];
     }
     else if (E_val > energy[E_bin-1]) {
         cout<<"Energy value is bigger than the energy boundary!\n";
         cout<<"Energy value is replaced to maximum value of energy bound : "<<energy[E_bin-1]<<"\n";
-        tmp_Get = sE2dNdEdAdt->Eval(energy[E_bin-1]);
+        //tmp_Get = sE2dNdEdAdt->Eval(energy[E_bin-1]);
+        tmp_Get = E2dNdEdAdt[E_bin-1];
     }
     else {
-        tmp_Get = sE2dNdEdAdt->Eval(E_val);
+        //tmp_Get = sE2dNdEdAdt->Eval(E_val);
+        tmp_Get = E2dNdEdAdt[ Tools::Getifreq( E_val, energy[0], energy[E_bin-1], E_bin ) ];
     }
     return tmp_Get;
 }

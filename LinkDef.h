@@ -13,6 +13,13 @@
 #pragma link C++ class Antenna_string+;
 #pragma link C++ class Antenna+;
 #pragma link C++ class Surface_antenna+;
+
+#pragma link C++ class Report+;
+#pragma link C++ class Antenna_r+;
+#pragma link C++ class Surface_antenna_r+;
+#pragma link C++ class String_r+;
+#pragma link C++ class Station_r+;
+
 #pragma link C++ class Position+;
 #pragma link C++ class Vector+;
 #pragma link C++ class Settings+;

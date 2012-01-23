@@ -19,43 +19,33 @@ SRCSUF = ${SrcSuf}
 
 
 #Generic and Site Specific Flags
-CXXFLAGS     += $(ROOTCFLAGS) $(SYSINCLUDES)
-LDFLAGS      += -g $(ROOTLDFLAGS) 
+CXXFLAGS     += $(SYSINCLUDES)
+LDFLAGS      += -g -I$(BOOST_ROOT) -L${ROOTSYS}/lib -L.
 
 # copy from ray_solver_makefile (removed -lAra part)
-LDFLAGS+=-lboost_program_options -L.
 
 # added for Fortran to C++
-G77LDFLAGS+=-lg2c
-G77	= g77
 
-LIBS          = $(ROOTLIBS) -lMinuit $(SYSLIBS) 
-#LIBS          = $(ROOTLIBS) -lgsl -lMinuit $(SYSLIBS) 
-GLIBS         = $(ROOTGLIBS) $(SYSLIBS)
 
-ROOT_LIBRARY = libAra.${DLLSUF}
-#LIB_OBJS = AraSim.o Detector.o Event.o Efficiencies.o Trigger.o IceModel.o EarthModel.o eventDict.o
-#LIB_OBJS =  Vector.o EarthModel.o IceModel.o Trigger.o Ray.o Tools.o Efficiencies.o Event.o Detector.o Position.o Spectra.o RayTrace.o RayTrace_IceModels.o signal.o eventDict.o Settings.o Primaries.o counting.o
-LIB_OBJS =  Vector.o EarthModel.o IceModel.o Trigger.o Ray.o Tools.o Efficiencies.o Event.o Detector.o Position.o Spectra.o RayTrace.o RayTrace_IceModels.o signal.o secondaries.o Settings.o Primaries.o counting.o RaySolver.o convolution_model_Fresnel_xyz.o dgausspkg.o divdifdouble.o vegas.o eventDict.o
-CCFILE       =  Vector.cc EarthModel.cc IceModel.cc Trigger.cc Ray.cc Tools.cc Efficiencies.cc Event.cc Detector.cc Spectra.cc Position.cc RayTrace.cc signal.cc secondaries.cc RayTrace_IceModels.cc Settings.cc Primaries.cc counting.cc RaySolver.cc
-CLASS_HEADERS = Trigger.h Detector.h Settings.h Spectra.h IceModel.h Primaries.h
-#LIB_OBJS = convolution_model_Fresnel_xyz.o dgausspkg.o divdifdouble.o vegas.o
+LIBS	= $(ROOTLIBS) -lMinuit $(SYSLIBS)
+GLIBS	= $(ROOTGLIBS) $(SYSLIBS)
+
+#ROOT_LIBRARY = libAra.${DLLSUF}
+
+OBJS = Vector.o EarthModel.o IceModel.o Trigger.o Ray.o Tools.o Efficiencies.o Event.o Detector.o Position.o Spectra.o RayTrace.o RayTrace_IceModels.o signal.o secondaries.o Settings.o Primaries.o counting.o RaySolver.o Report.o eventDict.o AraSim.o
+CCFILE = Vector.cc EarthModel.cc IceModel.cc Trigger.cc Ray.cc Tools.cc Efficiencies.cc Event.cc Detector.cc Spectra.cc Position.cc RayTrace.cc signal.cc secondaries.cc RayTrace_IceModels.cc Settings.cc Primaries.cc counting.cc RaySolver.cc Report.cc AraSim.cc
+CLASS_HEADERS = Trigger.h Detector.h Settings.h Spectra.h IceModel.h Primaries.h Report.h #need to add headers which added to Tree Branch
 
 PROGRAMS = araSim
 
-all : $(ROOT_LIBRARY) araSim
+all : $(PROGRAMS)
 
-araSim : $(ROOT_LIBRARY) AraSim.$(SRCSUF)
-	@echo "<**Compiling**> "  
-	$(LD) $(CXXFLAGS) $(LDFLAGS) AraSim.$(SRCSUF) $(ROOT_LIBRARY) $(LIBS) -o $@
-#--------------------------------------------------
-# araSim : $(ROOT_LIBRARY) AraSim.$(SRCSUF)
-# 	@echo "<**Compiling**> "  
-# 	$(LD) $(CXXFLAGS) $(LDFLAGS) $(LIBS) $(LIB_OBJS) -o $@
-#-------------------------------------------------- 
+araSim : $(OBJS)
+	$(LD) $(LDFLAGS) $(OBJS) $(LIBS) -o $(PROGRAMS)
+	@echo "done."
 
 #The library
-$(ROOT_LIBRARY) : $(LIB_OBJS) 
+$(ROOT_LIBRARY) : $(LIB_OBJS)
 	@echo "Linking $@ ..."
 ifeq ($(PLATFORM),macosx)
 # We need to make both the .dylib and the .so
@@ -106,6 +96,3 @@ clean:
 	@rm -f $(subst .$(DLLSUF),.so,$(ROOT_LIBRARY))	
 	@rm -f $(TEST)
 #############################################################################
-
-
-

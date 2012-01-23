@@ -31,11 +31,15 @@ class Detector;
 class Ray;
 class Primaries;
 class Spectra;
+class Secondaries;
+class Signal;
+class RaySolver;
+class Report;
 
-//using namespace std;
-using std::string;
+using namespace std;
+//using std::string;
 //
-using std::cout;
+//using std::cout;
 
 
 
@@ -151,6 +155,33 @@ class Interaction  {
  
 
 
+ // variables for GetSignal
+ //
+ int nu_nubar;
+ //int currentint;
+ string taudecay;
+ int n_interactions;
+ double emfrac, hadfrac;
+ double elast_y;
+ int ray_sol_cnt;   // counting number of solutions from Solve_Ray
+ vector <double> vmmhz1m;
+ vector <double> vmmhz1m_em;
+ vector <double> d_theta_em;
+ vector <double> d_theta_had;
+ double vmmhz1m_tmp;
+ double viewangle;
+ Position launch_vector;
+ Position R1;
+ Position R2;
+ vector < vector <double> > ray_output;
+ // end variables for GetSignal
+ //
+
+
+
+
+
+
  public:
 
  static const double phi_nu_banana; //Location in phi
@@ -163,9 +194,17 @@ class Interaction  {
  Interaction(string inttype,Primaries *primary1,Settings *settings1,int whichray,Counting *count1);
 
  Interaction (IceModel *antarctica, Detector *detector, Settings *settings1, int whichray, Counting *count1, Primaries *primary1, Spectra *spectra); // constructor for setting posnu, nnu, etc
+
+ //
+ // Eugene added. function for calculate signal and store in EvtReport class.
 //--------------------------------------------------
-//  Interaction (int mode, Ray *ray, Interaction *interaction1, IceModel *antarctica, Detector *detector); // constructor for setting posnu, nnu, etc
-//-------------------------------------------------- 
+//void GetSignal (Settings *settings1, Primaries *primary1, Secondaries *sec1, Signal *signal, Detector *detector, RaySolver *raysolver, IceModel *icemodel, TH1F *hy, int inu);
+void GetSignal (Settings *settings1, Primaries *primary1, Secondaries *sec1, Signal *signal, Detector *detector, RaySolver *raysolver, IceModel *icemodel, TH1F *hy, int inu, Report *report);
+ //
+ //
+ void Initialize (); // initialize values for Interaction class.
+ //
+ //
 
  void PickAnyDirection();
 
@@ -186,7 +225,6 @@ class Interaction  {
   // Eugene added for test ray solver result store
   //
   int ray_solver_toggle;    // : 0 no solution, : 1 solution exists
-  std::vector < std::vector <double> > ray_outputs; // array of results. path length, view angle, receipt angle
 
   //
   //

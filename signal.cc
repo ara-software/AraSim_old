@@ -66,8 +66,7 @@ Signal::Signal() : N_DEPTH(1.79) {
 
 Signal::Signal(Settings *settings1) : N_DEPTH(1.79) {
 
-  Initialize();
-  SetParameterization(settings1->WHICHPARAMETERIZATION);
+  Initialize(settings1);
 
 }
 
@@ -173,6 +172,86 @@ Signal::Signal(Settings *settings1) : N_DEPTH(1.79) {
 
 
 }
+
+
+
+ void Signal::Initialize(Settings *settings1) {
+
+  SetParameterization(settings1->WHICHPARAMETERIZATION);
+
+  logscalefactor_taper=0.;
+  JAIME_FACTOR=1.0; // factor to multiply Jaime's parameterization for error analysis
+
+  x0ice=0.403; 
+  //X0ICE=0.392; // radiation length of ice (meters)
+  ecice=63.7;                     // critical energy in ice (MeV)
+  //const static ECICE=73.0; // critical energy in ice (MeV)
+  nice=1.79;                      // index of refraction of ice
+  nfirn=1.3250;                   // index of refraction at the very surface - Peter
+  invnfirn=1/nfirn; 
+  invnice=1/nice;
+  rhoice=917;                     // density of ice (kg/m**3)
+  kelvins_ice=250.+150.;          // temperature in Kelvin (ice+system)
+  changle_ice=acos(1./nice);
+  aex_ice=1.;  //efficiency for producing charge asymmetry relative to ice.  1 by definition
+
+  alphaice=1.32; // exponent that goes into cutting off the spectrum at high frequencies
+  rm_ice=10.35; // moliere radius, in g/cm^2
+  ke_ice=4.79E-16; // const staticant in jaime's parameterization, in V/cm/MHz
+  kl_ice=23.80; //const staticant in jaime's parameterization
+  kdelta_ice=18.33; // const staticant in jaime's parameterization
+  kr_ice=1.42; // const staticant in jaime's parameterization
+  betaice=2.25; // exponent, in jaime's parameterization
+  nu0_modified=0.; // nu_0 modified for a specific medium
+
+  freq_reference=1.E6; // reference frequency in MHz
+  pnu_reference=1.E18; // reference energy in MHz
+
+
+
+  if (WHICHPARAMETERIZATION==1) {
+    nu_r=(RHOMEDIUM/1000.)
+      //NU_R=(RHOMEDIUM/1000.) // density in g/cm^3
+      /KR_MEDIUM/RM_MEDIUM*
+      CLIGHT*100./N_DEPTH/sin(acos(1/N_DEPTH));
+ 
+    vmmhz1m_reference=KE_MEDIUM/ECMEDIUM* // KE in V/cm/MHz^2, Ec in MeV
+      (X0MEDIUM*100.) // radiation length in cm
+      *freq_reference/1.E6 // frequency in MHz
+      *sqrt(N_DEPTH*N_DEPTH-1)/N_DEPTH // sin(theta_c)
+      *pnu_reference/1.E6 // energy in MeV
+      *1./sin(changle); 
+
+    cout << "multiplying by 1/changle which is " << 1./sin(changle) << "\n";
+
+    //    vmmhz1m*=1./(1.+pow(freq/NU_R,ALPHAMEDIUM));
+    vmmhz1m_reference*=1./(1.+pow(freq_reference/nu_r,ALPHAMEDIUM));
+
+  }
+  else {
+      cout<<"whichparameterization : "<<WHICHPARAMETERIZATION<<"\n";
+  }
+
+  
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void Signal::GetVmMHz(double vmmhz_max,double vmmhz1m_max,double pnu,double *freq,double notch_min,double notch_max,double *vmmhz,int nfreq) {
 
   // parametrization from Jaime Alvarez Munhiz  

@@ -170,7 +170,7 @@ class Detector {
         int Get_mode() {return Detector_mode;}
 
         int GetFreqBin() {return freq_step;}
-        double GetFreq(int bin) {return Freq[bin];}
+        double GetFreq(int bin) {return Freq[bin]*1.e6;} //from MHz to Hz
 
 
         ~Detector();    //destructor

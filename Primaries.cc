@@ -15,6 +15,11 @@
 #include "IceModel.h"
 #include "Detector.h"
 #include "Ray.h"
+#include "secondaries.hh"
+#include "signal.hh"
+#include "RaySolver.h"
+#include "Report.h"
+
 //#include "vector.hh"
 //#include "position.hh"
 //#include "earthmodel.hh"
@@ -374,7 +379,15 @@ string Primaries::GetNuFlavor() {
 } //GetNuFlavor
 
 Interaction::Interaction() {
+    Initialize ();
     //default constructor
+}
+
+void Interaction::Initialize() {
+    // settings for GetSignal
+    currentint=0;
+    taudecay = "test_taudecay";
+    n_interactions = 1;
 }
 
 
@@ -423,7 +436,235 @@ Interaction::Interaction (IceModel *antarctica, Detector *detector, Settings *se
     setNuFlavor(primary1, settings1, whichray,count1);
     setCurrent(primary1);
     pnu = spectra->GetNuEnergy();
+
+    //prepare for GetSignal
+    //
+    for (int i=0; i<detector->GetFreqBin(); i++) {
+        d_theta_em.push_back(0); // prepare d_theta_em and d_theta_had for GetSpread
+        d_theta_had.push_back(0);
+        vmmhz1m.push_back(0);
+        vmmhz1m_em.push_back(0);
+    }
+
 }
+
+
+
+//--------------------------------------------------
+// void Interaction::GetSignal (Settings *settings1, Primaries *primary1, Secondaries *sec1, Signal *signal, Detector *detector, IceModel *icemodel, TH1F *hy, int inu) {
+//-------------------------------------------------- 
+void Interaction::GetSignal (Settings *settings1, Primaries *primary1, Secondaries *sec1, Signal *signal, Detector *detector, RaySolver *raysolver, IceModel *icemodel, TH1F *hy, int inu, Report *report) {
+//Interaction::GetSignal (Primaries *primary1, Settings *settings1, Secondaries *sec1, Signal *signal1, Detector *detector, RaySolver *raysolver, IceModel *icemodel, EvtReport *report1) {
+
+    cout<<"test GetSignal started!"<<endl;
+
+
+    // clear & initialize Report
+    //
+    report->Initialize (detector);
+
+
+    /*
+    // clear vector values in Report stored from previous event
+    //
+    report->d_theta_em.clear();
+    report->d_theta_had.clear();
+    report->vmmhz1m.clear();
+    // need loop over stations, strings, antennas and clear signals
+    //
+           for (int i = 0; i< detector->params.number_of_stations; i++) {
+
+               for (int j=0; j< detector->params.number_of_strings_station; j++) {
+
+                   for (int k=0; k< detector->params.number_of_antennas_string; k++) {
+                                   report->stations[i].strings[j].antennas[k].view_ang.clear();
+                                   report->stations[i].strings[j].antennas[k].rec_ang.clear();
+                                   report->stations[i].strings[j].antennas[k].Dist.clear();
+                                   
+                                   report->stations[i].strings[j].antennas[k].vmmhz.clear();
+                   }
+               }
+           }
+    
+    //
+    */
+
+
+       //double elast_y = primary1->Gety(settings1, Evt->pnu, nu_nubar, currentint);  // set inelasticity
+       elast_y = primary1->Gety(settings1, pnu, nu_nubar, currentint);  // set inelasticity
+       cout<<"set inelasticity : "<<elast_y<<endl;
+
+       sec1->GetEMFrac( settings1, nuflavor, current, taudecay, elast_y, hy, pnu, inu, emfrac, hadfrac, n_interactions);   // set em, had frac values.
+       //sec1->GetEMFrac( settings1, Evt, taudecay, elast_y, hy, inu, emfrac, hadfrac, n_interactions);   // set em, had frac values.
+       cout<<"set emfrac : "<<emfrac<<" hadfrac : "<<hadfrac<<endl;
+
+       double vmmhz1m_sum;
+
+       // report interaction information 1.
+       //
+       report->posnu = posnu;
+       report->nnu = nnu;
+       report->pnu = pnu;
+       report->nuflavor = nuflavor;
+       report->current = current;
+       report->elast_y = elast_y;
+       report->em_frac = emfrac;
+       report->had_frac = hadfrac;
+       //
+       //
+
+       if (settings1->SIMULATION_MODE == 0) { // freq domain simulation (old mode)
+
+           // set vmmhz1m (which is generally used for all detector antennas)
+           // vmmhz1m is calculated for 1m, cherenkov angle
+           //
+
+
+           for (int i=0; i<detector->GetFreqBin(); i++) {   // for detector freq bin numbers
+
+               signal->GetSpread(pnu, emfrac, hadfrac, detector->GetFreq(i), d_theta_em[i], d_theta_had[i]);   // get max spread angle and save at d_theta_em[i] and d_theta_had[i]
+               cout<<"Freq : "<<detector->GetFreq(i)<<endl;
+               cout<<"GetSpread, theta_em : "<<d_theta_em[i]<<" theta_had : "<<d_theta_had[i]<<endl;
+
+               vmmhz1m[i] = signal->GetVmMHz1m( pnu, detector->GetFreq(i) );   // get VmMHz at 1m at cherenkov angle at GetFreq(i)
+               cout<<"GetVmMHZ1m : "<<vmmhz1m[i]<<endl;
+
+
+               //report interaction information 2.
+               //
+               report->d_theta_em.push_back(d_theta_em[i]);
+               report->d_theta_had.push_back(d_theta_had[i]);
+               report->vmmhz1m.push_back(vmmhz1m[i]);
+               //
+               //
+
+
+
+           }    // end detector freq bin numbers loop
+
+
+
+
+           for (int i = 0; i< detector->params.number_of_stations; i++) {
+
+               for (int j=0; j< detector->params.number_of_strings_station; j++) {
+
+                   for (int k=0; k< detector->params.number_of_antennas_string; k++) {
+
+                       // run ray solver, see if solution exist
+                       // if not, skip (set something like Sol_No = 0;
+                       // if solution exist, calculate view angle and calculate TaperVmMHz
+
+                       if (pickposnu) {    // if posnu is selected inside the antarctic ic:"<<viewangle<<" th_em:"<<d_theta_em[l]<<" th_had:"<<d_theta_had[l]<<" emfrac:"<<emfrac<<" hadfrac:"<<hadfrac<<" vmmhz1m:"<<vmmhz1m[l]<<endl;e
+                           
+                           raysolver->Solve_Ray(posnu, detector->stations[i].strings[j].antennas[k], icemodel, ray_output);   // solve ray between source and antenna
+                           //raysolver->Solve_Ray(Evt, detector->stations[i].strings[j].antennas[k], icemodel, ray_output);   // solve ray between source and antenna
+                           
+                          //cout<<"solution_toggle : "<<raysolver->solution_toggle<<endl;   
+                            
+                           ray_sol_cnt = 0;
+                           
+                           //if (ray_solver_toggle) {  // if there are solution from raysolver
+                           if (raysolver->solution_toggle) {  // if there are solution from raysolver
+                           //if (raysolver->solution_toggle && ray_solver_toggle) {  // if there are solution from raysolver
+                              cout<<"ray_output size : "<<ray_output[0].size()<<endl;
+                               
+                               while ( ray_sol_cnt < ray_output[0].size() ) {   // for number of soultions (could be 1 or 2)
+                                  cout<<"Path length : "<<ray_output[0][ray_sol_cnt]<<"\tView angle : "<<ray_output[1][ray_sol_cnt]<<"\tReceipt angle : "<<ray_output[2][ray_sol_cnt]<<endl;
+
+                                   R1 = detector->stations[i].strings[j].antennas[k];
+                                   R2 = posnu;
+                                   viewangle = PI/2. - ray_output[1][ray_sol_cnt];
+
+                                   launch_vector = (R1.Cross( R1.Cross(R2) )).Rotate(viewangle, R1.Cross(R2));
+                                   viewangle = launch_vector.Angle(nnu);
+                                   
+                                   // store information to report 3.
+                                   report->stations[i].strings[j].antennas[k].view_ang.push_back(viewangle);
+                                   report->stations[i].strings[j].antennas[k].rec_ang.push_back(ray_output[2][ray_sol_cnt]);
+                                   report->stations[i].strings[j].antennas[k].Dist.push_back(ray_output[0][ray_sol_cnt]);
+                                   
+                                   report->stations[i].strings[j].antennas[k].vmmhz.resize(ray_sol_cnt+1);
+
+
+                                   vmmhz1m_sum = 0;
+
+                                   for (int l=0; l<detector->GetFreqBin(); l++) {   // for detector freq bin numbers
+
+
+                                      cout<<"TaperVmMHz inputs VA:"<<viewangle<<" th_em:"<<d_theta_em[l]<<" th_had:"<<d_theta_had[l]<<" emfrac:"<<emfrac<<" hadfrac:"<<hadfrac<<" vmmhz1m:"<<vmmhz1m[l]<<endl;
+
+                                       vmmhz1m_tmp = vmmhz1m[l];
+
+                                       signal->TaperVmMHz( viewangle, d_theta_em[l], d_theta_had[l], emfrac, hadfrac, vmmhz1m_tmp, vmmhz1m_em[l]);
+                                      cout<<"TaperVmMHz (1m at view angle) at "<<l<<"th bin : "<<vmmhz1m_tmp<<endl;
+
+                                      vmmhz1m_tmp = vmmhz1m_tmp / ray_output[0][ray_sol_cnt] * exp(-ray_output[0][ray_sol_cnt]/icemodel->EffectiveAttenuationLength(settings1, posnu, 0));  // assume whichray = 0, now vmmhz1m_tmp has all factors except for the detector properties (antenna gain, etc)
+                                      cout<<"AttenLength : "<<icemodel->EffectiveAttenuationLength(settings1, posnu, 0)<<endl;
+
+                                      vmmhz1m_sum += vmmhz1m_tmp;
+
+
+                                       report->stations[i].strings[j].antennas[k].vmmhz[ray_sol_cnt].push_back( vmmhz1m_tmp );
+
+
+                                   }// end for freq bin
+
+                                   if (vmmhz1m_sum == 0.) {
+                                       report->stations[i].strings[j].antennas[k].trg.push_back(0);
+                                       cout<<"station["<<i<<"].strings["<<j<<"].antennas["<<k<<"].trg = "<<report->stations[i].strings[j].antennas[k].trg[ray_sol_cnt]<<" , vmmhz1m["<<ray_sol_cnt<<"][0] : "<<report->stations[i].strings[j].antennas[k].vmmhz[ray_sol_cnt][0]<<endl;
+                                   }
+                                   else {
+                                       report->stations[i].strings[j].antennas[k].trg.push_back(1);
+                                       cout<<"station["<<i<<"].strings["<<j<<"].antennas["<<k<<"].trg = "<<report->stations[i].strings[j].antennas[k].trg[ray_sol_cnt]<<" , vmmhz1m["<<ray_sol_cnt<<"][0] : "<<report->stations[i].strings[j].antennas[k].vmmhz[ray_sol_cnt][0]<<endl;
+                                   }
+                                       
+
+
+                                   ray_sol_cnt++;
+                               
+                               }// end while number of solutions
+                           
+                           }// end if solution exist
+
+                           else {
+                               
+                               report->stations[i].strings[j].antennas[k].trg.push_back(0); // say not trg
+                               cout<<"station["<<i<<"].strings["<<j<<"].antennas["<<k<<"].trg = "<<report->stations[i].strings[j].antennas[k].trg[ray_sol_cnt]<<"  No vmmhz1m data!"<<endl;
+
+                           }
+                       
+                       }// end if posnu selected
+
+                           else {
+                               cout<<" No posnu!!!!!! No signals calculated at all!!"<<endl;
+                           }
+
+
+                           report->stations[i].strings[j].antennas[k].ray_sol_cnt = ray_sol_cnt;    // save number of RaySolver solutions
+                       
+
+                   }// for number_of_antennas_string
+
+               }// for number_of_strings_station
+
+           }// for number_of_stations
+
+
+
+
+       }// if SIMULATION_MODE = 0 (freq domain old method)
+
+
+       else if (settings1->SIMULATION_MODE == 1) { // time domain simulation (new mode)
+           cout<<"Currently unavailable!!"<<endl;
+           // we need to break
+       }
+
+
+}// end GetSignal
+
+
 
 
 

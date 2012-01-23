@@ -51,6 +51,7 @@ using namespace std;
 #include "Settings.h"
 #include "counting.hh"
 #include "Primaries.h"
+#include "Report.h"
 
 #include "Ray.h"
 
@@ -71,6 +72,7 @@ int main() {
   Spectra *spectra = 0;
   IceModel *icemodel = 0;
   Interaction *interaction = 0;
+  Report *report = 0;
   cout<<"construct detector"<<endl;
 
   
@@ -84,6 +86,7 @@ int main() {
   AraTree->SetBranchAddress("spectra",&spectra);
   AraTree->SetBranchAddress("icemodel",&icemodel);
   AraTree2->SetBranchAddress("interaction",&interaction);
+  AraTree2->SetBranchAddress("report",&report);
   cout<<"branch detector"<<endl;
   
   AraTree->GetEvent(0);
@@ -132,15 +135,20 @@ cout<<"interaction nnu : "<<interaction->nnu.GetX()<<endl;
           posnuY[nnu_pass] = interaction->posnu.GetY();
           posnuR[nnu_pass] = interaction->posnu.R();
           nnu_pass++;
+
+          cout<<" inelasticity is : "<<report->elast_y<<endl;
+
+/*
           if ( interaction->ray_solver_toggle ) {   // if ray_solver succeeded to get soutions
               cout<<"pass evt : "<<nnu_pass<<"\t";
-              for (int i=0; i<interaction->ray_outputs[0].size(); i++) {
-                  for (int j=0; j<interaction->ray_outputs.size(); j++) {
-                      cout<<j<<"th ray_output : "<<interaction->ray_outputs[j][i]<<"\t";
+              for (int i=0; i<interaction->ray_output[0].size(); i++) {
+                  for (int j=0; j<interaction->ray_output.size(); j++) {
+                      cout<<j<<"th ray_output : "<<interaction->ray_output[j][i]<<"\t";
                   }
                   cout<<"\n";
               }
           }// end if ray_solver_toggle
+*/
       }
 
 
@@ -593,8 +601,10 @@ cout<<"Flux at 19 is : "<<spectra->GetEdNdEdAdt(E)<<endl;
 ///////////////////////////////////////////////////
 
 
-TSpline3 *sp1;
-sp1 = spectra->GetSEdNdEdAdt();
+//--------------------------------------------------
+// TSpline3 *sp1;
+// sp1 = spectra->GetSEdNdEdAdt();
+//-------------------------------------------------- 
 
 ///////////////////////////////////////////////////
 
@@ -603,14 +613,19 @@ sp1 = spectra->GetSEdNdEdAdt();
 
 
 TGraph *GEdN;
-GEdN = spectra->GetGEdNdEdAdt();
+//--------------------------------------------------
+// GEdN = spectra->GetGEdNdEdAdt();
+//-------------------------------------------------- 
+GEdN = new TGraph( spectra->GetE_bin(), spectra->Getenergy(), spectra->GetEdNdEdAdt() );
 
 TCanvas *c2 = new TCanvas("c2","A Simple Graph Example",200,10,1000,700);
 c2 -> cd();
 GEdN->Draw("al");
 
-sp1->SetLineColor(2);
-sp1->Draw("c same");
+//--------------------------------------------------
+// sp1->SetLineColor(2);
+// sp1->Draw("c same");
+//-------------------------------------------------- 
 c2 -> Print("GEdN.pdf");
 
 //////////////////////////////////////////////////

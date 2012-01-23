@@ -6,6 +6,7 @@
 #include "EarthModel.h"
 #include "Vector.h"
 #include "Ray.h"
+#include "Settings.h"
 //#include "icemodel.hh"
 //#include "earthmodel.hh"
 //#include "vector.hh"
@@ -1055,6 +1056,75 @@ double IceModel::EffectiveAttenuationLength(const Position &pos,const int &which
 
   return attenuation_length;
 } //EffectiveAttenuationLengthUp
+
+
+double IceModel::EffectiveAttenuationLength(Settings *settings1, const Position &pos,const int &whichray) const {
+  double localmaxdepth = IceThickness(pos);
+  double depth = Surface(pos) - pos.Mag();
+  
+  int depth_index=0;
+  double attenuation_length=0.0;
+//   if (inu<10) {
+//     cout << "pos is ";pos.Print();
+//     cout << "surface is " << Surface(pos) << "\n";
+//   }
+  if(WestLand(pos) && !CONSTANTICETHICKNESS) 
+    {
+      depth_index=int(depth*419.9/localmaxdepth);//use 420 m ice shelf attenuation length data as the standard, squeeze or stretch if localmaxdepth is longer or shorter than 420m.
+      if(RossIceShelf(pos) || RonneIceShelf(pos)) 
+	{	  
+	  if(whichray==0)
+	    attenuation_length=l_shelfup[depth_index];
+	  else if(whichray==1)
+	    attenuation_length=l_shelfdown[depth_index];
+	  else
+	    cerr << " wrong attenuation length " <<endl;
+	  
+	  //for sanity check
+	  if((depth_index+0.5)!=d_shelfup[depth_index])
+	    {
+	      cerr << "the index of the array l_iceshelfup is wrong!" << endl;
+	      exit(1);
+	    }
+	}
+      else //in ice sheet of westland
+	{
+	  if(whichray==0)
+	    attenuation_length=l_westlandup[depth_index]; 
+	  else if(whichray==1)
+	    attenuation_length=l_westlanddown[depth_index];
+	  else
+	    cerr << " wrong attenuation length " <<endl;
+      	}
+       
+      //if(mooreBayFlag)//if use Moore's Bay measured data for the west land
+      if(settings1->MOOREBAY)//if use Moore's Bay measured data for the west land
+	attenuation_length*=1.717557; //about 450 m (field attenuation length) for one whole way when assuming -3dB for the power loss at the bottom
+    }
+  else //in east antarctica or constant ice thickness
+     { 
+//        if (inu<10) {
+//        cout << "localmaxdepth is " << localmaxdepth << "\n";
+//        cout << "depth is " << depth << "\n";
+//        }
+       depth_index =int(depth*(2809.9/localmaxdepth));
+       //if (inu<10)
+	 //       cout << "depth_index is " << depth_index << "\n";
+
+       if(whichray==0)
+	 attenuation_length =l_sheetup[depth_index];
+       else if(whichray==1)
+	 attenuation_length =l_sheetdown[depth_index];
+       else
+	 cerr << " wrong attenuation length " <<endl;
+     } //else
+
+  return attenuation_length;
+} //EffectiveAttenuationLengthUp
+
+
+
+
 
 double IceModel::Area(double latitude) const {
   //Returns the area of one square of the BEDMAP data at a given latitude. 

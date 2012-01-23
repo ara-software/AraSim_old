@@ -35,9 +35,9 @@ static Vector z_axis = Vector(0,0,1);
 	////from Tau neutrino propagaiton and tau energy loss 2005 Dutta, Huang, & Reno. 
 	//Equation 16  &  used in Equation 30. 
 	/////////////////////|Units////|Description////////////////////////
-	B0=1.2*pow(10,-6); //| cm^2/g  |\,
-	B1=0.16*pow(10,-6);//| cm^2/g  | }parameterization using a logarithmic dependence on energy for B,
-	E0=pow(10,10);     //| GeV     |/   the tau elecromagnetic energy loss parameter.
+	B0=1.2*pow(10.,-6.); //| cm^2/g  |\,
+	B1=0.16*pow(10.,-6.);//| cm^2/g  | }parameterization using a logarithmic dependence on energy for B,
+	E0=pow(10.,10.);     //| GeV     |/   the tau elecromagnetic energy loss parameter.
 	p=2.65;            //| g/cm^3  |Density of Standard Rock
 	mT=1.777;	   //| GeV     |Mass of Tau
 	cT=0.008693; 	   //| cm      |Tau Decay length (86.93 microMeters)
@@ -1138,9 +1138,9 @@ double Secondaries::TauEnergyInitial(double ptau_final, double Distance, double 
 
 	////////////////////// Units////////////////////
 	p=2.65;            // g/cm^3
-	B0=1.2*pow(10,-6); // cm^2/g
-	B1=0.16*pow(10,-6);// cm^2/g
-	E0=pow(10,10);     // GeV
+	B0=1.2*pow(10.,-6.); // cm^2/g
+	B1=0.16*pow(10.,-6.);// cm^2/g
+	E0=pow(10.,10.);     // GeV
  */
 	double base=ptau_finalGeV/E0*exp(B0/B1*(1-exp(-B1*p*zprime_cm)));
 	double power=1/exp(-B1*p*zprime_cm);
@@ -1159,7 +1159,7 @@ double Secondaries::interactionLengthNu(Primaries*primary1,Settings*settings1,do
 	
 	CrossSection= primary1->GetSigma(pnu,sigma,len_int_kgm2,settings1,nu_nubar,currentint);
 	//even though they are not usually    ^declared here^?
-	//double Mn=1.672622*pow(10,-24);// nucleon/ proton mass in grams,also equal to 0.938 GeV.
+	//double Mn=1.672622*pow(10.,-24.);// nucleon/ proton mass in grams,also equal to 0.938 GeV.
 	//double p=2.65; //density of standard rock g/cm^3
 
 	Lcm=Mn/(CrossSection*1.E4*p);//Lcm is in cm. cross section is in m, must convert to cm.
