@@ -28,7 +28,7 @@ class Antenna_r {
 
         int ray_sol_cnt;    // number of RaySolver solutions
 
-        vector <int> trg;    // if antenna recieved any signal or not. 0 : no signal,  1 : yes signal
+        //vector <int> trg;    // if antenna recieved any signal or not. 0 : no signal,  1 : yes signal
 
         vector <double> view_ang;    //viewing angle
         vector <double> rec_ang;     //receiving angle
@@ -53,7 +53,7 @@ class Antenna_r {
 
 class String_r {
     public:
-        int trg;    // if any antenna trigg in the event. 0 : no antenna in the string trg
+        //int trg;    // if any antenna trigg in the event. 0 : no antenna in the string trg
                     //                                    1 : 1 or more antenna trg
 
         vector <Antenna_r> antennas;
@@ -63,7 +63,7 @@ class String_r {
 
 class Station_r {
     public:
-        int trg;    // if any antenna trigg in the event. 0 : no antenna trg
+        //int trg;    // if any antenna trigg in the event. 0 : no antenna trg
                     //                                    1: 1 or more antenna trg 
         vector <String_r> strings;
         vector <Surface_antenna_r> surfaces;
@@ -77,24 +77,8 @@ class Report {
     private:
 
     public:
-        int trg;    // if any antenna in entire detectors trg. 0 : no antenna trg
+        //int trg;    // if any antenna in entire detectors trg. 0 : no antenna trg
                     //                                         1 : 1 or more antenna trg
-
-        Position posnu;
-        Position nnu;
-        double pnu;
-        string nuflavor;
-        string current;
-
-        double elast_y;     // inelasticity
-        double em_frac, had_frac;
-        
-        vector <double> d_theta_em; // max angle spread from cherenkov angle for each freq bin
-        vector <double> d_theta_had;
-
-        // below freq domain simulation output
-        vector <double> vmmhz1m;    // signal V/m/MHz at 1m (signal without 1/r and ice attenuation)
-        //
 
         Report ();
         Report (Detector *detector);

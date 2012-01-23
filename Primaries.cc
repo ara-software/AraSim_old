@@ -464,32 +464,6 @@ void Interaction::GetSignal (Settings *settings1, Primaries *primary1, Secondari
     report->Initialize (detector);
 
 
-    /*
-    // clear vector values in Report stored from previous event
-    //
-    report->d_theta_em.clear();
-    report->d_theta_had.clear();
-    report->vmmhz1m.clear();
-    // need loop over stations, strings, antennas and clear signals
-    //
-           for (int i = 0; i< detector->params.number_of_stations; i++) {
-
-               for (int j=0; j< detector->params.number_of_strings_station; j++) {
-
-                   for (int k=0; k< detector->params.number_of_antennas_string; k++) {
-                                   report->stations[i].strings[j].antennas[k].view_ang.clear();
-                                   report->stations[i].strings[j].antennas[k].rec_ang.clear();
-                                   report->stations[i].strings[j].antennas[k].Dist.clear();
-                                   
-                                   report->stations[i].strings[j].antennas[k].vmmhz.clear();
-                   }
-               }
-           }
-    
-    //
-    */
-
-
        //double elast_y = primary1->Gety(settings1, Evt->pnu, nu_nubar, currentint);  // set inelasticity
        elast_y = primary1->Gety(settings1, pnu, nu_nubar, currentint);  // set inelasticity
        cout<<"set inelasticity : "<<elast_y<<endl;
@@ -500,18 +474,6 @@ void Interaction::GetSignal (Settings *settings1, Primaries *primary1, Secondari
 
        double vmmhz1m_sum;
 
-       // report interaction information 1.
-       //
-       report->posnu = posnu;
-       report->nnu = nnu;
-       report->pnu = pnu;
-       report->nuflavor = nuflavor;
-       report->current = current;
-       report->elast_y = elast_y;
-       report->em_frac = emfrac;
-       report->had_frac = hadfrac;
-       //
-       //
 
        if (settings1->SIMULATION_MODE == 0) { // freq domain simulation (old mode)
 
@@ -528,15 +490,6 @@ void Interaction::GetSignal (Settings *settings1, Primaries *primary1, Secondari
 
                vmmhz1m[i] = signal->GetVmMHz1m( pnu, detector->GetFreq(i) );   // get VmMHz at 1m at cherenkov angle at GetFreq(i)
                cout<<"GetVmMHZ1m : "<<vmmhz1m[i]<<endl;
-
-
-               //report interaction information 2.
-               //
-               report->d_theta_em.push_back(d_theta_em[i]);
-               report->d_theta_had.push_back(d_theta_had[i]);
-               report->vmmhz1m.push_back(vmmhz1m[i]);
-               //
-               //
 
 
 
@@ -579,7 +532,7 @@ void Interaction::GetSignal (Settings *settings1, Primaries *primary1, Secondari
                                    launch_vector = (R1.Cross( R1.Cross(R2) )).Rotate(viewangle, R1.Cross(R2));
                                    viewangle = launch_vector.Angle(nnu);
                                    
-                                   // store information to report 3.
+                                   // store information to report
                                    report->stations[i].strings[j].antennas[k].view_ang.push_back(viewangle);
                                    report->stations[i].strings[j].antennas[k].rec_ang.push_back(ray_output[2][ray_sol_cnt]);
                                    report->stations[i].strings[j].antennas[k].Dist.push_back(ray_output[0][ray_sol_cnt]);
@@ -609,17 +562,9 @@ void Interaction::GetSignal (Settings *settings1, Primaries *primary1, Secondari
 
 
                                    }// end for freq bin
-
-                                   if (vmmhz1m_sum == 0.) {
-                                       report->stations[i].strings[j].antennas[k].trg.push_back(0);
-                                       cout<<"station["<<i<<"].strings["<<j<<"].antennas["<<k<<"].trg = "<<report->stations[i].strings[j].antennas[k].trg[ray_sol_cnt]<<" , vmmhz1m["<<ray_sol_cnt<<"][0] : "<<report->stations[i].strings[j].antennas[k].vmmhz[ray_sol_cnt][0]<<endl;
-                                   }
-                                   else {
-                                       report->stations[i].strings[j].antennas[k].trg.push_back(1);
-                                       cout<<"station["<<i<<"].strings["<<j<<"].antennas["<<k<<"].trg = "<<report->stations[i].strings[j].antennas[k].trg[ray_sol_cnt]<<" , vmmhz1m["<<ray_sol_cnt<<"][0] : "<<report->stations[i].strings[j].antennas[k].vmmhz[ray_sol_cnt][0]<<endl;
-                                   }
+                                   
+                                   cout<<"station["<<i<<"].strings["<<j<<"].antennas["<<k<<"].vmmhz1m["<<ray_sol_cnt<<"][0] : "<<report->stations[i].strings[j].antennas[k].vmmhz[ray_sol_cnt][0]<<endl;
                                        
-
 
                                    ray_sol_cnt++;
                                
@@ -629,8 +574,7 @@ void Interaction::GetSignal (Settings *settings1, Primaries *primary1, Secondari
 
                            else {
                                
-                               report->stations[i].strings[j].antennas[k].trg.push_back(0); // say not trg
-                               cout<<"station["<<i<<"].strings["<<j<<"].antennas["<<k<<"].trg = "<<report->stations[i].strings[j].antennas[k].trg[ray_sol_cnt]<<"  No vmmhz1m data!"<<endl;
+                               //cout<<"station["<<i<<"].strings["<<j<<"].antennas["<<k<<"].trg = "<<report->stations[i].strings[j].antennas[k].trg[ray_sol_cnt]<<"  No vmmhz1m data!"<<endl;
 
                            }
                        

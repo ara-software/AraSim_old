@@ -136,7 +136,7 @@ cout<<"interaction nnu : "<<interaction->nnu.GetX()<<endl;
           posnuR[nnu_pass] = interaction->posnu.R();
           nnu_pass++;
 
-          cout<<" inelasticity is : "<<report->elast_y<<endl;
+          cout<<"evt no "<<inu<<"stations[0].strings[1].antennas[2].ray_sol_cnt : "<<report->stations[0].strings[1].antennas[2].ray_sol_cnt<<endl;
 
 /*
           if ( interaction->ray_solver_toggle ) {   // if ray_solver succeeded to get soutions

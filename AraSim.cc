@@ -220,13 +220,18 @@ cout<<"begain looping events!!"<<endl;
        Evt->GetSignal ( settings1, primary1, sec1, signal, detector, raysolver, icemodel, hy, inu, report);
 
        
-       cout<<"pnu from Report : "<<report->pnu<<endl;
        for (int i=0;i<1;i++) {  // there are only 1 station for the test!!!
            for (int j=0; j<4;j++) { // 4 strings per station
                for (int k=0;k<4;k++) {  // 4 antennas per string
 
-                   if ( report->stations[i].strings[j].antennas[k].trg[0] ) {
-                       cout<<"evt "<<inu<<"; vmmhz for station["<<i<<"].string["<<j<<"].antenna["<<k<<"].vmmhz[0][0] : "<<report->stations[i].strings[j].antennas[k].vmmhz[0][0]<<endl;
+                   if ( Evt->pickposnu && report->stations[i].strings[j].antennas[k].ray_sol_cnt ) {
+                       cout<<"Evt->pickposnu : "<<Evt->pickposnu<<"\t report->...ray_sol_cnt : "<<report->stations[i].strings[j].antennas[k].ray_sol_cnt<<endl;
+                       for (int l=0;l<report->stations[i].strings[j].antennas[k].ray_sol_cnt; l++) {    // loop for number of RaySolver solutions
+                           for (int m=0;m<detector->GetFreqBin();m++) {
+                               cout<<"evt "<<inu<<"; vmmhz for station["<<i<<"].string["<<j<<"].antenna["<<k<<"].vmmhz["<<l<<"]["<<m<<"] : "<<report->stations[i].strings[j].antennas[k].vmmhz[l][m]<<endl;
+                           }
+                    
+                       }
                    }
 
                }

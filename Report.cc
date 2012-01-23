@@ -29,35 +29,6 @@ Report::Report(Detector *detector) {
 void Report::Initialize(Detector *detector) {
     
 
-    // clear vector values in Report stored from previous event
-    //
-    d_theta_em.clear();
-    d_theta_had.clear();
-    vmmhz1m.clear();
-    stations.clear();   // test if works (clean all sub vectors)
-    // need loop over stations, strings, antennas and clear signals
-    //
-    //
-    //
-    /*
-           for (int i = 0; i< detector->params.number_of_stations; i++) {
-
-               for (int j=0; j< detector->params.number_of_strings_station; j++) {
-
-                   for (int k=0; k< detector->params.number_of_antennas_string; k++) {
-                                   stations[i].strings[j].antennas[k].view_ang.clear();
-                                   stations[i].strings[j].antennas[k].rec_ang.clear();
-                                   stations[i].strings[j].antennas[k].Dist.clear();
-                                   
-                                   stations[i].strings[j].antennas[k].vmmhz.clear();
-                   }
-               }
-           }
-
-    */
-    
-
-
     //read Detector information and prepare
     //
 

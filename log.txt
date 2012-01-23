@@ -204,3 +204,12 @@ For example, ARA-37_station_layout.pdf will show you the layout of ARA detector 
 
 ===============================================================================
 
+01/23/12_2 E. Hong;
+
+Some minor changes in Report class.
+
+Variables in Report which are overlapping with Interaction class have been removed.
+Report should more focus on connection between Interaction and Detector classes.
+
+
+===============================================================================
