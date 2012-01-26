@@ -33,6 +33,10 @@ Report::Report(Detector *detector) {
 
 void Report::Initialize(Detector *detector) {
     
+    // clear information stored in previous event
+    //
+    stations.clear();
+
 
     //read Detector information and prepare
     //
@@ -62,6 +66,21 @@ void Report::Initialize(Detector *detector) {
 
 }
 
+void Antenna_r::clear() {   // if any vector variable added in Antenna_r, need to be added here!
+    view_ang.clear();
+    rec_ang.clear();
+    reflect_ang.clear();
+    Dist.clear();
+    reflection.clear();
+    vmmhz.clear();
+
+    time.clear();
+    Ax.clear();
+    Ay.clear();
+    Az.clear();
+
+}
+
 
 void Report::Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1) {
 
@@ -80,6 +99,9 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                for (int j=0; j< detector->params.number_of_strings_station; j++) {
 
                    for (int k=0; k< detector->params.number_of_antennas_string; k++) {
+
+
+                       stations[i].strings[j].antennas[k].clear();  // clear data in antenna which stored in previous event
 
                        // run ray solver, see if solution exist
                        // if not, skip (set something like Sol_No = 0;

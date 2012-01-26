@@ -50,6 +50,8 @@ class Antenna_r {
         vector < vector <double> > Ay;
         vector < vector <double> > Az;
         //
+        
+        void clear ();  // clear all vector format information for next event
 
         ClassDef(Antenna_r,1);
 };

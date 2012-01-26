@@ -71,7 +71,7 @@ int main() {
   Settings *settings = 0;
   Spectra *spectra = 0;
   IceModel *icemodel = 0;
-  Interaction *interaction = 0;
+  Event *event = 0;
   Report *report = 0;
   cout<<"construct detector"<<endl;
 
@@ -85,7 +85,7 @@ int main() {
   AraTree->SetBranchAddress("settings",&settings);
   AraTree->SetBranchAddress("spectra",&spectra);
   AraTree->SetBranchAddress("icemodel",&icemodel);
-  AraTree2->SetBranchAddress("interaction",&interaction);
+  AraTree2->SetBranchAddress("event",&event);
   AraTree2->SetBranchAddress("report",&report);
   cout<<"branch detector"<<endl;
   
@@ -115,9 +115,9 @@ cout<<"Detector static const double freq_init : "<<detector->Getfreq_init()<<end
 cout<<"icemodel surface : "<<icemodel->Surface(0.,0.)<<endl;
 
 AraTree2->GetEvent(0);
-cout<<"interaction nnu : "<<interaction->nnu.GetX()<<endl;
+cout<<"nnu x : "<<event->nnu.GetX()<<endl;
 AraTree2->GetEvent(1);
-cout<<"interaction nnu : "<<interaction->nnu.GetX()<<endl;
+cout<<"nnu x : "<<event->nnu.GetX()<<endl;
 
   int nnu_pass = 0; // number of nu events which passed PickUnbiased.
   double posnuX[settings->NNU];
@@ -130,10 +130,10 @@ cout<<"interaction nnu : "<<interaction->nnu.GetX()<<endl;
       AraTree2->GetEvent(inu);
 
       // save X, Y of posnus which passed PickUnbiased
-      if ( interaction->pickposnu ) {
-          posnuX[nnu_pass] = interaction->posnu.GetX();
-          posnuY[nnu_pass] = interaction->posnu.GetY();
-          posnuR[nnu_pass] = interaction->posnu.R();
+      if ( event->Nu_Interaction[0].pickposnu ) {
+          posnuX[nnu_pass] = event->Nu_Interaction[0].posnu.GetX();
+          posnuY[nnu_pass] = event->Nu_Interaction[0].posnu.GetY();
+          posnuR[nnu_pass] = event->Nu_Interaction[0].posnu.R();
           nnu_pass++;
 
           cout<<"evt no "<<inu<<"stations[0].strings[1].antennas[2].ray_sol_cnt : "<<report->stations[0].strings[1].antennas[2].ray_sol_cnt<<endl;
@@ -198,7 +198,7 @@ cout<<"z2 : "<<(double)detector->strings[3].antennas[1].GetZ()<<" type : "<<(int
 
 
 
-
+/*
 
 else if ( settings->DETECTOR == 1 ) {
 
@@ -322,14 +322,15 @@ c1->Print("ARA-37_station_layout.pdf");
 
 
 
+*/
 
 
 
 
 
 
-
-else if ( settings->DETECTOR == 2 ) {
+//else if ( settings->DETECTOR == 2 ) {
+else {
 
 cout<<"\n\t Test ARA-37 array setting !"<<endl;
 //cout<<"total number of strings : "<<(int)detector->Detector.params.number_of_strings<<endl;
@@ -504,16 +505,16 @@ for(int i =0; i<settings->NNU; i++) {
     AraTree2->GetEvent(i);
 
     cd6_x[i] = i;
-    cd6_y_top[i] = icemodel->Surface( interaction->posnu.Lon(), interaction->posnu.Lat() );
-    cd6_y_bot[i] = icemodel->Surface( interaction->posnu.Lon(), interaction->posnu.Lat() ) - icemodel->IceThickness( interaction->posnu.Lon(), interaction->posnu.Lat() );
+    cd6_y_top[i] = icemodel->Surface( event->Nu_Interaction[0].posnu.Lon(), event->Nu_Interaction[0].posnu.Lat() );
+    cd6_y_bot[i] = icemodel->Surface( event->Nu_Interaction[0].posnu.Lon(), event->Nu_Interaction[0].posnu.Lat() ) - icemodel->IceThickness( event->Nu_Interaction[0].posnu.Lon(), event->Nu_Interaction[0].posnu.Lat() );
     
-    if (icemodel->Surface( interaction->posnu.Lon(), interaction->posnu.Lat() ) - posnuR[i] < 0) { 
-        cout<<"Surface - posnuR : "<<icemodel->Surface( interaction->posnu.Lon(), interaction->posnu.Lat() ) - posnuR[i]<<endl;
+    if (icemodel->Surface( event->Nu_Interaction[0].posnu.Lon(), event->Nu_Interaction[0].posnu.Lat() ) - posnuR[i] < 0) { 
+        cout<<"Surface - posnuR : "<<icemodel->Surface( event->Nu_Interaction[0].posnu.Lon(), event->Nu_Interaction[0].posnu.Lat() ) - posnuR[i]<<endl;
         cout<<"!offsurface"<<endl;
     }
 
-    if (posnuR[i] - ( icemodel->Surface( interaction->posnu.Lon(), interaction->posnu.Lat()) - icemodel->IceThickness(interaction->posnu.Lon(), interaction->posnu.Lat()) ) < 0)  {
-        cout<<"posnuR - Icebottom : "<<posnuR[i] - ( icemodel->Surface( interaction->posnu.Lon(), interaction->posnu.Lat() ) - icemodel->IceThickness(interaction->posnu.Lon(), interaction->posnu.Lat()) ) <<endl;
+    if (posnuR[i] - ( icemodel->Surface( event->Nu_Interaction[0].posnu.Lon(), event->Nu_Interaction[0].posnu.Lat()) - icemodel->IceThickness(event->Nu_Interaction[0].posnu.Lon(), event->Nu_Interaction[0].posnu.Lat()) ) < 0)  {
+        cout<<"posnuR - Icebottom : "<<posnuR[i] - ( icemodel->Surface( event->Nu_Interaction[0].posnu.Lon(), event->Nu_Interaction[0].posnu.Lat() ) - icemodel->IceThickness(event->Nu_Interaction[0].posnu.Lon(), event->Nu_Interaction[0].posnu.Lat()) ) <<endl;
         cout<<"!offbottomice"<<endl;
     }
 
@@ -552,6 +553,11 @@ gr_bot->SetMarkerStyle(21);
 gr_bot->Draw("p");
 
 
+TLegend *Leg_top_bot = new TLegend(1., 0.95, 0.5,0.8);
+Leg_top_bot -> AddEntry(gr_top, "Ice Surface");
+Leg_top_bot -> AddEntry(gr_depth, "posnu depth");
+Leg_top_bot -> AddEntry(gr_bot, "Bedrock");
+Leg_top_bot -> Draw();
 
 c1->Print("ARA-37_station_layout.pdf");
 

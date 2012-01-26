@@ -14,6 +14,7 @@
 #pragma link C++ class Antenna+;
 #pragma link C++ class Surface_antenna+;
 
+#pragma link C++ class Event+;
 #pragma link C++ class Report+;
 #pragma link C++ class Antenna_r+;
 #pragma link C++ class Surface_antenna_r+;

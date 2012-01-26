@@ -232,3 +232,13 @@ Some more modifications are expected after discusstion with Prof. Connolly.
 
 ===============================================================================
 
+01/26/12 E. Hong;
+
+There was a bug in the previous version that Report keep accumulate information as event goes on.
+Added clear() function in the Antenna_r class in Report and call it when we use Connect_Interaction_Detector function.
+
+Also modified readTree.cc to work in new structure of AraOut.root file.
+
+
+===============================================================================
+
