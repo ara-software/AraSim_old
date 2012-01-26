@@ -213,3 +213,22 @@ Report should more focus on connection between Interaction and Detector classes.
 
 
 ===============================================================================
+
+01/25/12 E. Hong;
+
+Main change : let Interaction as a vector inside Event class.
+Event class has basic information about the event.
+ ( choose the initial particle, flavor, direction, etc)
+ There will be number of Interaction vector array as much as number of interactions
+ (currently there is only 1 interaction)
+
+Interaction class will have information about that specific interaction.
+So, elast_y, posnu, emfrac, hadfrac, cone width, VmMHz1m will be determinded
+
+Report class will then read Event class (then we can access Interaction of that Event), Detector class and some other classes which needed to calculate the signal at each antennas.
+
+Some more modifications are expected after discusstion with Prof. Connolly.
+
+
+===============================================================================
+

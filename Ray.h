@@ -39,7 +39,9 @@ class Ray {
 
  public:
   Ray();
-  vector<double> getEField(Event *event,Position pos); // Get E field from the shower at a particular location pos
+//--------------------------------------------------
+//   vector<double> getEField(Event *event,Position pos); // Get E field from the shower at a particular location pos
+//-------------------------------------------------- 
 
 
   //

@@ -7,11 +7,14 @@
 #define REPORT_H
 
 #include <vector>
-#include "Position.h"
 #include "Vector.h"
 
-class Position;
 class Detector;
+class Event;
+class RaySolver;
+class Signal;
+class IceModel;
+class Settings;
 
 using namespace std;
 
@@ -84,6 +87,9 @@ class Report {
         Report (Detector *detector);
 
         void Initialize (Detector *detector);
+
+
+        void Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1);
 
         vector <Station_r> stations;
         vector <String_r> strings;

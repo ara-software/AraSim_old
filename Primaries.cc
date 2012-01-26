@@ -239,6 +239,36 @@ int Primaries::GetSigma(double pnu,double& sigma,double &len_int_kgm2,Settings *
 } //GetSigma
 
 
+Vector Primaries::GetAnyDirection() {
+  Vector output;
+  double rndlist[2];
+  gRandom->RndmArray(2,rndlist);
+  
+  costheta_nutraject=2*rndlist[0]-1;
+
+ 
+  // pick a neutrino azimuthal angle
+  phi_nutraject=2*PI*rndlist[1];
+  
+  // check that these give the right result
+  double thetanu=acos(costheta_nutraject);
+  
+  double sinthetanu=sin(thetanu);
+  
+  // find direction vector of neutrino
+  // **** are cosine and sine flipped?
+  output.SetX(sinthetanu*cos(phi_nutraject));
+  output.SetY(sinthetanu*sin(phi_nutraject));
+  output.SetZ(costheta_nutraject);
+
+  return output;
+
+
+}
+
+
+
+
 // The interaction
 double Primaries::Gety(Settings *settings1,double pnu,int nu_nubar,int currentint) {
   // THIS IS A ROUGH PARAMETRIZATION OF PLOT 6 FROM 
@@ -385,12 +415,13 @@ Interaction::Interaction() {
 
 void Interaction::Initialize() {
     // settings for GetSignal
-    currentint=0;
     taudecay = "test_taudecay";
-    n_interactions = 1;
 }
 
 
+// remove ANITA option for ARASIM
+//
+/*
 Interaction::Interaction(string inttype,Primaries *primary1,Settings *settings1,int whichray,Counting *count1) : banana_flavor("numu"), banana_current("nc"),  nu_banana(Position(theta_nu_banana,phi_nu_banana)) {
 
   noway=0;
@@ -425,34 +456,77 @@ Interaction::Interaction(string inttype,Primaries *primary1,Settings *settings1,
     }
 }
 
+*/
 
-Interaction::Interaction (IceModel *antarctica, Detector *detector, Settings *settings1, int whichray, Counting *count1, Primaries *primary1, Spectra *spectra) {
+Interaction::Interaction (double pnu, string nuflavor, int &n_interactions, IceModel *antarctica, Detector *detector, Settings *settings1, Primaries *primary1, Signal *signal, Secondaries *sec1 ) {
+
+    Initialize ();
+
+    setCurrent(primary1);   // set current of interaction (cc or nc) ! (this should be change if this is secondary interaction. if first interaction was cc, then there is no secondary cc)
+
+
+    //prepare for GetSignal
+    //
+    for (int i=0; i<detector->GetFreqBin(); i++) {
+    }
+
+
+    // pick posnu (position where nutrino interact with ice
     if (settings1->INTERACTION_MODE == 0) {    // for pickunbiased. posnu will be all around antarctica
         Interaction::PickUnbiased( antarctica );
     }
     else if (settings1->INTERACTION_MODE == 1) {   // for picknear. posnu will be only near by ARA core
         Interaction::PickNear (antarctica, detector, settings1);
     }
-    setNuFlavor(primary1, settings1, whichray,count1);
-    setCurrent(primary1);
-    pnu = spectra->GetNuEnergy();
 
-    //prepare for GetSignal
-    //
-    for (int i=0; i<detector->GetFreqBin(); i++) {
-        d_theta_em.push_back(0); // prepare d_theta_em and d_theta_had for GetSpread
-        d_theta_had.push_back(0);
-        vmmhz1m.push_back(0);
-        vmmhz1m_em.push_back(0);
-    }
+
+       elast_y = primary1->Gety(settings1, pnu, nu_nubar, currentint);  // set inelasticity
+       cout<<"set inelasticity : "<<elast_y<<endl;
+
+       sec1->GetEMFrac( settings1, nuflavor, current, taudecay, elast_y, pnu, emfrac, hadfrac, n_interactions);   // set em, had frac values.
+       cout<<"set emfrac : "<<emfrac<<" hadfrac : "<<hadfrac<<endl;
+
+
+       if (settings1->SIMULATION_MODE == 0) { // freq domain simulation (old mode)
+
+           // set vmmhz1m (which is generally used for all detector antennas)
+           // vmmhz1m is calculated at 1m, cherenkov angle
+           //
+
+
+           for (int i=0; i<detector->GetFreqBin(); i++) {   // for detector freq bin numbers
+
+
+            d_theta_em.push_back(0); // prepare d_theta_em and d_theta_had for GetSpread
+            d_theta_had.push_back(0);
+            vmmhz1m.push_back(0);
+            vmmhz1m_em.push_back(0);
+
+
+               signal->GetSpread(pnu, emfrac, hadfrac, detector->GetFreq(i), d_theta_em[i], d_theta_had[i]);   // get max spread angle and save at d_theta_em[i] and d_theta_had[i]
+               cout<<"Freq : "<<detector->GetFreq(i)<<endl;
+               cout<<"GetSpread, theta_em : "<<d_theta_em[i]<<" theta_had : "<<d_theta_had[i]<<endl;
+
+               vmmhz1m[i] = signal->GetVmMHz1m( pnu, detector->GetFreq(i) );   // get VmMHz at 1m at cherenkov angle at GetFreq(i)
+               cout<<"GetVmMHZ1m : "<<vmmhz1m[i]<<endl;
+
+           }    // end detector freq bin numbers loop
+
+       }// if SIMULATION_MODE = 0 (freq domain old method)
+
+
+       else if (settings1->SIMULATION_MODE == 1) { // time domain simulation (new mode)
+           cout<<"Currently unavailable!!"<<endl;
+           // we need to break
+       }
+
+
 
 }
 
 
-
-//--------------------------------------------------
-// void Interaction::GetSignal (Settings *settings1, Primaries *primary1, Secondaries *sec1, Signal *signal, Detector *detector, IceModel *icemodel, TH1F *hy, int inu) {
-//-------------------------------------------------- 
+// GetSignal should move to Report class
+/*
 void Interaction::GetSignal (Settings *settings1, Primaries *primary1, Secondaries *sec1, Signal *signal, Detector *detector, RaySolver *raysolver, IceModel *icemodel, TH1F *hy, int inu, Report *report) {
 //Interaction::GetSignal (Primaries *primary1, Settings *settings1, Secondaries *sec1, Signal *signal1, Detector *detector, RaySolver *raysolver, IceModel *icemodel, EvtReport *report1) {
 
@@ -608,7 +682,7 @@ void Interaction::GetSignal (Settings *settings1, Primaries *primary1, Secondari
 
 }// end GetSignal
 
-
+*/
 
 
 
@@ -1335,7 +1409,9 @@ void Interaction::PickAnyDirection() {
 
 }
 
-
+// removed this function as it's set in Event class
+//
+/*
 void  Interaction::setNuFlavor(Primaries *primary1,Settings *settings1,int whichray,Counting *counting1) {
      // pick the neutrino flavor,  type of tau decay when relevant,
       //  lpm energy.
@@ -1362,6 +1438,7 @@ void  Interaction::setNuFlavor(Primaries *primary1,Settings *settings1,int which
 
 
 }
+*/
 
 
 void  Interaction::setCurrent(Primaries *primary1) {

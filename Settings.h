@@ -40,6 +40,8 @@ class Settings
 
         int SIMULATION_MODE;    // 0 : old freq domain mode, 1: new time domain mode
 
+        int EVENT_TYPE;         // 0 : neutrino only events,  1 : blackhole evnet? ... etc
+
 
  // below : values from icemc
 

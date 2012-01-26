@@ -153,6 +153,7 @@ public:
   int secondary_e_noncons; 
 
   void GetSecondaries(Settings *settings1,string,double,double&,double&,int&,TH1F*);
+  void GetSecondaries(Settings *settings1,string,double,double&,double&,int&);
 
   void InitTauola();
   void GetTauDecay(string nuflavor,string current,string& taudecay, double& emfrac_db, double& hadfrac_db);
@@ -178,16 +179,14 @@ public:
 
   // Eugene added version
   int GetEMFrac(Settings *settings1,
-                Interaction *interaction,
-                string taudecay,
+		string nuflavor,
+		string current,
+		string taudecay,
 		double y,
-		TH1F *hy,
-		int inu,
-
+		double pnu,
 		double& emfrac,
 		double& hadfrac,
 		int& n_interactions);
-
 
 
   bool secondbang;

@@ -717,6 +717,166 @@ static Vector z_axis = Vector(0,0,1);
 } //GetSecondaries
 
 
+// Eugene version. (without histogram hy)
+ void Secondaries::GetSecondaries(Settings *settings1,string nuflavor,double plepton,double &em_secondaries_max,double &had_secondaries_max,int &n_interactions ) {
+
+
+  em_secondaries_max=0.;
+  had_secondaries_max=0.;
+
+  int i=(int)((log10(plepton)-18.)*2.);
+  if (i>6)
+    i=6;
+  if (i<0)
+    i=0;
+
+  int n_brems,n_epair,n_pn; // number of interactions of each type.
+  int index_y; // index along the horizontal axis of ped's plots
+  double rnd1=1000.;
+  double rnd2=1000.;  // random numbers for throwing at dart board
+  double y = 0; // inelasticity
+ 
+  string whichtype; // which type of interaction corresponds to that index
+  
+
+
+  if (nuflavor=="numu") {   
+    n_brems=gRandom->Poisson(int_muon_brems[i]); // pick number of brem interactions
+    n_epair=gRandom->Poisson(int_muon_epair[i]); // # of pair production
+    n_pn=gRandom->Poisson(int_muon_pn[i]); // # photonuclear interactions   
+    
+    n_interactions+=(n_brems+n_epair+n_pn);	
+
+
+    for (int j=0;j<n_brems+n_epair+n_pn;j++) {
+      rnd1=gRandom->Rndm();
+      if (rnd1<=(double)n_brems/(double)(n_brems+n_epair+n_pn))
+	whichtype="brems";
+      else if (rnd1<=(double)(n_brems+n_epair)/(double)(n_brems+n_epair+n_pn))
+	whichtype="epair";
+      else
+	whichtype="pn";
+
+
+
+      rnd1=1000.;
+      rnd2=1000.;  // random numbers for throwing at dart board
+      index_y=0;
+
+      if (whichtype=="brems") {	
+	rnd1=gRandom->Rndm();
+	Picky(y_cumulative_muon_brems[i],NPROB,rnd1,y);
+      }
+      else if (whichtype=="epair") {	
+	rnd1=gRandom->Rndm();
+	Picky(y_cumulative_muon_epair[i],NPROB,rnd1,y);	
+      }
+      else if (whichtype=="pn") {
+	rnd1=gRandom->Rndm();
+	Picky(y_cumulative_muon_pn[i],NPROB,rnd1,y);
+      }
+     
+      if (y*plepton>max(em_secondaries_max,had_secondaries_max)) {  // if this is the largest interaction for this event so far
+	if (whichtype=="brems" || whichtype=="epair") {  // save it
+	  em_secondaries_max=y*plepton;
+
+	}
+	if (whichtype=="pn") 
+	  had_secondaries_max=y*plepton;
+	 
+		
+      }
+    } // loop over secondary interactions
+  } // end if it was a muon neutrino
+  if (nuflavor=="nutau") {
+    n_brems=gRandom->Poisson(int_tauon_brems[i]);
+    n_epair=gRandom->Poisson(int_tauon_epair[i]);
+    n_pn=gRandom->Poisson(int_tauon_pn[i]);
+
+    n_interactions+=(n_brems+n_epair+n_pn); // increment number of secondary interactions.
+
+    for (int j=0;j<n_brems+n_epair+n_pn;j++) { // loop over secondary interactions. 
+      
+      rnd1=gRandom->Rndm();
+      if (rnd1<=(double)n_brems/(double)(n_brems+n_epair+n_pn))
+	whichtype="brems";
+      else if (rnd1<=(double)(n_brems+n_epair)/(double)(n_brems+n_epair+n_pn))
+	whichtype="epair";
+      else
+	whichtype="pn";
+  
+      rnd1=1000.;
+      rnd2=1000.;  // random numbers for throwing at dart board
+      index_y=0;
+
+      if (whichtype=="brems") {  // bremstrahlung interaction
+	rnd1=gRandom->Rndm();
+	Picky(y_cumulative_tauon_brems[i],NPROB,rnd1,y);
+      }
+      if (whichtype=="epair") { // pair production
+	rnd1=gRandom->Rndm();
+	Picky(y_cumulative_tauon_epair[i],NPROB,rnd1,y);
+      }
+      if (whichtype=="pn") {
+	rnd1=gRandom->Rndm();
+	Picky(y_cumulative_tauon_pn[i],NPROB,rnd1,y);
+      }
+
+//--------------------------------------------------
+//       if (settings1->HIST==1 && !settings1->ONLYFINAL && hy->GetEntries()<settings1->HIST_MAX_ENTRIES)
+// 	hy->Fill(y);
+//-------------------------------------------------- 
+      if (y*plepton>max(em_secondaries_max,had_secondaries_max)) { // if this is the biggest secondary signal yet,
+	if (whichtype=="brems" || whichtype=="epair") // save it.
+	  em_secondaries_max=y*plepton;
+	if (whichtype=="pn")
+	  had_secondaries_max=y*plepton;
+      }
+    }
+   
+
+    if (TAUDECAY) {
+      n_interactions++; // increment number of interactions, for plotting.
+
+      rnd1=gRandom->Rndm();
+      if (rnd1<0.65011)  // pick which type of decay it is.
+	whichtype="hadrdecay";
+      if (rnd1>=0.65011 && rnd1<0.8219)
+	whichtype="mudecay";
+      if (rnd1>=0.8219)
+	whichtype="edecay";
+           
+      rnd1=1000.;
+      rnd2=1000.;  // random numbers for throwing at dart board
+      index_y=0;     
+      
+      if (whichtype=="hadrdecay") { // hadronic decay
+	rnd1=gRandom->Rndm();
+	Picky(y_cumulative_tauon_hadrdecay[i],NPROB,rnd1,y);	
+      }
+      else if (whichtype=="edecay") { // e decay	
+	rnd1=gRandom->Rndm();
+	Picky(y_cumulative_tauon_edecay[i],NPROB,rnd1,y);
+      }
+      else if (whichtype=="mudecay") { // mu decay
+	rnd1=gRandom->Rndm();
+	Picky(y_cumulative_tauon_mudecay[i],NPROB,rnd1,y);
+      }
+      
+     
+      if (y*plepton>max(em_secondaries_max, had_secondaries_max)) {  // if this is the biggest interaction yet,    
+	if (whichtype=="edecay") // save it.
+	  em_secondaries_max=y*plepton;
+	if (whichtype=="hadrdecay")
+	  had_secondaries_max=y*plepton;
+      } //if     
+    } //if (TAUDECAY)
+  } //if (nutau)
+
+} //GetSecondaries
+
+
+
 
  int Secondaries::GetEMFrac(Settings *settings1,string nuflavor,
 		     string current,
@@ -815,22 +975,15 @@ static Vector z_axis = Vector(0,0,1);
 
 
 
-// Eugene added version
- int Secondaries::GetEMFrac(Settings *settings1, Interaction *interaction,
+// Eugene added version (no hy, inu)
+ int Secondaries::GetEMFrac(Settings *settings1,string nuflavor,
+		     string current,
 		     string taudecay,	      
 		     double y,
-		     TH1F *hy,
-                     int inu,
-
-
+		     double pnu,				  
 		     double& emfrac,
 		     double& hadfrac,
 		     int& n_interactions) {
-
-     double pnu = interaction->pnu;
-     string current = interaction->current;
-     string nuflavor = interaction->nuflavor;
-
 
 
   if (current=="cc")
@@ -872,7 +1025,7 @@ static Vector z_axis = Vector(0,0,1);
 
     while (1) {
 
-      GetSecondaries(settings1,nuflavor,plepton,em_secondaries_max,had_secondaries_max,n_interactions,hy); // find how much em and hadronic energies comes from secondary interactions.  keep picking until you get a bunch of secondary interactions that conserve energy
+      GetSecondaries(settings1,nuflavor,plepton,em_secondaries_max,had_secondaries_max,n_interactions ); // find how much em and hadronic energies comes from secondary interactions.  keep picking until you get a bunch of secondary interactions that conserve energy
 
       if (em_secondaries_max+had_secondaries_max<=plepton*(1.+1.E-5)) // if conserves energy, break.
 	break;
@@ -894,8 +1047,10 @@ static Vector z_axis = Vector(0,0,1);
     } //if
   } //if (charged current, secondaries on)
 
-  if (nuflavor=="numu" && current=="cc" && n_interactions==0)
-    cout << "Look at this one.  inu is " << inu << "\n";
+//--------------------------------------------------
+//   if (nuflavor=="numu" && current=="cc" && n_interactions==0)
+//     cout << "Look at this one.  inu is " << inu << "\n";
+//-------------------------------------------------- 
   
 
 

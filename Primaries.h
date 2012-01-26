@@ -118,6 +118,12 @@ public:
 	~Primaries();//destructor //default
 	//*primary1 must be manually deleted in icemc for deconstructor to actually be called.
 
+        // GetAnyDirection for selecting nnu
+        //
+        Vector GetAnyDirection();   // get random direction for nnu. Added this function instead of removing PickAnyDirection in Interaction to prevent confliction
+        double costheta_nutraject; //theta of nnu with earth center to balloon as z axis 
+        double phi_nutraject; //phi of nnu with earth center to balloon as z axis
+
 	int GetSigma(double pnu,double& sigma,double &len_int_kgm2,Settings *settings1,int nu_nubar,int currentint);//not static
 	double Gety(Settings *settings1,double pnu,int nu_nubar,int currentint);
 	double Getyweight(double pnu,double y,int nu_nubar,int currentint);
@@ -155,12 +161,19 @@ class Interaction  {
  
 
 
+
+
+
+
+
+ public:
+
+
  // variables for GetSignal
  //
  int nu_nubar;
- //int currentint;
  string taudecay;
- int n_interactions;
+ //int n_interactions;  // moved to Event class
  double emfrac, hadfrac;
  double elast_y;
  int ray_sol_cnt;   // counting number of solutions from Solve_Ray
@@ -169,20 +182,13 @@ class Interaction  {
  vector <double> d_theta_em;
  vector <double> d_theta_had;
  double vmmhz1m_tmp;
- double viewangle;
- Position launch_vector;
- Position R1;
- Position R2;
- vector < vector <double> > ray_output;
+
  // end variables for GetSignal
  //
 
 
 
 
-
-
- public:
 
  static const double phi_nu_banana; //Location in phi
 
@@ -191,15 +197,10 @@ class Interaction  {
  double banana_phi_obs;
  Vector banana_obs; //Vector from the neutrino interaction to the observation point
  Interaction(); // default constructor
- Interaction(string inttype,Primaries *primary1,Settings *settings1,int whichray,Counting *count1);
+ //Interaction(string inttype,Primaries *primary1,Settings *settings1,int whichray,Counting *count1);
 
- Interaction (IceModel *antarctica, Detector *detector, Settings *settings1, int whichray, Counting *count1, Primaries *primary1, Spectra *spectra); // constructor for setting posnu, nnu, etc
+ Interaction (double pnu, string nuflavor, int &n_interactions, IceModel *antarctica, Detector *detector, Settings *settings1, Primaries *primary1, Signal *signal, Secondaries *sec1 ); // constructor for setting posnu, y, emfrac, hadfrac, vmmhz1m at cherenkov angle, etc
 
- //
- // Eugene added. function for calculate signal and store in EvtReport class.
-//--------------------------------------------------
-//void GetSignal (Settings *settings1, Primaries *primary1, Secondaries *sec1, Signal *signal, Detector *detector, RaySolver *raysolver, IceModel *icemodel, TH1F *hy, int inu);
-void GetSignal (Settings *settings1, Primaries *primary1, Secondaries *sec1, Signal *signal, Detector *detector, RaySolver *raysolver, IceModel *icemodel, TH1F *hy, int inu, Report *report);
  //
  //
  void Initialize (); // initialize values for Interaction class.
@@ -268,13 +269,18 @@ static const double banana_signal_fluct;//Turn off noise for banana plots (setti
  
  double pnu;    // energy of neutrino
 
-  void  setNuFlavor(Primaries *primary1,Settings *settings1,int whichray,Counting *count1);
+ // NuFlavor is determined in Event class
+//--------------------------------------------------
+//   void  setNuFlavor(Primaries *primary1,Settings *settings1,int whichray,Counting *count1);
+//-------------------------------------------------- 
  void setCurrent(Primaries *primary1);
   Position posnu;
   Position posnu_down;
-string  nuflavor;                   // neutrino flavor
+//--------------------------------------------------
+// string  nuflavor;                   // neutrino flavor
+// int nuflavorint;                // Added by Stephen for output purposes
+//-------------------------------------------------- 
   string  current;                    //  CC or NC?
-int nuflavorint;                // Added by Stephen for output purposes
   int currentint;                 // Ditto - Stephen
   
 

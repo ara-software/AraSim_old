@@ -6,66 +6,129 @@
 #define EVENT_H
 
 #include <vector>
+#include "Vector.h"
 #include <string>
-//#include "Position.h"
+#include "Primaries.h"
+//#include "Neutrino.h"
 
 
-using std::vector;
-using std::string;
+using namespace std;
 
-class Position;
+class Settings;
+class Spectra;
+class Primaries;
+class Interaction;
 
-// Treat this like a struct and make data members public
 class Event {
 
- private:
-  
-  protected:
-  
   public:
 
-  //  Event(int);
-  //  Event(double);
- Event(double) : inu(0), nnu(Position()), pnu(1.E18), posnu(1,Position()), int_type(0), nu_flav(0), y(0.2), eField1m(3) {}
-  ~Event();
-  int inu; // index for this event
-  Position nnu;  // unit vector pointing in direction of neutrino trajectory
-  double pnu;  // neutrino energy
+      int Event_type;   // 0 : neutrino event,  1 : blackhole event,  2 : monopole event,... etc
 
+      double pnu;   // energy of neutrino
+      Vector nnu;   // direction of neutrino
+      string nuflavor;  // flavor of neutrino
+      int nuflavorint;  // 1 : nue,  2 : numu,  3 : nutau
+      int n_interactions;    // number of interaction inside the ice
 
-// direction and charge density of a charged lepton
-  Vector sh_dir;
+      void Initialize ();
 
-  //there should be same number of posnu's as charge_per_lengths
-  //0th posnu is the hadronic shower
-  //starting with 1st posnu are leptonic showers
-  //there is one less charge_per_lengths than posnu's
-  //0th charge_per_length is charge/length just after primary leptonic interaction
-  //1st charge_per_length is just after first secondary leptonic interaction
+      void Choose_Evt_Type(Settings *settings1);    // choose the event type depend on the settings->EVENT_TYPE value
 
-  vector<Position> posnu;  // position of neutrino interaction
-  vector<double> charge_per_length;
-  vector<string> sh_type; // same length as posnu.
-  // 0th element always indicates hadronic
-  //choices are "em", "had"
-  vector<double> sh_energy; // same length as posnu
-  
+      vector <Interaction> Nu_Interaction;
+
+      Event (); // default constructor
+      Event (Settings *settings1, Spectra *spectra1, Primaries *primary1, IceModel *icemodel, Detector *detector, Signal *signal, Secondaries *sec1 );
 
 
 
-  int int_type; // type of interaction - cc (0) or nc(1)
-  int nu_flav;// neutrino flavor - e (0), mu (1), tau (2)
-  double y; // inelasticity
 
-  // something that describes the radiation that emerges from the shower
-  // this may be a root file or text file that is generated from jaime's program
-  vector<double> eField1m; // E field - 3d vector as a function of frequency at 1 m from the interaction
-  
- 
+
+
+
+
+
+
+//--------------------------------------------------
+//   Event(int, Spectra*);
+//   //  Event(double);
+//   ~Event();
+//   int iev; // index for this event
+//   int part_type; // incident particle type (neutrino, magnetic monopole)
+//   vector<double> n_incident;  // unit vector pointing in direction of incident particle trajectory (like a neutrino)
+//   double e_incident;  // energy of particle incident at the interaction point
+// 
+//   // something that describes the radiation that emerges from the shower
+//   // this may be a root file or text file that is generated from jaime's program
+//   vector<double> eField1m; // E field - 3d vector as a function of frequency at 1 m from the interaction
+//   
+//   vector<double> getEField1m();
+// 
+//  
+//  Event(double) : pos_sh(),int_type(0),iev(0),part_type(0),n_incident(3), e_incident(1.E18), eField1m(3) {}
+//-------------------------------------------------- 
 
 
 };
 
-
-
 #endif //EVENT_H
+
+
+
+
+
+
+
+
+/* class Event { */
+/* public: */
+
+/* }; */
+ 
+/* class NeutrinoEvent : public Event { */
+/* public: */
+
+/* }; */
+ 
+/* class BlackHoleEvent : public Event { */
+/* public: */
+
+/* }; */
+ 
+/* class MonopoleEvent : public Event { */
+/* public: */
+
+/* }; */
+//class NeutrinoEvent;
+
+/* template<class T, class U> */
+/*   class NeutrinoEvent : public Event { */
+/*  public: */
+/*   NeutrinoEvent(T this_ev,U spectra1): Event(this_ev,spectra1) { */
+
+/*   } */
+/* }; */
+
+
+
+
+
+
+
+
+/*
+ * Create all available events and print their prices
+ */
+/* void event_information( EventFactory::EventType eventtype,int this_ev,Spectra spectra1 ) */
+/* { */
+/*   Event* event = EventFactory::createEvent(eventtype,this_ev,spectra1); */
+/* 	//        std::cout << "Price of " << eventtype << " is " << event->getPrice() << std::endl; */
+/*         delete event; */
+/* } */
+ 
+
+
+
+
+
+

@@ -56,6 +56,8 @@ outputdir="outputs"; // directory where outputs go
   WHICHPARAMETERIZATION=0;  //
 
   SIMULATION_MODE=0;    // default freq domain simulation
+
+  EVENT_TYPE=0;         // default neutrino only events
     
 
 }
@@ -111,6 +113,9 @@ void Settings::ReadFile(string setupfile) {
               }
               else if (label == "SIMULATION_MODE") {
                   SIMULATION_MODE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "EVENT_TYPE") {
+                  EVENT_TYPE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
               }
           }
       }

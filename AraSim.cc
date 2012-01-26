@@ -153,11 +153,16 @@ int main() {
   cout<<"called Primaries"<<endl;
 
   int whichray = 0; // for test
-  Interaction *interaction1=new Interaction("nu",primary1,settings1,whichray,count1);
-  cout<<"called Interaction1"<<endl;
+//--------------------------------------------------
+//   Interaction *interaction1=new Interaction("nu",primary1,settings1,whichray,count1);
+//   cout<<"called Interaction1"<<endl;
+//-------------------------------------------------- 
 
   Interaction *Evt = new Interaction();
-  cout<<"called Evt"<<endl;
+  cout<<"called Interaction"<<endl;
+
+  Event *event = new Event();
+  cout<<"called Event"<<endl;
 
   Report *report = new Report(detector);
   cout<<"called Evt"<<endl;
@@ -209,23 +214,24 @@ TH1F *hy=new TH1F("hy","hy",100,0.,1.); // histogram for inelasticity
 cout<<"begain looping events!!"<<endl;
    for (int inu=0;inu<settings1->NNU;inu++) { // loop over neutrinos
 
+       cout<<"inu : "<<inu<<endl;
 
+       event = new Event ( settings1, spectra, primary1, icemodel, detector, signal, sec1 );
 
-       Evt = new Interaction(icemodel, detector, settings1, whichray, count1, primary1, spectra); // it will set posnu, nnu, flavor, current, and pnu and store in Evt (Interaction class).
-       cout<<"set new Interaction as Evt"<<endl;
-       cout<<"pnu : "<<Evt->pnu<<endl;
+       cout<<"event->pnu : "<<event->pnu<<endl;
+       cout<<"event->n_interactions : "<<event->n_interactions<<endl;
+       cout<<"event->Nu_Interaction[0].vmmhz1m[0] : "<<event->Nu_Interaction[0].vmmhz1m[0]<<endl;
 
-
-       //Evt->GetSignal ( settings1, primary1, sec1, signal, detector, raysolver, icemodel, hy, inu);
-       Evt->GetSignal ( settings1, primary1, sec1, signal, detector, raysolver, icemodel, hy, inu, report);
+       report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1);
 
        
        for (int i=0;i<1;i++) {  // there are only 1 station for the test!!!
            for (int j=0; j<4;j++) { // 4 strings per station
                for (int k=0;k<4;k++) {  // 4 antennas per string
 
-                   if ( Evt->pickposnu && report->stations[i].strings[j].antennas[k].ray_sol_cnt ) {
-                       cout<<"Evt->pickposnu : "<<Evt->pickposnu<<"\t report->...ray_sol_cnt : "<<report->stations[i].strings[j].antennas[k].ray_sol_cnt<<endl;
+                   if ( event->Nu_Interaction[0].pickposnu && report->stations[i].strings[j].antennas[k].ray_sol_cnt ) {
+                       cout<<"Evt->pickposnu : "<<event->Nu_Interaction[0].pickposnu<<"\t report->...ray_sol_cnt : "<<report->stations[i].strings[j].antennas[k].ray_sol_cnt<<endl;
+                       event->Nu_Interaction[0].posnu.Print();
                        for (int l=0;l<report->stations[i].strings[j].antennas[k].ray_sol_cnt; l++) {    // loop for number of RaySolver solutions
                            for (int m=0;m<detector->GetFreqBin();m++) {
                                cout<<"evt "<<inu<<"; vmmhz for station["<<i<<"].string["<<j<<"].antenna["<<k<<"].vmmhz["<<l<<"]["<<m<<"] : "<<report->stations[i].strings[j].antennas[k].vmmhz[l][m]<<endl;
@@ -279,7 +285,9 @@ cout<<"begain looping events!!"<<endl;
  delete settings1;
  delete count1;
  delete primary1;
- delete interaction1;
+//--------------------------------------------------
+//  delete interaction1;
+//-------------------------------------------------- 
 
  delete spectra;
 
