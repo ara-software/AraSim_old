@@ -7,7 +7,6 @@
 #define REPORT_H
 
 #include <vector>
-#include "Vector.h"
 
 class Detector;
 class Event;
@@ -15,6 +14,7 @@ class RaySolver;
 class Signal;
 class IceModel;
 class Settings;
+class Vector;
 
 using namespace std;
 
@@ -35,9 +35,12 @@ class Antenna_r {
 
         vector <double> view_ang;    //viewing angle
         vector <double> rec_ang;     //receiving angle
-        vector <double> reflect_ang; // surface reflection angle (if 100 : non reflected case)
+        vector <double> reflect_ang; // surface reflection angle (if 100 : no reflection case)
         vector <double> Dist;        //Distance between posnu and antenna
         vector <int> reflection;     // non-reflected : 0,  reflected : 1
+        vector <Position> Pol_vector;   // polarization vector at the antenna
+        //vector <Position> n_H;  // normalized vector for H pol
+        //vector <Position> n_V;  // normalized vector for V pol
 
         // below freq domain simulation output
         vector < vector <double> > vmmhz;  // signal V/m/MHz for each freq bin
@@ -92,6 +95,9 @@ class Report {
 
 
         void Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1);
+
+        Vector GetPolarization (Vector &nnu, Vector &launch_vector);
+        void GetParameters (Position &src, Position &trg, Vector &nnu, double &viewangle, double receive_angle, Vector &launch_vector, Vector &receive_vector);    // get viewangle, launch, receive vectors  (it reads launch angle as a viewangle and returns actual viewangle)
 
         vector <Station_r> stations;
         vector <String_r> strings;

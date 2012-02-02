@@ -42,6 +42,8 @@ class Settings
 
         int EVENT_TYPE;         // 0 : neutrino only events,  1 : blackhole evnet? ... etc
 
+        int WAVE_TYPE;          // 0 : plane wave,  1 : spherical wave
+
 
  // below : values from icemc
 

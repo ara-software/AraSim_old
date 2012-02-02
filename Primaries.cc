@@ -937,7 +937,8 @@ void Interaction::PickNear (IceModel *antarctica, Detector *detector, Settings *
 
     //pick random posnu within boundary 2km radius
     double thisPhi = gRandom->Rndm() * (2*PI);
-    double thisR = gRandom->Rndm() * (range);
+    //double thisR = gRandom->Rndm() * (range);
+    double thisR = pow( gRandom->Rndm(), 0.5 ) * (range);   // for uniform distribution
 
     double X, Y, D;    // X,Y wrt detector core, and it's distance D
     

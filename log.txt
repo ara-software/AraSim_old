@@ -242,3 +242,16 @@ Also modified readTree.cc to work in new structure of AraOut.root file.
 
 ===============================================================================
 
+02/01/12 E. Hong;
+
+Modified Report and IceModel classes.
+Added GetFresnel function in IceModel. It is similar with GetFresnel in icemc.cc but values calculated in GetFresnel is changed from refracted ray to reflected ray as there are only reflected rays in ARA.
+
+Also added GetParameters function in Report.
+GetParameters will calculate the viewangle, launch vector and receive vector.
+
+Minor change in Interaction class, PickNear function.
+Fixed the bug that PickNear more likely pick posnu near the center of the array.
+
+===============================================================================
+

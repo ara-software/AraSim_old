@@ -1412,6 +1412,115 @@ void IceModel::ReadWaterDepth() {
   return;
 } //method ReadWaterDepth
 
+
+
+void IceModel::GetFresnel_slappy (double i_ang, double n1, double n2, double &r, double &t ) {
+
+    //calculate the fresnel coefficient at i_ang incident angle, n1 (incident medium index of refraction), n2.
+    //r for reflection coefficient,
+    //t for transmitted coefficient.
+    //
+
+    if (n1/n2 * sin(i_ang) >= 1.) { // total internal reflection
+        r = 1.;
+        t = 0.;
+    }
+    else {
+        double t_ang = asin( n1/n2 * sin(i_ang) );
+
+        r = sin (i_ang - t_ang) / sin (i_ang + t_ang);
+
+        t = 2.*sin(t_ang) * cos(i_ang) / (sin(i_ang + t_ang));
+    }
+
+    return;
+}
+
+
+void IceModel::GetFresnel_pokey (double i_ang, double n1, double n2, double &r, double &t ) {
+
+    //calculate the fresnel coefficient at i_ang incident angle, n1 (incident medium index of refraction), n2.
+    //r for reflection coefficient,
+    //t for transmitted coefficient.
+    //
+
+    if (n1/n2 * sin(i_ang) >= 1.) { // total internal reflection
+        r = 1.;
+        t = 0.;
+    }
+    else {
+        double t_ang = asin( n1/n2 * sin(i_ang) );
+
+        r = tan (i_ang - t_ang) / tan (i_ang + t_ang);
+
+        t = 2.*sin(t_ang) * cos(i_ang) / (sin(i_ang + t_ang) * cos(i_ang - t_ang) );
+    }
+
+    return;
+}
+
+
+void IceModel::GetFresnel (
+        double launch_angle, double rec_angle,
+        double refl_angle, Position &posnu, Vector &launch_vector, Vector &rec_vector, Settings *settings1, double &fresnel, double &mag,
+        Vector &Pol // will read the polarization at the source and return polarization at the target antenna
+        ) {
+
+    double n1 = 1.35;   // index of refraction at the firn
+    double n2 = 1.;     // index of refraction at the air
+
+    // calculate the magnification factor for plane / spherical wave case
+    if (settings1->WAVE_TYPE == 0) { // plane wave
+        mag = sqrt( tan (rec_angle)*tan(rec_angle) / tan (launch_angle)*tan(launch_angle) );
+    }
+    else if (settings1->WAVE_TYPE == 1) { // spherical wave
+        mag = sqrt( tan (launch_angle)*tan(launch_angle) / tan (rec_angle)*tan(rec_angle) );
+    }
+
+    Vector perp = launch_vector.Cross( posnu ).Unit();    // perp unit vector it should be same in both src and trg
+    Vector src_parallel = perp.Cross( launch_vector ).Unit();
+    Vector trg_parallel = perp.Cross( rec_vector ).Unit();
+
+    double pol_perp_src = Pol * perp;
+    double pol_parallel_src = Pol * src_parallel;
+    double pol_perp_trg=0, pol_parallel_trg=0;
+
+    // check if ray is reflected or not
+    if (refl_angle < PI/2.) {   // the ray is reflected at the surface
+
+        double r_coeff_pokey, r_coeff_slappy;
+
+        if (n1/n2 * sin(launch_angle) >= 1.) {  // total internal reflection case
+            r_coeff_pokey = 1.;
+            r_coeff_slappy = 1.;
+        }
+
+        else {  // there is refracted ray to air
+
+            double t_angle = asin( n1/n2 * sin(launch_angle) ); // transmitted ray (which we don't care) angle
+
+            r_coeff_pokey = tan(launch_angle - t_angle) / tan(launch_angle + t_angle);  // only reflected ray can be a signal
+            r_coeff_slappy = sin(launch_angle - t_angle) / sin(launch_angle + t_angle);
+
+        }
+
+        pol_parallel_trg = r_coeff_pokey * pol_parallel_src;
+        pol_perp_trg = r_coeff_slappy * pol_perp_src;
+
+    }
+    else {      // ray didn't relfected at the surface; no fresnel coeff need to be applied
+        pol_parallel_trg = pol_parallel_src;
+        pol_perp_trg = pol_perp_src;
+    }
+
+    fresnel = sqrt( pow(pol_perp_trg,2) + pow(pol_parallel_trg,2) );
+
+    Pol = (pol_perp_trg * perp + pol_parallel_trg * trg_parallel).Unit();
+
+
+}
+
+
 //void IceModel::FillArraysforTree(double icethck[1200][1000],double elev[1068][869],double lon_ground[1068][869],double lat_ground[1068][869],double lon_ice[1200][1000],double lat_ice[1200][1000],double h20_depth[1200][1000],double lon_water[1200][1000],double lat_water[1200][1000]) {
 // void IceModel::FillArraysforTree(double lon_ground[1068][869],double lat_ground[1068][869],double lon_ice[1200][1000],double lat_ice[1200][1000],double lon_water[1200][1000],double lat_water[1200][1000]) {
  

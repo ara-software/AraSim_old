@@ -58,6 +58,8 @@ outputdir="outputs"; // directory where outputs go
   SIMULATION_MODE=0;    // default freq domain simulation
 
   EVENT_TYPE=0;         // default neutrino only events
+
+  WAVE_TYPE=0;          // default wave type : plane wave (inside the ice)
     
 
 }
@@ -116,6 +118,9 @@ void Settings::ReadFile(string setupfile) {
               }
               else if (label == "EVENT_TYPE") {
                   EVENT_TYPE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "WAVE_TYPE") {
+                  WAVE_TYPE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
               }
           }
       }

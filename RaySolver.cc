@@ -631,11 +631,12 @@ void RaySolver::Solve_Ray (Position &source, Position &target, IceModel *antarct
 			<< std::setw(10) << (it->attenuation*signal)
 			<< std::endl;
 
-                        outputs.resize(3);
+                        outputs.resize(4);
 
                         outputs[0].push_back(it->pathLen);
                         outputs[1].push_back(it->launchAngle);
                         outputs[2].push_back(it->receiptAngle);
+                        outputs[3].push_back(it->reflectionAngle);
                         std::cout<<"outputs[0]["<<sol_no<<"] : "<<outputs[0][sol_no]<<"\n";
                         sol_no++;
 

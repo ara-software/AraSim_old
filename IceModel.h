@@ -153,6 +153,14 @@ public:
 		     int& n_coord) const;
   int Getice_model();
 
+  void GetFresnel_slappy (double i_ang, double n1, double n2, double &r, double &t);
+  void GetFresnel_pokey (double i_ang, double n1, double n2, double &r, double &t);
+void GetFresnel (
+        double launch_angle, double rec_angle,
+        double refl_angle, Position &posnu, Vector &launch_vector, Vector &rec_vector, Settings *settings1, double &fresnel, double &mag,
+        Vector &Pol // will read the polarization at the source and return polarization at the target antenna
+        );
+
   //  void FillArraysforTree(double lon_ground[1068][869],double lat_ground[1068][869],double lon_ice[1200][1000],double lat_ice[1200][1000],double lon_water[1200][1000],double lat_water[1200][1000]);
 
   // below three members are copied from icemc icemodel.

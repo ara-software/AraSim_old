@@ -5,6 +5,7 @@
 #include "signal.hh"
 #include "IceModel.h"
 #include "Settings.h"
+#include "Vector.h"
 
 #include <iostream>
 #include <sstream>
@@ -38,9 +39,6 @@ void Report::Initialize(Detector *detector) {
     stations.clear();
 
 
-    //read Detector information and prepare
-    //
-
     // tmp for push_back vector structure
     Antenna_r tmp_antenna;
     String_r tmp_string;
@@ -59,6 +57,7 @@ void Report::Initialize(Detector *detector) {
             }
         }
         for (int j=0; j<detector->params.number_of_surfaces_station; j++) {
+            // vector surface antennas
             stations[i].surfaces.push_back(tmp_surface);
         }
     }
@@ -72,6 +71,7 @@ void Antenna_r::clear() {   // if any vector variable added in Antenna_r, need t
     reflect_ang.clear();
     Dist.clear();
     reflection.clear();
+    Pol_vector.clear();
     vmmhz.clear();
 
     time.clear();
@@ -86,12 +86,15 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
     int ray_sol_cnt;
     double viewangle;
-    Position launch_vector;
-    Position R1;
-    Position R2;
+    Position launch_vector; // direction of ray at the source
+    Position receive_vector;    // direction of ray at the target antenna
     vector < vector <double> > ray_output;
 
     double vmmhz1m_tmp, vmmhz1m_sum, vmmhz1m_em;    // currently not using vmmhz1m_em
+    Position Pol_vector;                            // polarization vector at the source
+    double mag;                                     // magnification factor. it can vary in case of plane / spherical wave
+    double fresnel;                                 // fresnel factor
+    double tmp; // for non use return values
 
 
            for (int i = 0; i< detector->params.number_of_stations; i++) {
@@ -110,33 +113,59 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                        if (event->Nu_Interaction[0].pickposnu) {    // if posnu is selected inside the antarctic ic:"<<viewangle<<" th_em:"<<d_theta_em[l]<<" th_had:"<<d_theta_had[l]<<" emfrac:"<<emfrac<<" hadfrac:"<<hadfrac<<" vmmhz1m:"<<vmmhz1m[l]<<endl;e
                            
                            raysolver->Solve_Ray(event->Nu_Interaction[0].posnu, detector->stations[i].strings[j].antennas[k], icemodel, ray_output);   // solve ray between source and antenna
-                           //raysolver->Solve_Ray(Evt, detector->stations[i].strings[j].antennas[k], icemodel, ray_output);   // solve ray between source and antenna
                            
-                          //cout<<"solution_toggle : "<<raysolver->solution_toggle<<endl;   
-                            
                            ray_sol_cnt = 0;
                            
-                           //if (ray_solver_toggle) {  // if there are solution from raysolver
                            if (raysolver->solution_toggle) {  // if there are solution from raysolver
-                           //if (raysolver->solution_toggle && ray_solver_toggle) {  // if there are solution from raysolver
                               cout<<"ray_output size : "<<ray_output[0].size()<<endl;
                                
                                while ( ray_sol_cnt < ray_output[0].size() ) {   // for number of soultions (could be 1 or 2)
                                   cout<<"Path length : "<<ray_output[0][ray_sol_cnt]<<"\tView angle : "<<ray_output[1][ray_sol_cnt]<<"\tReceipt angle : "<<ray_output[2][ray_sol_cnt]<<endl;
 
-                                   R1 = detector->stations[i].strings[j].antennas[k];
-                                   R2 = event->Nu_Interaction[0].posnu;
-                                   viewangle = PI/2. - ray_output[1][ray_sol_cnt];
+                                  // set viewangle, launch_vector, receive vectors
+                                  viewangle = ray_output[1][ray_sol_cnt];
+                                  GetParameters ( event->Nu_Interaction[0].posnu,   // posnu
+                                                detector->stations[i].strings[j].antennas[k],   // trg antenna
+                                                event->nnu,                         // nnu
+                                                viewangle,         // inputs launch_angle, returns viewangle
+                                                ray_output[2][ray_sol_cnt],         // receive_angle
+                                                launch_vector, receive_vector );
 
-                                   launch_vector = (R1.Cross( R1.Cross(R2) )).Rotate(viewangle, R1.Cross(R2));
-                                   viewangle = launch_vector.Angle(event->nnu);
-                                   
+
                                    // store information to report
                                    stations[i].strings[j].antennas[k].view_ang.push_back(viewangle);
                                    stations[i].strings[j].antennas[k].rec_ang.push_back(ray_output[2][ray_sol_cnt]);
                                    stations[i].strings[j].antennas[k].Dist.push_back(ray_output[0][ray_sol_cnt]);
+                                   stations[i].strings[j].antennas[k].reflect_ang.push_back(ray_output[3][ray_sol_cnt]);
                                    
                                    stations[i].strings[j].antennas[k].vmmhz.resize(ray_sol_cnt+1);
+
+                                   // calculate the polarization vector at the source
+                                   Pol_vector = GetPolarization (event->nnu, launch_vector);
+
+                                   icemodel->GetFresnel( ray_output[1][ray_sol_cnt],    // launch_angle
+                                                        ray_output[2][ray_sol_cnt],     // rec_angle
+                                                        ray_output[3][ray_sol_cnt],     // reflect_angle
+                                                        event->Nu_Interaction[0].posnu,
+                                                        launch_vector,
+                                                        receive_vector,
+                                                        settings1,
+                                                        fresnel,
+                                                        mag,
+                                                        Pol_vector);                    // input src Pol and return Pol at trg
+
+                                   
+
+                                   if ( ray_output[3][ray_sol_cnt] < PI/2. ) {  // when not reflected at the surface, angle = 100
+                                       stations[i].strings[j].antennas[k].reflection.push_back(1);  // say this is reflected ray
+                                   }
+                                   else {
+                                       stations[i].strings[j].antennas[k].reflection.push_back(0);  // say this is not reflected ray
+                                   }
+
+
+                                   stations[i].strings[j].antennas[k].Pol_vector.push_back(Pol_vector); // this Pol_vector is for the target antenna
+
 
 
                                    vmmhz1m_sum = 0;
@@ -151,8 +180,11 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                        signal->TaperVmMHz( viewangle, event->Nu_Interaction[0].d_theta_em[l], event->Nu_Interaction[0].d_theta_had[l], event->Nu_Interaction[0].emfrac, event->Nu_Interaction[0].hadfrac, vmmhz1m_tmp, vmmhz1m_em);
                                       cout<<"TaperVmMHz (1m at view angle) at "<<l<<"th bin : "<<vmmhz1m_tmp<<endl;
 
-                                      vmmhz1m_tmp = vmmhz1m_tmp / ray_output[0][ray_sol_cnt] * exp(-ray_output[0][ray_sol_cnt]/icemodel->EffectiveAttenuationLength(settings1, event->Nu_Interaction[0].posnu, 0));  // assume whichray = 0, now vmmhz1m_tmp has all factors except for the detector properties (antenna gain, etc)
+
+                                      // multiply all factors for traveling ice
+                                      vmmhz1m_tmp = vmmhz1m_tmp / ray_output[0][ray_sol_cnt] * exp(-0.5*ray_output[0][ray_sol_cnt]/icemodel->EffectiveAttenuationLength(settings1, event->Nu_Interaction[0].posnu, 0)) * mag * fresnel;  // assume whichray = 0, now vmmhz1m_tmp has all factors except for the detector properties (antenna gain, etc)
                                       cout<<"AttenLength : "<<icemodel->EffectiveAttenuationLength(settings1, event->Nu_Interaction[0].posnu, 0)<<endl;
+
 
                                       vmmhz1m_sum += vmmhz1m_tmp;
 
@@ -195,6 +227,48 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
 
 
+
+
+}
+
+
+Vector Report::GetPolarization (Vector &nnu, Vector &launch_vector) {
+    // copy from icemc GetPolarization
+
+    // Want to find a unit vector in the same plane as
+    // nnu and launch_vector, but perpendicular to launch_vector, pointing away
+    // from nnu.
+    
+    // cross nnu with launch_vector to get the direction of the B field.
+    Vector n_bfield = nnu.Cross(launch_vector);
+    
+    // cross b-field with nrf2_iceside to get the polarization vector.
+    Vector n_pol = n_bfield.Cross(launch_vector);
+    
+    n_pol = n_pol.Unit();
+    
+    // check and make sure E-field is pointing in the right direction.
+    if (nnu*launch_vector>0 && n_pol*nnu>0)
+	cout << "error in GetPolarization.  \n";
+    
+    
+    
+    return n_pol;
+} //GetPolarization
+
+
+void Report::GetParameters( Position &src, Position &trg, Vector &nnu, double &viewangle, double receive_angle, Vector &launch_vector, Vector &receive_vector) {
+
+    viewangle = PI/2. - viewangle;  // viewangle was actually launch angle
+
+    launch_vector = (trg.Cross( trg.Cross(src) )).Rotate(viewangle, trg.Cross(src));
+    launch_vector = launch_vector.Unit();
+    viewangle = launch_vector.Angle(nnu);
+
+                                   cout<<"launch_vector angle between R1 (trg) : "<<launch_vector.Angle(trg)<<"\n";
+
+    receive_vector = trg.Rotate( receive_angle, src.Cross(trg) );
+    receive_vector = receive_vector.Unit();
 
 
 }

@@ -203,7 +203,9 @@ cout<<"finish calling secondaries and signal"<<endl;
 
 
 
-TH1F *hy=new TH1F("hy","hy",100,0.,1.); // histogram for inelasticity
+//--------------------------------------------------
+// TH1F *hy=new TH1F("hy","hy",100,0.,1.); // histogram for inelasticity
+//-------------------------------------------------- 
 
 
 
@@ -236,6 +238,10 @@ cout<<"begain looping events!!"<<endl;
                        //cout<<"Evt->pickposnu : "<<event->Nu_Interaction[0].pickposnu<<"\t report->...ray_sol_cnt : "<<report->stations[i].strings[j].antennas[k].ray_sol_cnt<<endl;
                        //event->Nu_Interaction[0].posnu.Print();
                        for (int l=0;l<report->stations[i].strings[j].antennas[k].ray_sol_cnt; l++) {    // loop for number of RaySolver solutions
+                           cout<<"reflection : "<<report->stations[i].strings[j].antennas[k].reflection[l]<<endl;
+                           cout<<"reflect_ang : "<<report->stations[i].strings[j].antennas[k].reflect_ang[l]<<endl;
+                           cout<<"Pol_vector : ";
+                           report->stations[i].strings[j].antennas[k].Pol_vector[l].Print();
                            for (int m=0;m<detector->GetFreqBin();m++) {
                                cout<<"evt "<<inu<<"; vmmhz for station["<<i<<"].string["<<j<<"].antenna["<<k<<"].vmmhz["<<l<<"]["<<m<<"] : "<<report->stations[i].strings[j].antennas[k].vmmhz[l][m]<<endl;
                            }
