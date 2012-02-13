@@ -207,6 +207,7 @@ Signal::Signal(Settings *settings1) : N_DEPTH(1.79) {
   freq_reference=1.E6; // reference frequency in MHz
   pnu_reference=1.E18; // reference energy in MHz
 
+  SetLPM(settings1->LPM);   // set LPM effect on/off value
 
 
   if (WHICHPARAMETERIZATION==1) {

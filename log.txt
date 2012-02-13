@@ -255,3 +255,21 @@ Fixed the bug that PickNear more likely pick posnu near the center of the array.
 
 ===============================================================================
 
+02/10/12 E. Hong;
+
+Fixed some bugs in IceModel->GetFresnel and Report.
+At GetFresnel function, magnification factor was calculated wrong.
+In Report, when ice attenuation factor is applied, there was extra factor 2 applied inside exponential (power <-> field)
+
+===============================================================================
+
+02/13/12 E. Hong;
+
+Fixed bug in initialzation function in signal class.
+Previously there was no initialization function for LPM in signal class.
+Now added LPM in Settings class, and read the LPM value from Settings class and set LPM in signal class.
+
+
+===============================================================================
+
+

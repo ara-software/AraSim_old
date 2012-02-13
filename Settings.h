@@ -44,6 +44,8 @@ class Settings
 
         int WAVE_TYPE;          // 0 : plane wave,  1 : spherical wave
 
+        int LPM;                // 0 : no LPM effect, 1 : with LPM effect(default)
+
 
  // below : values from icemc
 

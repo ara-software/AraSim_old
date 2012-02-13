@@ -60,6 +60,8 @@ outputdir="outputs"; // directory where outputs go
   EVENT_TYPE=0;         // default neutrino only events
 
   WAVE_TYPE=0;          // default wave type : plane wave (inside the ice)
+
+  LPM=1;                //default : enable LPM effect
     
 
 }
@@ -121,6 +123,9 @@ void Settings::ReadFile(string setupfile) {
               }
               else if (label == "WAVE_TYPE") {
                   WAVE_TYPE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "LPM") {
+                  LPM = atof( line.substr(line.find_first_of("=") + 1).c_str() );
               }
           }
       }
