@@ -46,6 +46,10 @@ class Settings
 
         int LPM;                // 0 : no LPM effect, 1 : with LPM effect(default)
 
+        int SECONDARIES;        // 0 : no secondary interaction, 1 : with secondary interactions
+
+        int TAUDECAY;           // 0 : don't account tau decay as secondaries, 1 : let tau decay as secondaries
+
 
  // below : values from icemc
 

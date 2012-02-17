@@ -272,4 +272,15 @@ Now added LPM in Settings class, and read the LPM value from Settings class and 
 
 ===============================================================================
 
+02/17/12 E. Hong;
+
+Added n_trg_slappy and n_trg_pokey variables in Report class for later use.
+Added SECONDARIES and TAUDECAY values in Settings class.
+Default values are SECONDARIES=1, TAUDECAY=1 which mean (work on secondary interactions, and include taudecay to secondary interactions)
+Secondary class now reads Settings when it constructs (read SECONDARIES and TAUDECAY from Settings and apply them).
+Now when we set SECONDARY=0 inside setup.txt file, there will be only "1" number of interactions (events->n_interactions)
+
+
+===============================================================================
+
 

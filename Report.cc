@@ -88,6 +88,8 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
     double viewangle;
     Position launch_vector; // direction of ray at the source
     Position receive_vector;    // direction of ray at the target antenna
+    Vector n_trg_pokey;         // unit pokey vector at the target
+    Vector n_trg_slappy;        // unit slappy vector at the target
     vector < vector <double> > ray_output;
 
     double vmmhz1m_tmp, vmmhz1m_sum, vmmhz1m_em;    // currently not using vmmhz1m_em
@@ -129,7 +131,9 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                                 event->nnu,                         // nnu
                                                 viewangle,         // inputs launch_angle, returns viewangle
                                                 ray_output[2][ray_sol_cnt],         // receive_angle
-                                                launch_vector, receive_vector );
+                                                launch_vector, receive_vector,
+                                                n_trg_slappy, n_trg_pokey);
+
 
 
                                    // store information to report
@@ -182,7 +186,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
 
                                       // multiply all factors for traveling ice
-                                      vmmhz1m_tmp = vmmhz1m_tmp / ray_output[0][ray_sol_cnt] * exp(-0.5*ray_output[0][ray_sol_cnt]/icemodel->EffectiveAttenuationLength(settings1, event->Nu_Interaction[0].posnu, 0)) * mag * fresnel;  // assume whichray = 0, now vmmhz1m_tmp has all factors except for the detector properties (antenna gain, etc)
+                                      vmmhz1m_tmp = vmmhz1m_tmp / ray_output[0][ray_sol_cnt] * exp(-ray_output[0][ray_sol_cnt]/icemodel->EffectiveAttenuationLength(settings1, event->Nu_Interaction[0].posnu, 0)) * mag * fresnel;  // assume whichray = 0, now vmmhz1m_tmp has all factors except for the detector properties (antenna gain, etc)
                                       cout<<"AttenLength : "<<icemodel->EffectiveAttenuationLength(settings1, event->Nu_Interaction[0].posnu, 0)<<endl;
 
 
@@ -257,7 +261,7 @@ Vector Report::GetPolarization (Vector &nnu, Vector &launch_vector) {
 } //GetPolarization
 
 
-void Report::GetParameters( Position &src, Position &trg, Vector &nnu, double &viewangle, double receive_angle, Vector &launch_vector, Vector &receive_vector) {
+void Report::GetParameters( Position &src, Position &trg, Vector &nnu, double &viewangle, double receive_angle, Vector &launch_vector, Vector &receive_vector, Vector &n_trg_slappy, Vector &n_trg_pokey) {
 
     viewangle = PI/2. - viewangle;  // viewangle was actually launch angle
 
@@ -269,6 +273,9 @@ void Report::GetParameters( Position &src, Position &trg, Vector &nnu, double &v
 
     receive_vector = trg.Rotate( receive_angle, src.Cross(trg) );
     receive_vector = receive_vector.Unit();
+
+    n_trg_pokey = trg.Unit();
+    n_trg_slappy = (trg.Cross(src)).Unit();
 
 
 }

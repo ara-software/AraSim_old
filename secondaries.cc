@@ -29,7 +29,7 @@ static Vector y_axis = Vector(0,1,0);
 static Vector z_axis = Vector(0,0,1);
 
 
- Secondaries::Secondaries() {
+ Secondaries::Secondaries(Settings *settings1) {
 	//For Total Tau Survival probability equation
 	//n.b. not in SI units.
 	////from Tau neutrino propagaiton and tau energy loss 2005 Dutta, Huang, & Reno. 
@@ -50,9 +50,10 @@ static Vector z_axis = Vector(0,0,1);
   flavors[1]="numu";
   flavors[2]="nutau"; // the gps path of the anita-lite flight
 
-  SECONDARIES=1; // include secondary interactions
-  TAUDECAY=1; // include secondary interactions
-  // This is just the initialization, it is set in ReadInputs
+  //SECONDARIES=1; // include secondary interactions
+  //TAUDECAY=1; // include secondary interactions
+  SECONDARIES = settings1->SECONDARIES;
+  TAUDECAY = settings1->TAUDECAY;
 
 
     // reading in tauola data file for tau decays
@@ -1020,8 +1021,11 @@ static Vector z_axis = Vector(0,0,1);
   had_secondaries_max=hadfrac;
 
   
+  cout<<"settings1->FORSECKEL = "<<settings1->FORSECKEL<<endl;
   
   if (SECONDARIES==1 && current=="cc" && settings1->FORSECKEL!=1) {
+
+      cout<<"look for second interaction em, had frac"<<endl;
 
     while (1) {
 

@@ -193,7 +193,7 @@ cout<<"called RaySolver"<<endl;
 
 
 cout<<"will call secondaries"<<endl;
-Secondaries *sec1 = new Secondaries;
+Secondaries *sec1 = new Secondaries (settings1);
 cout<<"will call signal"<<endl;
 //Signal *signal = new Signal;
 Signal *signal = new Signal (settings1);
@@ -223,6 +223,7 @@ cout<<"begain looping events!!"<<endl;
        cout<<"nnu : ";
        event->Nu_Interaction[0].nnu.Print();
        cout<<"event->n_interactions : "<<event->n_interactions<<endl;
+       cout<<"nu_flavor : "<<event->nuflavor<<endl;
        cout<<"event->Nu_Interaction[0].vmmhz1m[0] : "<<event->Nu_Interaction[0].vmmhz1m[0]<<endl;
        cout<<"pickposnu : "<<event->Nu_Interaction[0].pickposnu<<endl;
 

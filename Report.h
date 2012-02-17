@@ -97,7 +97,7 @@ class Report {
         void Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1);
 
         Vector GetPolarization (Vector &nnu, Vector &launch_vector);
-        void GetParameters (Position &src, Position &trg, Vector &nnu, double &viewangle, double receive_angle, Vector &launch_vector, Vector &receive_vector);    // get viewangle, launch, receive vectors  (it reads launch angle as a viewangle and returns actual viewangle)
+        void GetParameters (Position &src, Position &trg, Vector &nnu, double &viewangle, double receive_angle, Vector &launch_vector, Vector &receive_vector, Vector &n_trg_slappy, Vector &n_trg_pokey );    // get viewangle, launch, receive vectors  (it reads launch angle as a viewangle and returns actual viewangle)
 
         vector <Station_r> stations;
         vector <String_r> strings;

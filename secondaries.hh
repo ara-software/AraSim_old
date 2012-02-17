@@ -143,7 +143,7 @@ private:
   
 
 public:
-  Secondaries();
+  Secondaries(Settings *settings1);
 
 
   int SECONDARIES;

@@ -62,6 +62,10 @@ outputdir="outputs"; // directory where outputs go
   WAVE_TYPE=0;          // default wave type : plane wave (inside the ice)
 
   LPM=1;                //default : enable LPM effect
+
+  SECONDARIES=1;        //default : enable secondary interactions
+
+  TAUDECAY=1;           //default : let taudecay as secondary interactions
     
 
 }
@@ -126,6 +130,12 @@ void Settings::ReadFile(string setupfile) {
               }
               else if (label == "LPM") {
                   LPM = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "SECONDARIES") {
+                  SECONDARIES = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "TAUDECAY") {
+                  TAUDECAY = atof( line.substr(line.find_first_of("=") + 1).c_str() );
               }
           }
       }

@@ -27,6 +27,8 @@
 
 //SIMULATION_MODE=0;    // 0 for freq domain simulation (old method) 1 for time domain (new method). time domain currently not available
 
+//SECONDARIES=1;        // 1 for with secondary interactions, 0 for without secondary interactions
+
 //
 // Above are default values!
 //
@@ -41,3 +43,4 @@ EXPONENT=30
 
 NNU=10
 DETECTOR=1
+SECONDARIES=0
