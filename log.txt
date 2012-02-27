@@ -283,4 +283,10 @@ Now when we set SECONDARY=0 inside setup.txt file, there will be only "1" number
 
 ===============================================================================
 
+02/27/12 E. Hong;
 
+Bug fixed in IceModel -> GetFresnel, return value of magnification factor.
+from sqrt( tan^2 / tan^2 ) to sqrt( abs(tan) / abs(tan) ) which should have been.
+
+
+===============================================================================

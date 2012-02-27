@@ -1471,10 +1471,10 @@ void IceModel::GetFresnel (
 
     // calculate the magnification factor for plane / spherical wave case
     if (settings1->WAVE_TYPE == 0) { // plane wave
-        mag = sqrt( tan (rec_angle)*tan(rec_angle) / tan (launch_angle)*tan(launch_angle) );
+        mag = sqrt( abs(tan(rec_angle)) / abs(tan (launch_angle)) );
     }
     else if (settings1->WAVE_TYPE == 1) { // spherical wave
-        mag = sqrt( tan (launch_angle)*tan(launch_angle) / tan (rec_angle)*tan(rec_angle) );
+        mag = sqrt( abs(tan (launch_angle)) / abs(tan (rec_angle)) );
     }
 
     Vector perp = launch_vector.Cross( posnu ).Unit();    // perp unit vector it should be same in both src and trg
