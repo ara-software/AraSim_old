@@ -2,6 +2,7 @@
 #include "Tools.h"
 #include "Event.h"
 #include "IceModel.h"
+#include "Settings.h"
 
 #include <iostream>
 #include <fstream>
@@ -25,12 +26,46 @@ Detector::Detector() {
 }
 
 
-Detector::Detector(int mode, IceModel *icesurface) {
+Detector::Detector(Settings *settings1, IceModel *icesurface) {
+//Detector::Detector(int mode, IceModel *icesurface) {
+
+    // set freq_forfft for later use
+    //
+
+    // set freq_forfft array
+    // same with icemc anita class initialization function
+
+    double freqstep=1./(double)(settings1->NFOUR/2)/(settings1->TIMESTEP);
+    
+    //for (int i=0;i<HALFNFOUR/2;i++) {
+    for (int i=0;i<settings1->NFOUR/4;i++) {
+	//--------------------------------------------------
+	// freq_forfft[2*i]=(double)i*freqstep;
+	// freq_forfft[2*i+1]=(double)i*freqstep;
+	//-------------------------------------------------- 
+	freq_forfft.push_back( (double)i*freqstep );    // even numbers
+	freq_forfft.push_back( (double)i*freqstep );    // odd numbers
+	
+    }
+    for (int i=settings1->NFOUR/4;i<settings1->NFOUR/2;i++) {
+	//--------------------------------------------------
+	// freq_forfft[2*i]=(double)i*freqstep;
+	// freq_forfft[2*i+1]=(double)i*freqstep;
+	//-------------------------------------------------- 
+	freq_forfft.push_back( (double)i*freqstep );    // even numbers
+	freq_forfft.push_back( (double)i*freqstep );    // odd numbers
+	
+    }
+    // end of settings freq_forfft
+    
+
+
 
     //set mode ex) mode 0 = testbed,
     // mode 1 = ARA_1
     // mode 2 = ARA_2
     // mode 3 = ARA_37
+    int mode = settings1->DETECTOR;
     Detector_mode = mode;
 
     int string_id = -1;

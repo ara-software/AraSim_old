@@ -37,6 +37,7 @@ class Antenna_r {
         vector <double> rec_ang;     //receiving angle
         vector <double> reflect_ang; // surface reflection angle (if 100 : no reflection case)
         vector <double> Dist;        //Distance between posnu and antenna
+        vector <double> arrival_time;        //time from posnu to antenna (t:0 at posnu)
         vector <int> reflection;     // non-reflected : 0,  reflected : 1
         vector <Position> Pol_vector;   // polarization vector at the antenna
         //vector <Position> n_H;  // normalized vector for H pol
@@ -45,6 +46,7 @@ class Antenna_r {
         // below freq domain simulation output
         vector < vector <double> > vmmhz;  // signal V/m/MHz for each freq bin
         //
+        vector < vector <double> > Vfft;  // signal V preparing for FFT
 
 
         // below time domain simulation output
@@ -52,7 +54,12 @@ class Antenna_r {
         vector < vector <double> > Ax;     // vector potential x component
         vector < vector <double> > Ay;
         vector < vector <double> > Az;
+        vector < vector <double> > V;   // volt signal at the backend of antenna (from fft)
         //
+        //
+        vector <double> PeakV;  // peak voltage in time domain
+        vector <int> Rank;      // rank of peak voltage between antennas (Rank = 0 for 0 signal)
+
         
         void clear ();  // clear all vector format information for next event
 
@@ -89,15 +96,35 @@ class Report {
                     //                                         1 : 1 or more antenna trg
 
         Report ();
-        Report (Detector *detector);
+        Report (Detector *detector, Settings *settings1);
 
-        void Initialize (Detector *detector);
+        void Initialize (Detector *detector, Settings *settings1);
 
 
         void Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1);
 
         Vector GetPolarization (Vector &nnu, Vector &launch_vector);
+
         void GetParameters (Position &src, Position &trg, Vector &nnu, double &viewangle, double receive_angle, Vector &launch_vector, Vector &receive_vector, Vector &n_trg_slappy, Vector &n_trg_pokey );    // get viewangle, launch, receive vectors  (it reads launch angle as a viewangle and returns actual viewangle)
+
+        double GaintoHeight(double gain, double freq, double n_medium);
+
+        void ApplyAntFactors(Settings *settings1, double heff, Vector &n_trg_pokey, Vector &n_trg_slappy, Vector &Pol_vector, int ant_type, double &vmmhz);
+
+        void GetAngleAnt(Vector &rec_vector, Position &antenna, double &ant_theta, double &ant_phi);
+
+        void MakeArraysforFFT(Settings *settings1, Detector *detector, vector <double> &vsignal_array, double *vsignal_forfft);
+
+        void MakeNoiseArraysforFFT(Settings *settings1, double vnoise, double *vnoisesignal_forfft);
+
+
+        void ReadFilter (string filename, int &N, vector <double> &xfreq, vector <double> &ygain);
+
+        double FindPeak (double *waveform, int n);  // same with icemc; trigger->AntTrigger::FindPeak
+
+        void SetRank(Detector *detector); // set rank (rank of strength of signal at each antenna)
+
+
 
         vector <Station_r> stations;
         vector <String_r> strings;

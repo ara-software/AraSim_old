@@ -22,6 +22,7 @@ using namespace std;
 
 class Detector;
 class IceModel;
+class Settings;
 
 //struct Parameters {
 //class Parameters : public TObject {
@@ -159,9 +160,13 @@ class Detector {
     public:
         Parameters params;
         Detector ();    //default constructor
-        Detector (int mode, IceModel *icesurface);
+        Detector (Settings *settings1, IceModel *icesurface);
+        //Detector (int mode, IceModel *icesurface);
         vector <ARA_station> stations;
         vector <Antenna_string> strings;
+
+        vector <double> freq_forfft;
+
         double GetGain(double freq, double theta, double phi, int ant_m, int ant_o);    //read antenna gain at certain angle, certain type, and certain orientation
         double GetGain(double freq, double theta, double phi, int ant_m);   //read antenna gain at certain angle, certain type. (orientation : default)
         

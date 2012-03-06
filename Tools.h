@@ -68,6 +68,9 @@ public:
   static void GetNumbersAsStringArray(ifstream& fin, ofstream& fout,vector<string>& vnumbers, int nelements);
   static void GetNext2NumbersAsString(ifstream& fin,ofstream& fout,string& number1,string& number2, string& stherest);
   static void GetNextNumberAsString(ifstream& fin,ofstream& fout,string& number);
+
+  static void SimpleLinearInterpolation(int n1, double *x1, double *y1, int n2, double *x2, double *y2 );
+
 protected:
 
 };

@@ -66,6 +66,12 @@ outputdir="outputs"; // directory where outputs go
   SECONDARIES=1;        //default : enable secondary interactions
 
   TAUDECAY=1;           //default : let taudecay as secondary interactions
+
+  TIMESTEP=(1./2.6)*1.E-9;  // default, same with icemc
+
+  PHASE=90.;            // default : 90 deg phase (it means all imaginary values)
+
+  NFOUR=1024;           // default : 1024, same as in icemc
     
 
 }

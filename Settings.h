@@ -50,6 +50,12 @@ class Settings
 
         int TAUDECAY;           // 0 : don't account tau decay as secondaries, 1 : let tau decay as secondaries
 
+        double TIMESTEP;        // time step after fft. t domain bin width
+
+        double PHASE;           // phase factor for fft. default 90 deg (in deg !!)
+
+        int NFOUR;              // number of total bins for FFT. has to be power of 2 values
+
 
  // below : values from icemc
 

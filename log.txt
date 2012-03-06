@@ -290,3 +290,24 @@ from sqrt( tan^2 / tan^2 ) to sqrt( abs(tan) / abs(tan) ) which should have been
 
 
 ===============================================================================
+03/06/12 E. Hong;
+
+Added Rank in Report->stations.strings.antennas
+When Report->Connect_Interaction_Detector runs, it will call SetRank and set Rank values for 1st ray solve solutions.
+You can find out the Rank values when you run readTree.
+readTree will printout the Rank for all antennas at certain event number.
+
+Added SimpleLinearInterpolation function in Tools class.
+It will read arrays (which is not evenly spaced bin like digitized array) and return new array which x values are set as you want.
+
+Filter gain data file (which I got from digitizing from the plot) is added to /data/filter.csv
+As a test, AraSim will make a plot of the Filter with Tools::SimpleLinearInterpolation.
+
+Some minor changes in Detector, RaySolver, Settings class.
+
+
+===============================================================================
+
+
+
+

@@ -112,6 +112,11 @@ cout<<"random energy from Spectra : "<<spectra->GetNuEnergy()<<endl;
 
 cout<<"Detector static const double freq_init : "<<detector->Getfreq_init()<<endl;
 
+
+cout<<"Detector -> freq_forfft[0] : "<<detector->freq_forfft[0]<<endl;
+cout<<"Detector -> freq_forfft[9] : "<<detector->freq_forfft[9]<<endl;
+cout<<"Detector -> freq_forfft[100] : "<<detector->freq_forfft[100]<<endl;
+
 cout<<"icemodel surface : "<<icemodel->Surface(0.,0.)<<endl;
 
 AraTree2->GetEvent(0);
@@ -626,6 +631,10 @@ GEdN = new TGraph( spectra->GetE_bin(), spectra->Getenergy(), spectra->GetEdNdEd
 
 TCanvas *c2 = new TCanvas("c2","A Simple Graph Example",200,10,1000,700);
 c2 -> cd();
+c2->SetLogy();
+GEdN->SetTitle("Neutrino flux (ESS)");
+GEdN->GetHistogram()->SetXTitle("log E");
+GEdN->GetHistogram()->SetYTitle("Flux EdNdEdAdt (cm^2*str*s)");
 GEdN->Draw("al");
 
 //--------------------------------------------------
@@ -741,9 +750,118 @@ cGeo -> Print("GEOID1.pdf");
 //////////////////////////////////////////////////
 
 
+int evt_n, station_n, string_n, antenna_n, ray_sol_n;
+
+evt_n = 0;
+station_n = 0;
+string_n = 1;
+//string_n = 0;
+antenna_n = 1;
+//antenna_n = 0;
+ray_sol_n = 0;
+
+AraTree2->GetEvent(evt_n);
+
+double time[settings->NFOUR/2];
+double V[settings->NFOUR/2];
+double V_org[settings->NFOUR/2];
+
+cout<<"view angle : "<<report->stations[station_n].strings[string_n].antennas[antenna_n].view_ang[ray_sol_n]*DEGRAD<<endl;
+
+for (int i=0;i<settings->NFOUR/2;i++) {
+    time[i] = report->stations[station_n].strings[string_n].antennas[antenna_n].time[ray_sol_n][i];
+    V_org[i] = report->stations[station_n].strings[string_n].antennas[antenna_n].V[ray_sol_n][i];
+    if (i<settings->NFOUR/4) {
+        V[i+settings->NFOUR/4] = report->stations[station_n].strings[string_n].antennas[antenna_n].V[ray_sol_n][i];
+    }
+    else {
+        V[i-settings->NFOUR/4] = report->stations[station_n].strings[string_n].antennas[antenna_n].V[ray_sol_n][i];
+    }
+}
+
+
+TGraph *G_V_time;
+G_V_time = new TGraph(settings->NFOUR/2, time, V);
+
+TGraph *G_V_time_org;
+G_V_time_org = new TGraph(settings->NFOUR/2, time, V_org);
+
+TCanvas *cV_time = new TCanvas("cV_time","V(t)", 200,10,1400,700);
+cV_time->Divide(2,1);
+cV_time -> cd(1);
+G_V_time_org->SetTitle("V(t) for evt %d, station[%d].string[%d].antenna[%d] (org)");
+G_V_time_org->GetHistogram()->SetXTitle("time (s)");
+G_V_time_org->GetHistogram()->SetYTitle("Voltage (V)");
+G_V_time_org->Draw("al");
+
+cV_time -> cd(2);
+G_V_time->SetTitle("V(t) for evt 0, station[0].string[0].antenna[0] (fixed?)");
+G_V_time->GetHistogram()->SetXTitle("time (s)");
+G_V_time->GetHistogram()->SetYTitle("Voltage (V)");
+G_V_time->Draw("al");
+
+cV_time -> Print("V_time_evt0.pdf");
+
+
+TGraph *G_V_time_zoom;
+G_V_time_zoom = new TGraph(settings->NFOUR/2, time, V);
+
+TCanvas *cV_time_zoom = new TCanvas("cV_time_zoom","V(t) for evt 0, station0.string0.antenna0",200,10,1400,700);
+cV_time_zoom->Divide(2,1);
+cV_time_zoom -> cd(1);
+G_V_time->Draw("al");
+
+cV_time_zoom -> cd(2);
+G_V_time_zoom->SetTitle("V(t) for evt 0, station[0].string[0].antenna[0] (Zoomed)");
+G_V_time_zoom->GetHistogram()->SetXTitle("time (s)");
+G_V_time_zoom->GetHistogram()->SetYTitle("Voltage (V)");
+G_V_time_zoom->GetXaxis()->SetLimits(8E-8,12E-8);
+G_V_time_zoom->Draw("al");
+
+cV_time_zoom -> Print("V_time_evt0_zoom.pdf");
 
 
 
+int N_freq;
+N_freq = detector->GetFreqBin();
+
+double freq[N_freq];
+double vmmhz_freq[N_freq];
+
+
+
+for (int i=0;i<N_freq;i++) {
+    freq[i] = detector->GetFreq(i); // freq in Hz
+    vmmhz_freq[i] = report->stations[station_n].strings[string_n].antennas[antenna_n].vmmhz[ray_sol_n][i];
+}
+
+
+TGraph *G_vmmhz_freq;
+G_vmmhz_freq = new TGraph(N_freq, freq, vmmhz_freq);
+
+
+TCanvas *cVmMHz = new TCanvas("cVmMHz","V/m/MHz", 200,10,1000,700);
+
+cVmMHz -> cd();
+cVmMHz -> SetLogy();
+
+G_vmmhz_freq->SetTitle("VmMHz for evt 0, station[0].string[0].antenna[0] (before antenna)");
+G_vmmhz_freq->GetHistogram()->SetXTitle("freq (Hz)");
+G_vmmhz_freq->GetHistogram()->SetYTitle("Signal (V/m/MHz)");
+G_vmmhz_freq->Draw("al");
+
+cVmMHz -> Print("VmMHz_evt0.pdf");
+
+
+AraTree2->GetEvent(3);
+for (int i=0; i<detector->params.number_of_stations; i++) {
+    for (int j=0; j<detector->params.number_of_strings_station; j++) {
+        for (int k=0; k<detector->params.number_of_antennas_string; k++) {
+            cout<<"Rank of stations["<<i<<"].strings["<<j<<"].antennas["<<k<<"] = "<<report->stations[i].strings[j].antennas[k].Rank[0]<<endl;
+            cout<<"PeakV of stations["<<i<<"].strings["<<j<<"].antennas["<<k<<"] = "<<report->stations[i].strings[j].antennas[k].PeakV[0]<<endl;
+        }
+    }
+}
 
 
 

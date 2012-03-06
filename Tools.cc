@@ -482,3 +482,52 @@ void Tools::NormalTimeOrdering(const int n,double *volts) {
   }
 
 }
+
+void Tools::SimpleLinearInterpolation(int n1, double *x1, double *y1, int n2, double *x2, double *y2 ) {    // reads n1 array values x1, y1 and do simple linear interpolation and return n2 array with values x2, y2.
+    // if interploated array has wider range (x values) than original array, it will use the first original value
+    //
+
+    int first=0;    // first x2 array which is bigger than x1[0]
+    int last=0;       // last x2 array which is smaller than x1[n1-1]
+
+    int cnt = 0;
+    
+    for (int i=0; i<n2; i++) {
+        if (x2[i] < x1[0] ) {
+            first++;
+        }
+        else if (x2[i] > x1[n1-1]) {
+            last++;
+        }
+    }
+
+
+    for (int i=0; i<n2; i++) {
+
+        if (i<first) {  // if x2 has smaller x values than x1, just use x1[0] value
+            y2[i] = y1[0];
+        }
+        else if (i>n2-last-1) {   // if x2 has bigger x values than x1, just use x1[n1-1] value
+            y2[i] = y1[n1-1];
+        }
+
+        else {
+            cnt=-1;
+            for (int j=0; j<n1; j++) {
+                if (x2[i] < x1[j] && cnt==-1) {
+                    cnt = j;
+                }
+            }
+
+            y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+
+        }
+    }
+
+
+}
+
+
+
+
+

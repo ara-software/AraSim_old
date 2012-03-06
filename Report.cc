@@ -6,6 +6,7 @@
 #include "IceModel.h"
 #include "Settings.h"
 #include "Vector.h"
+#include "Tools.h"
 
 #include <iostream>
 #include <sstream>
@@ -24,15 +25,15 @@ ClassImp(Station_r);
 Report::Report() {
 }
 
-Report::Report(Detector *detector) {
+Report::Report(Detector *detector, Settings *settings1) {
     // Default constructor
 
-    Initialize(detector);
+    Initialize(detector, settings1);
     
 }
 
 
-void Report::Initialize(Detector *detector) {
+void Report::Initialize(Detector *detector, Settings *settings1) {
     
     // clear information stored in previous event
     //
@@ -63,6 +64,8 @@ void Report::Initialize(Detector *detector) {
     }
 
 
+
+
 }
 
 void Antenna_r::clear() {   // if any vector variable added in Antenna_r, need to be added here!
@@ -70,14 +73,21 @@ void Antenna_r::clear() {   // if any vector variable added in Antenna_r, need t
     rec_ang.clear();
     reflect_ang.clear();
     Dist.clear();
+    arrival_time.clear();
     reflection.clear();
     Pol_vector.clear();
     vmmhz.clear();
+    Vfft.clear();
 
     time.clear();
     Ax.clear();
     Ay.clear();
     Az.clear();
+
+    V.clear();
+
+    PeakV.clear();
+    Rank.clear();
 
 }
 
@@ -97,6 +107,10 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
     double mag;                                     // magnification factor. it can vary in case of plane / spherical wave
     double fresnel;                                 // fresnel factor
     double tmp; // for non use return values
+
+    double freq_tmp, heff, antenna_theta, antenna_phi;  // values needed for apply antenna gain factor and prepare fft, trigger
+    double volts_forfft[settings1->NFOUR/2];       // array for fft
+    //double volts_forfft[settings1->NFOUR/2]={0.};       // array for fft
 
 
            for (int i = 0; i< detector->params.number_of_stations; i++) {
@@ -122,7 +136,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                               cout<<"ray_output size : "<<ray_output[0].size()<<endl;
                                
                                while ( ray_sol_cnt < ray_output[0].size() ) {   // for number of soultions (could be 1 or 2)
-                                  cout<<"Path length : "<<ray_output[0][ray_sol_cnt]<<"\tView angle : "<<ray_output[1][ray_sol_cnt]<<"\tReceipt angle : "<<ray_output[2][ray_sol_cnt]<<endl;
+                                  cout<<"Path length : "<<ray_output[0][ray_sol_cnt]<<"\tView angle : "<<ray_output[1][ray_sol_cnt]<<"\tReceipt angle : "<<ray_output[2][ray_sol_cnt]<<"\tpath time : "<<ray_output[4][ray_sol_cnt]<<endl;
 
                                   // set viewangle, launch_vector, receive vectors
                                   viewangle = ray_output[1][ray_sol_cnt];
@@ -135,14 +149,25 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                                 n_trg_slappy, n_trg_pokey);
 
 
+                                  // check viewangle that if ray in near Cherenkov cone
+                                  //
+                                  if (viewangle*DEGRAD >55. && viewangle*DEGRAD <57.) { // if viewangle is 56 deg +- 1 deg
+                                      cout<<"near cone! view angle : "<<viewangle*DEGRAD<<"station["<<i<<"].string["<<j<<"].antenna["<<k<<"] with  ray_sol_cnt : "<<ray_sol_cnt<<endl;
+                                  }
 
                                    // store information to report
                                    stations[i].strings[j].antennas[k].view_ang.push_back(viewangle);
                                    stations[i].strings[j].antennas[k].rec_ang.push_back(ray_output[2][ray_sol_cnt]);
                                    stations[i].strings[j].antennas[k].Dist.push_back(ray_output[0][ray_sol_cnt]);
+                                   stations[i].strings[j].antennas[k].arrival_time.push_back(ray_output[4][ray_sol_cnt]);
                                    stations[i].strings[j].antennas[k].reflect_ang.push_back(ray_output[3][ray_sol_cnt]);
                                    
                                    stations[i].strings[j].antennas[k].vmmhz.resize(ray_sol_cnt+1);
+                                   
+                                   stations[i].strings[j].antennas[k].Vfft.resize(ray_sol_cnt+1);
+
+                                   stations[i].strings[j].antennas[k].V.resize(ray_sol_cnt+1);
+                                   stations[i].strings[j].antennas[k].time.resize(ray_sol_cnt+1);
 
                                    // calculate the polarization vector at the source
                                    Pol_vector = GetPolarization (event->nnu, launch_vector);
@@ -174,6 +199,13 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                                    vmmhz1m_sum = 0;
 
+
+                                   GetAngleAnt(receive_vector, detector->stations[i].strings[j].antennas[k], antenna_theta, antenna_phi);   // get theta, phi for signal ray arrived at antenna
+                                   cout<<"antenna theta : "<<antenna_theta<<"  phi : "<<antenna_phi<<endl;  
+
+
+
+
                                    for (int l=0; l<detector->GetFreqBin(); l++) {   // for detector freq bin numbers
 
 
@@ -196,9 +228,46 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                        stations[i].strings[j].antennas[k].vmmhz[ray_sol_cnt].push_back( vmmhz1m_tmp );
 
 
+                                       freq_tmp = detector->GetFreq(l); // freq in Hz
+
+                                       heff = GaintoHeight(detector->stations[i].strings[j].antennas[k].GetG(detector, freq_tmp*1.E-6, // to MHz
+                                                   antenna_theta, antenna_phi), 
+                                                   freq_tmp, icemodel->GetN(detector->stations[i].strings[j].antennas[k]) );
+                                       cout<<"gain : "<<detector->stations[i].strings[j].antennas[k].GetG(detector, freq_tmp*1.E-6, antenna_theta, antenna_phi)<<endl;
+                                       cout<<"heff : "<<heff<<endl;
+
+                                       ApplyAntFactors(settings1, heff, n_trg_pokey, n_trg_slappy, Pol_vector, detector->stations[i].strings[j].antennas[k].type, vmmhz1m_tmp);
+
+                                       stations[i].strings[j].antennas[k].Vfft[ray_sol_cnt].push_back( vmmhz1m_tmp );
+
+
+
                                    }// end for freq bin
                                    
                                    cout<<"station["<<i<<"].strings["<<j<<"].antennas["<<k<<"].vmmhz1m["<<ray_sol_cnt<<"][0] : "<<stations[i].strings[j].antennas[k].vmmhz[ray_sol_cnt][0]<<endl;
+
+                                   MakeArraysforFFT(settings1, detector, stations[i].strings[j].antennas[k].Vfft[ray_sol_cnt], volts_forfft);
+
+                                   // now, after realft, volts_forfft is time domain signal at backend of antenna
+                                   Tools::realft(volts_forfft,-1,settings1->NFOUR/2);
+                                   //Tools::realft(volts_forfft,1,settings1->NFOUR/2);
+                                   
+                                   stations[i].strings[j].antennas[k].PeakV.push_back( FindPeak(volts_forfft, settings1->NFOUR/2) );
+
+                                   // test; noise from flat spectrum Kb * T
+                                   // T_ice = 240K
+                                   double T_ice = 240.;
+                                   double noise_V = sqrt( KBOLTZ * T_ice * 50. /2./(settings1->TIMESTEP));  // similar with ApplyAntFactors. /2. for SURF, TURF divide 3dB, for the bandwidth 1./TIMESTEP
+                                   // I don't understand why we apply 1./TIMESTEP instead of 1/( (NFOUR/2) * TIMESTEP ) which is actual d_freq in FFT freq domain.
+
+                                   //MakeNoiseArraysforFFT(settings1, detector);
+
+
+                                   for (int n=0; n<settings1->NFOUR/2; n++) {
+                                       stations[i].strings[j].antennas[k].V[ray_sol_cnt].push_back( volts_forfft[n] );
+                                       stations[i].strings[j].antennas[k].time[ray_sol_cnt].push_back( (double)n * settings1->TIMESTEP );
+                                   }
+                                   
                                        
 
                                    ray_sol_cnt++;
@@ -230,10 +299,12 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
            }// for number_of_stations
 
 
+           // after all values are stored in Report, set ranking of signal between antennas
+           SetRank(detector);
 
 
 
-}
+}   // end Connect_Interaction_Detector
 
 
 Vector Report::GetPolarization (Vector &nnu, Vector &launch_vector) {
@@ -279,6 +350,366 @@ void Report::GetParameters( Position &src, Position &trg, Vector &nnu, double &v
 
 
 }
+
+
+double Report::GaintoHeight(double gain, double freq, double n_medium) {
+
+
+    // from gain=4*pi*A_eff/lambda^2
+    // and h_eff=2*sqrt(A_eff*Z_rx/Z_air)
+    // gain is unitless value
+    
+    return 2*sqrt(gain/4/PI*CLIGHT*CLIGHT/(freq*freq*n_medium*n_medium)*Zr/(Z0/n_medium));  // n_medium parts are changed from icemc(I believe this is correct one; E. Hong)
+}
+
+
+void Report::ApplyAntFactors(Settings *settings1, double heff, Vector &n_trg_pokey, Vector &n_trg_slappy, Vector &Pol_vector, int ant_type, double &vmmhz) {  // vmmhz is input and output. output will have some antenna factors on it
+
+    double pol_factor;
+
+    if (ant_type == 0) {    // if v pol
+        pol_factor = n_trg_pokey * Pol_vector;
+    }
+    else if (ant_type == 1) {   // if h pol
+        pol_factor = n_trg_slappy * Pol_vector;
+    }
+
+    // apply 3dB spliter, d nu to prepare FFT
+    // now actually vmmhz is not V/m/MHz but V/m unit
+    vmmhz = vmmhz/sqrt(2.)/(settings1->TIMESTEP*1.E6); //sqrt(2) for 3dB spliter for TURF, SURF
+
+
+    // apply antenna effective height and 0.5 (to calculate power with heff), and polarization factor
+    // not vmmhz is actually V unit
+    vmmhz = vmmhz * 0.5 * heff * abs(pol_factor);
+
+    // now we have to use MakeArraysforFFT to change signal arrays for FFT
+}
+
+
+void Report::GetAngleAnt(Vector &rec_vector, Position &antenna, double &ant_theta, double &ant_phi) {   //ant_theta and ant_phi is in degree 
+
+    // need to fix some parts.
+    // currently phi is not correct.
+    // I think we have to actually rotate (0,-1,0) to antenna location and get phi from rotated (0,-1,0)
+    ant_theta = rec_vector.Angle(antenna)*DEGRAD;
+
+    Vector unit0_10;
+    Vector unit100;
+    unit0_10.SetXYZ(0,-1,0);
+    unit100.SetXYZ(1,0,0);
+    Vector proj;
+
+    proj = antenna.Cross( rec_vector.Cross(antenna) );
+
+    if (proj * unit100 > 0.) {  // rec_vector is pointing to positive x direction
+        ant_phi = 360. - ( proj.Angle(unit0_10) )*DEGRAD;
+    }
+    else {
+        ant_phi = proj.Angle(unit0_10) * DEGRAD;
+    }
+
+}
+
+
+    
+
+void Report::MakeArraysforFFT(Settings *settings1, Detector *detector, vector <double> &vsignal_array, double *vsignal_forfft) {
+
+
+
+    // from icemc, anita class MakeArraysforFFT
+
+    int NFOUR = settings1->NFOUR;
+    Tools::Zero(vsignal_forfft,NFOUR/2);
+    
+    double previous_value_e_even=0.;
+    double previous_value_e_odd=0.;
+    int count_nonzero=0;
+    int iprevious=0;
+    int ifirstnonzero=-1;
+    int ilastnonzero=2000;
+    //for (int i=0;i<NFREQ;i++) {
+    for (int i=0;i<detector->GetFreqBin();i++) {
+	
+	// freq_forfft has NFOUR/2 elements because it is meant to cover real and imaginary values
+	// but there are only NFOUR/4 different values
+	// it's the index among the NFOUR/4 that we're interested in
+	int ifour=Tools::Getifreq(detector->GetFreq(i),detector->freq_forfft[0],detector->freq_forfft[NFOUR/2-1],NFOUR/4);
+	
+	if (ifour!=-1 && 2*ifour+1<NFOUR/2) {
+	    count_nonzero++;
+	    if (ifirstnonzero==-1)
+		ifirstnonzero=ifour;
+	    
+	    vsignal_forfft[2*ifour]=vsignal_array[i]*2/((double)NFOUR/2); // phases is 90 deg.
+	    
+	    //      cout << "ifour, vsignal is " << ifour << " " << vsignal_e_forfft[2*ifour] << "\n";
+	    
+	    vsignal_forfft[2*ifour+1]=vsignal_array[i]*2/((double)NFOUR/2); // phase is 90 deg.
+	    // the 2/(nfour/2) needs to be included since were using Tools::realft with the -1 setting
+	    
+	    // how about we interpolate instead of doing a box average
+	    
+	    for (int j=iprevious+1;j<ifour;j++) {
+		vsignal_forfft[2*j]=previous_value_e_even+(vsignal_forfft[2*ifour]-previous_value_e_even)*(double)(j-iprevious)/(double)(ifour-iprevious);
+		//	cout << "j, vsignal is " << j << " " << vsignal_e_forfft[2*j] << "\n";
+		
+		vsignal_forfft[2*j+1]=previous_value_e_odd+(vsignal_forfft[2*ifour+1]-previous_value_e_odd)*(double)(j-iprevious)/(double)(ifour-iprevious);
+	    }
+	    
+	    ilastnonzero=ifour;
+	    iprevious=ifour;
+	    previous_value_e_even=vsignal_forfft[2*ifour];
+	    previous_value_e_odd=vsignal_forfft[2*ifour+1];
+	}
+	
+    } // end loop over nfreq
+    
+    //  cout << "ifirstnonzero, ilastnonzero are " << ifirstnonzero << " " << ilastnonzero << "\n";
+    //cout << "ratio is " << (double)count_nonzero/(double)(ilastnonzero-ifirstnonzero) << "\n";
+    for (int j=0;j<NFOUR/4;j++) {
+	vsignal_forfft[2*j]*=sqrt((double)count_nonzero/(double)(ilastnonzero-ifirstnonzero));
+	vsignal_forfft[2*j+1]*=sqrt((double)count_nonzero/(double)(ilastnonzero-ifirstnonzero));
+    }
+    
+    //  Tools::InterpolateComplex(vsignal_e_forfft,NFOUR/4);
+    //Tools::InterpolateComplex(vsignal_h_forfft,NFOUR/4);
+    for (int ifour=0;ifour<NFOUR/4;ifour++) {
+
+
+
+	vsignal_forfft[2*ifour]*=cos(settings1->PHASE*PI/180.);
+	vsignal_forfft[2*ifour+1]*=sin(settings1->PHASE*PI/180.);
+	
+	//--------------------------------------------------
+	// if (!PULSER) {
+	//     
+	//     vsignal_forfft[2*ifour]*=cos(phase*PI/180.);
+	//     vsignal_forfft[2*ifour+1]*=sin(phase*PI/180.);
+	//     
+	//     
+	// }
+	// else {
+	//     vsignal_forfft[2*ifour]*=cos(v_phases[ifour]*PI/180.);
+	//     vsignal_forfft[2*ifour+1]*=sin(v_phases[ifour]*PI/180.);
+	//     
+	// }	  	  	  
+	//-------------------------------------------------- 
+	
+	
+    }
+    
+    
+}
+
+
+
+
+//void Report::MakeArraysforFFT(Settings *settings1, Detector *detector, vector <double> &vsignal_array, double *vsignal_forfft) {
+void Report::MakeNoiseArraysforFFT(Settings *settings1, double vnoise, double *vnoisesignal_forfft) {
+
+
+
+    // from icemc, anita class MakeArraysforFFT
+
+    int NFOUR = settings1->NFOUR;
+    Tools::Zero(vnoisesignal_forfft,NFOUR/2);
+
+    double rand_phase;      // randomly generated phase [0,2PI]
+    
+    double previous_value_e_even=0.;
+    double previous_value_e_odd=0.;
+    int count_nonzero=0;
+    int iprevious=0;
+    int ifirstnonzero=-1;
+    int ilastnonzero=2000;
+    //for (int i=0;i<NFREQ;i++) {
+    for (int ifour=0;ifour<NFOUR/4;ifour++) {
+	
+	// freq_forfft has NFOUR/2 elements because it is meant to cover real and imaginary values
+	// but there are only NFOUR/4 different values
+	// it's the index among the NFOUR/4 that we're interested in
+        //
+	//int ifour=Tools::Getifreq(detector->GetFreq(i),detector->freq_forfft[0],detector->freq_forfft[NFOUR/2-1],NFOUR/4);
+	
+	if (ifour!=-1 && 2*ifour+1<NFOUR/2) {
+	    count_nonzero++;
+	    if (ifirstnonzero==-1)
+		ifirstnonzero=ifour;
+	    
+	    vnoisesignal_forfft[2*ifour]=vnoise*2/((double)NFOUR/2); // phases is 90 deg.
+	    
+	    //      cout << "ifour, vsignal is " << ifour << " " << vsignal_e_forfft[2*ifour] << "\n";
+	    
+	    vnoisesignal_forfft[2*ifour+1]=vnoise*2/((double)NFOUR/2); // phase is 90 deg.
+	    // the 2/(nfour/2) needs to be included since were using Tools::realft with the -1 setting
+	    
+	    // how about we interpolate instead of doing a box average
+	    
+	    for (int j=iprevious+1;j<ifour;j++) {
+		vnoisesignal_forfft[2*j]=previous_value_e_even+(vnoisesignal_forfft[2*ifour]-previous_value_e_even)*(double)(j-iprevious)/(double)(ifour-iprevious);
+		//	cout << "j, vsignal is " << j << " " << vsignal_e_forfft[2*j] << "\n";
+		
+		vnoisesignal_forfft[2*j+1]=previous_value_e_odd+(vnoisesignal_forfft[2*ifour+1]-previous_value_e_odd)*(double)(j-iprevious)/(double)(ifour-iprevious);
+	    }
+	    
+	    ilastnonzero=ifour;
+	    iprevious=ifour;
+	    previous_value_e_even=vnoisesignal_forfft[2*ifour];
+	    previous_value_e_odd=vnoisesignal_forfft[2*ifour+1];
+	}
+	
+    } // end loop over nfreq
+    
+    //  cout << "ifirstnonzero, ilastnonzero are " << ifirstnonzero << " " << ilastnonzero << "\n";
+    //cout << "ratio is " << (double)count_nonzero/(double)(ilastnonzero-ifirstnonzero) << "\n";
+    for (int j=0;j<NFOUR/4;j++) {
+	vnoisesignal_forfft[2*j]*=sqrt((double)count_nonzero/(double)(ilastnonzero-ifirstnonzero));
+	vnoisesignal_forfft[2*j+1]*=sqrt((double)count_nonzero/(double)(ilastnonzero-ifirstnonzero));
+    }
+    
+    //  Tools::InterpolateComplex(vsignal_e_forfft,NFOUR/4);
+    //Tools::InterpolateComplex(vsignal_h_forfft,NFOUR/4);
+    for (int ifour=0;ifour<NFOUR/4;ifour++) {
+
+        rand_phase = 2*PI*gRandom->Rndm();
+
+	vnoisesignal_forfft[2*ifour]*=cos(rand_phase);
+	vnoisesignal_forfft[2*ifour+1]*=sin(rand_phase);
+	
+    }
+    
+    
+}
+
+
+
+void Report::ReadFilter(string filename, int &N, vector <double> &xfreq, vector <double> &ygain) {    // will return unitless gain with Hz (x)
+
+    ifstream Filter( filename.c_str() );
+
+    string line;
+
+    N=-1;
+
+    if ( Filter.is_open() ) {
+        while (Filter.good() ) {
+
+            getline (Filter, line);
+            //xfreq[N] = atof( line.substr(0, line.find_first_of(",")).c_str() );
+            xfreq.push_back( atof( line.substr(0, line.find_first_of(",")).c_str() ) );
+            //xfreq.push_back( atof( line.substr(0, line.find_first_of(",")).c_str() ) * 1.E6 );  // from MHz to Hz
+
+            //xfreq[N] = xfreq[N] * 1.E6; // from MHz to Hz
+
+            //ygain[N] = atof( line.substr(line.find_first_of(",") + 1).c_str() );
+            ygain.push_back( atof( line.substr(line.find_first_of(",") + 1).c_str() ) );
+            //ygain.push_back( pow(pow(10,atof( line.substr(line.find_first_of(",") + 1).c_str() ) /10.),0.5) );  // from dB to unitless gain for voltage
+
+            //ygain[N] = pow(pow(10,yFilter[i]/10.0),0.5);    // from dB to field strength unitless gain
+            
+            N++;
+
+        }
+        Filter.close();
+    }
+
+    else cout<<"Filter file can not opened!!"<<endl;
+
+}
+
+        
+double Report::FindPeak(double *waveform, int n) {  // same with icemc, trigger-> AntTrigger::FindPeak
+
+    double peak=0.;
+
+    for (int i=0;i<n;i++) {
+        if (fabs(waveform[i])>peak)
+            peak = fabs(waveform[i]);
+    }
+    return peak;
+}
+
+void Report::SetRank(Detector *detector) {
+    // think about this!
+    // test 1
+
+    int current = 0;    // current checking rank
+    int check;  // check is any change in rank
+    double maxpeak; // maxpeak value
+    double pre_maxpeak; // maxpeak at previous round
+
+
+        for (int i = 0; i< detector->params.number_of_stations; i++) {
+
+            for (int j=0; j< detector->params.number_of_strings_station; j++) {
+
+                for (int k=0; k< detector->params.number_of_antennas_string; k++) {
+
+                    if (stations[i].strings[j].antennas[k].PeakV[0] == 0.) {
+                        stations[i].strings[j].antennas[k].Rank.push_back(0);  // rank 0, PeakV is 0, non-countable rank.
+                    }
+                    else {
+                        stations[i].strings[j].antennas[k].Rank.push_back(current+1);  // elses, if PeakV is not 0, set Rank as 1 (for now)
+                    }
+                }
+            }
+        }
+
+
+    cout<<"Start while loop for Ranking!!"<<endl;
+
+    check = 1;
+    pre_maxpeak = 1.E5; // unreasonably big value which real PeakV will never reach
+    while (check!=0) {
+        check=0;
+        maxpeak = 0.;
+        for (int i = 0; i< detector->params.number_of_stations; i++) {
+
+            for (int j=0; j< detector->params.number_of_strings_station; j++) {
+
+                for (int k=0; k< detector->params.number_of_antennas_string; k++) {
+
+                    //for (int l=0; l< detector->stations[i].strings[j].antennas[k].ray_sol_cnt; l++) {
+                    //
+                    //lets start with 1st ray_sol only
+                    //
+
+                    if (stations[i].strings[j].antennas[k].PeakV[0] < pre_maxpeak) {
+
+                        if (maxpeak < stations[i].strings[j].antennas[k].PeakV[0] ) {
+                            maxpeak = stations[i].strings[j].antennas[k].PeakV[0];
+
+                            stations[i].strings[j].antennas[k].Rank[0] = current+1;
+                            check++;
+                        } // is maxpeak < PeakV
+                        else {
+                            stations[i].strings[j].antennas[k].Rank[0] = current + 2;
+                        } // else
+
+                    } // if rank > current
+
+                } // for antennas
+            } // for strings
+        } // for stations
+
+        current++;
+        pre_maxpeak = maxpeak;
+
+
+    }   // while
+
+
+    cout<<"END Ranking!!"<<endl;
+
+
+
+
+}
+
+
+
 
 
 
