@@ -528,6 +528,38 @@ void Tools::SimpleLinearInterpolation(int n1, double *x1, double *y1, int n2, do
 }
 
 
+void Tools::get_random_rician(double signal_amplitude, double signal_phase, double sigma, double &amplitude, double &phase){
+    double rand_gauss_a, rand_gauss_b;
+    get_circular_bivariate_normal_random_variable(rand_gauss_a, rand_gauss_b);
+
+    // check the value
+    //cout<<"Factor from random rician : "<<sqrt(rand_gauss_a * rand_gauss_a +rand_gauss_b *rand_gauss_b) * sqrt(2./M_PI)<<"\n";
+    
+    // Gives the gaussian-distributed random variables a standard deviation of sigma
+    rand_gauss_a *= sigma;
+    rand_gauss_b *= sigma;
+    
+    // Gives the gaussian-distributed random variables a mean of (v*cos(theta), v*sin(theta)) when v is the mean of the desired rician distribution
+    rand_gauss_a += signal_amplitude * cos(signal_phase);
+    rand_gauss_b += signal_amplitude * sin(signal_phase);
+    
+    // The Rician Distribution produces the probability of the the absolute value (radius) of a circular bivariate normal random variable:
+    amplitude = sqrt(rand_gauss_a * rand_gauss_a + rand_gauss_b * rand_gauss_b);
+    // Thus, the descriptor other than amplitude for the circular bivariate is given by a phase:
+    phase = atan2(rand_gauss_b, rand_gauss_a);
+    return;
+}
+
+void Tools::get_circular_bivariate_normal_random_variable(double& rand_gauss_a, double& rand_gauss_b){
+    double rand_uni_a = gRandom->Rndm(); //gRandom->Rndm() produces uniformly-distributed floating points in ]0,1]
+    double rand_uni_b = gRandom->Rndm();
+    
+    // Box-Muller transform from a bivariate uniform distribution from 0 to 1 to a gaussian with mean = 0 and sigma = 1
+    rand_gauss_a = sqrt(-2. * log(rand_uni_a)) * cos(2. * M_PI * rand_uni_b);
+    rand_gauss_b = sqrt(-2. * log(rand_uni_a)) * sin(2. * M_PI * rand_uni_b);
+    return;
+}
+
 
 
 

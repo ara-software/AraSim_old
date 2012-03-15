@@ -765,12 +765,22 @@ AraTree2->GetEvent(evt_n);
 double time[settings->NFOUR/2];
 double V[settings->NFOUR/2];
 double V_org[settings->NFOUR/2];
+double V_noise[settings->NFOUR/2];
 
 cout<<"view angle : "<<report->stations[station_n].strings[string_n].antennas[antenna_n].view_ang[ray_sol_n]*DEGRAD<<endl;
+
+double sum_V2_t = 0.;
+double sum_V2_f = 0.;
 
 for (int i=0;i<settings->NFOUR/2;i++) {
     time[i] = report->stations[station_n].strings[string_n].antennas[antenna_n].time[ray_sol_n][i];
     V_org[i] = report->stations[station_n].strings[string_n].antennas[antenna_n].V[ray_sol_n][i];
+    V_noise[i] = report->stations[station_n].strings[string_n].antennas[antenna_n].V_noise[ray_sol_n][i];
+
+    sum_V2_t += V_org[i]*V_org[i];
+    sum_V2_f += report->stations[station_n].strings[string_n].antennas[antenna_n].Vfft[ray_sol_n][i] * report->stations[station_n].strings[string_n].antennas[antenna_n].Vfft[ray_sol_n][i];
+
+
     if (i<settings->NFOUR/4) {
         V[i+settings->NFOUR/4] = report->stations[station_n].strings[string_n].antennas[antenna_n].V[ray_sol_n][i];
     }
@@ -780,11 +790,16 @@ for (int i=0;i<settings->NFOUR/2;i++) {
 }
 
 
+
 TGraph *G_V_time;
 G_V_time = new TGraph(settings->NFOUR/2, time, V);
 
 TGraph *G_V_time_org;
 G_V_time_org = new TGraph(settings->NFOUR/2, time, V_org);
+
+
+TGraph *G_V_time_noise;
+G_V_time_noise = new TGraph(settings->NFOUR/2, time, V_noise);
 
 TCanvas *cV_time = new TCanvas("cV_time","V(t)", 200,10,1400,700);
 cV_time->Divide(2,1);
@@ -794,28 +809,35 @@ G_V_time_org->GetHistogram()->SetXTitle("time (s)");
 G_V_time_org->GetHistogram()->SetYTitle("Voltage (V)");
 G_V_time_org->Draw("al");
 
+//--------------------------------------------------
+// G_V_time_noise->SetLineColor(kRed);
+// G_V_time_noise->Draw("l");
+//-------------------------------------------------- 
+
 cV_time -> cd(2);
-G_V_time->SetTitle("V(t) for evt 0, station[0].string[0].antenna[0] (fixed?)");
-G_V_time->GetHistogram()->SetXTitle("time (s)");
-G_V_time->GetHistogram()->SetYTitle("Voltage (V)");
-G_V_time->Draw("al");
+G_V_time_noise->SetTitle("V_noise(t) for evt %d, station[%d].string[%d].antenna[%d] (org)");
+G_V_time_noise->GetHistogram()->SetXTitle("time (s)");
+G_V_time_noise->GetHistogram()->SetYTitle("Voltage (V)");
+G_V_time_noise->Draw("al");
+
+//G_V_time_noise->SetLineColor(kRed);
 
 cV_time -> Print("V_time_evt0.pdf");
 
 
 TGraph *G_V_time_zoom;
-G_V_time_zoom = new TGraph(settings->NFOUR/2, time, V);
+G_V_time_zoom = new TGraph(settings->NFOUR/2, time, V_org);
 
 TCanvas *cV_time_zoom = new TCanvas("cV_time_zoom","V(t) for evt 0, station0.string0.antenna0",200,10,1400,700);
 cV_time_zoom->Divide(2,1);
 cV_time_zoom -> cd(1);
-G_V_time->Draw("al");
+G_V_time_org->Draw("al");
 
 cV_time_zoom -> cd(2);
 G_V_time_zoom->SetTitle("V(t) for evt 0, station[0].string[0].antenna[0] (Zoomed)");
 G_V_time_zoom->GetHistogram()->SetXTitle("time (s)");
 G_V_time_zoom->GetHistogram()->SetYTitle("Voltage (V)");
-G_V_time_zoom->GetXaxis()->SetLimits(8E-8,12E-8);
+G_V_time_zoom->GetXaxis()->SetLimits(time[settings->NFOUR/4-100], time[settings->NFOUR/4+100]);
 G_V_time_zoom->Draw("al");
 
 cV_time_zoom -> Print("V_time_evt0_zoom.pdf");
@@ -823,47 +845,193 @@ cV_time_zoom -> Print("V_time_evt0_zoom.pdf");
 
 
 int N_freq;
+double NFOUR;
 N_freq = detector->GetFreqBin();
+NFOUR = (double)settings->NFOUR;
+
+double dfreq_detector;  // dfreq at detector related freq bin
+double dfreq_fft;       // dfreq at fft bin
+dfreq_detector = (detector->GetFreq(1) - detector->GetFreq(0));
+dfreq_fft = 1./ ((double)settings->NFOUR/2 * settings->TIMESTEP);
 
 double freq[N_freq];
 double vmmhz_freq[N_freq];
+double vmmhz_antfactors[N_freq];
+double vmmhz_filter[N_freq];
+
+double freq_fft[settings->NFOUR/4];
+double vmmhz_fft[settings->NFOUR/4];
+
+double Vfft_noise_before[settings->NFOUR/4];
+double Vfft_noise_after[settings->NFOUR/4];
+
+double total_mean_power_noise_before = 0.;
+double total_mean_power_noise_after = 0.;
+double total_mean_power_signal = 0.;
+
+double Filter[settings->NFOUR/4];
 
 
 
 for (int i=0;i<N_freq;i++) {
     freq[i] = detector->GetFreq(i); // freq in Hz
-    vmmhz_freq[i] = report->stations[station_n].strings[string_n].antennas[antenna_n].vmmhz[ray_sol_n][i];
+    vmmhz_freq[i] = report->stations[station_n].strings[string_n].antennas[antenna_n].vmmhz[ray_sol_n][i] / (1.E6); // from V/m/MHz to V/m/Hz
+    vmmhz_freq[i] = vmmhz_freq[i]*vmmhz_freq[i] * dfreq_detector * 2. / 50.;
+
+    vmmhz_antfactors[i] = report->stations[station_n].strings[string_n].antennas[antenna_n].VHz_antfactor[ray_sol_n][i];
+    vmmhz_antfactors[i] = vmmhz_antfactors[i]*vmmhz_antfactors[i] * dfreq_detector * 2. / 50.;
+
+    vmmhz_filter[i] = report->stations[station_n].strings[string_n].antennas[antenna_n].VHz_filter[ray_sol_n][i];
+    vmmhz_filter[i] = vmmhz_filter[i]*vmmhz_filter[i] * dfreq_detector * 2. / 50.;
+
 }
+
+for (int i=0;i<settings->NFOUR/4;i++) {
+    freq_fft[i] = (double)i * dfreq_fft;
+
+    vmmhz_fft[i] = pow(report->stations[station_n].strings[string_n].antennas[antenna_n].Vfft[ray_sol_n][i*2],2.) + pow(report->stations[station_n].strings[string_n].antennas[antenna_n].Vfft[ray_sol_n][i*2 + 1],2.);
+
+    vmmhz_fft[i] = vmmhz_fft[i] * pow( NFOUR/4.,2.) * 2. / ( ( NFOUR * NFOUR / 4.) * 50. * dfreq_fft );
+    // first pow(NFOUR/4, 2) is to cancel out the factor which is meaningful after the inverse FFT (MakeArraysforFFT apply it before inverse FFT)
+    // second 2/(NFOUR*NFOUR/4) is for 2/(N*N) in equation (for mean power)
+
+    // dont know why they are different!!!
+    //vmmhz_fft[i] *= 3.;
+    //
+
+    Vfft_noise_after[i] = pow(report->Vfft_noise_after[i*2],2.) + pow(report->Vfft_noise_after[i*2 + 1],2.);    // after have R, I part
+    Vfft_noise_before[i] = pow(report->Vfft_noise_before[i],2.);
+    //Vfft_noise[i] = pow(report->stations[station_n].strings[string_n].antennas[antenna_n].Vfft_noise[ray_sol_n][i*2],2.) + pow(report->stations[station_n].strings[string_n].antennas[antenna_n].Vfft_noise[ray_sol_n][i*2 + 1],2.);
+
+    Vfft_noise_after[i] = Vfft_noise_after[i] * 2. / ( ( NFOUR * NFOUR / 4.) * 50. * dfreq_fft );
+    Vfft_noise_before[i] = Vfft_noise_before[i] * 2. / ( ( NFOUR * NFOUR / 4.) * 50. * dfreq_fft );
+
+
+    Filter[i] = pow(10., ( detector->GetFilterGain_fft(i) )/20.);   // from dB to unitless gain for voltage
+
+    total_mean_power_noise_before += Vfft_noise_before[i];
+    total_mean_power_noise_after += Vfft_noise_after[i];
+    total_mean_power_signal += vmmhz_fft[i];
+
+}
+
 
 
 TGraph *G_vmmhz_freq;
 G_vmmhz_freq = new TGraph(N_freq, freq, vmmhz_freq);
 
+TGraph *G_vmmhz_factor;
+G_vmmhz_factor = new TGraph(N_freq, freq, vmmhz_antfactors);
 
-TCanvas *cVmMHz = new TCanvas("cVmMHz","V/m/MHz", 200,10,1000,700);
+TGraph *G_vmmhz_filter;
+G_vmmhz_filter = new TGraph(N_freq, freq, vmmhz_filter);
 
-cVmMHz -> cd();
+TGraph *G_vmmhz_fft;
+G_vmmhz_fft = new TGraph(settings->NFOUR/4, freq_fft, vmmhz_fft);
+
+TGraph *G_Vfft_noise_before;
+G_Vfft_noise_before = new TGraph(settings->NFOUR/4, freq_fft, Vfft_noise_before);
+
+TGraph *G_Vfft_noise_after;
+G_Vfft_noise_after = new TGraph(settings->NFOUR/4, freq_fft, Vfft_noise_after);
+
+
+TGraph *G_Filter;
+G_Filter = new TGraph(settings->NFOUR/4, freq_fft, Filter);
+
+
+TCanvas *cVmMHz = new TCanvas("cVmMHz","V/m/MHz", 200,10,4000,1400);
+cVmMHz->Divide(4,2);
+
+cVmMHz -> cd(1);
 cVmMHz -> SetLogy();
 
-G_vmmhz_freq->SetTitle("VmMHz for evt 0, station[0].string[0].antenna[0] (before antenna)");
+G_vmmhz_freq->SetTitle("spectrum (before antenna W/m^2/Hz)");
 G_vmmhz_freq->GetHistogram()->SetXTitle("freq (Hz)");
-G_vmmhz_freq->GetHistogram()->SetYTitle("Signal (V/m/MHz)");
+G_vmmhz_freq->GetHistogram()->SetYTitle("mean power spectrum (W/m^2/Hz)");
 G_vmmhz_freq->Draw("al");
+
+
+
+cVmMHz -> cd(2);
+cVmMHz -> SetLogy();
+
+G_vmmhz_factor->SetTitle("spectrum (after antenna W/Hz)");
+G_vmmhz_factor->GetHistogram()->SetXTitle("freq (Hz)");
+G_vmmhz_factor->GetHistogram()->SetYTitle("mean power spectrum (W/Hz)");
+G_vmmhz_factor->Draw("al");
+
+cVmMHz -> cd(3);
+cVmMHz -> SetLogy();
+
+G_vmmhz_filter->SetTitle("spectrum (after antenna, filter W/Hz)");
+G_vmmhz_filter->GetHistogram()->SetXTitle("freq (Hz)");
+G_vmmhz_filter->GetHistogram()->SetYTitle("mean power spectrum (W/Hz)");
+G_vmmhz_filter->Draw("al");
+
+
+cVmMHz -> cd(4);
+cVmMHz -> SetLogy();
+
+G_vmmhz_fft->SetTitle("spectrum (after antenna, filter, changed for fft W/Hz)");
+G_vmmhz_fft->GetHistogram()->SetXTitle("freq (Hz)");
+G_vmmhz_fft->GetHistogram()->SetYTitle("mean power spectrum (W/Hz)");
+G_vmmhz_fft->Draw("al");
+
+
+//cVmMHz -> cd(5)->SetLogy();
+
+
+cVmMHz -> cd(5);
+cVmMHz -> SetLogy();
+
+G_Filter->SetTitle("Filter gain (unitless)");
+G_Filter->GetHistogram()->SetXTitle("freq (Hz)");
+G_Filter->GetHistogram()->SetYTitle("gain (Vo/Vi)");
+G_Filter->Draw("al");
+
+
+cVmMHz -> cd(6);
+
+G_Vfft_noise_before->SetTitle("Noise spectrum (after filter W/Hz)");
+G_Vfft_noise_before->GetHistogram()->SetXTitle("freq (Hz)");
+G_Vfft_noise_before->GetHistogram()->SetYTitle("mean power spectrum (W/Hz)");
+G_Vfft_noise_before->Draw("al");
+
+cVmMHz -> cd(7);
+
+G_Vfft_noise_after->SetTitle("Noise spectrum (after filter & random_rician W/Hz)");
+G_Vfft_noise_after->GetHistogram()->SetXTitle("freq (Hz)");
+G_Vfft_noise_after->GetHistogram()->SetYTitle("mean power spectrum (W/Hz)");
+G_Vfft_noise_after->Draw("al");
+
+
+
 
 cVmMHz -> Print("VmMHz_evt0.pdf");
 
 
-AraTree2->GetEvent(3);
+AraTree2->GetEvent(0);
 for (int i=0; i<detector->params.number_of_stations; i++) {
     for (int j=0; j<detector->params.number_of_strings_station; j++) {
         for (int k=0; k<detector->params.number_of_antennas_string; k++) {
             cout<<"Rank of stations["<<i<<"].strings["<<j<<"].antennas["<<k<<"] = "<<report->stations[i].strings[j].antennas[k].Rank[0]<<endl;
             cout<<"PeakV of stations["<<i<<"].strings["<<j<<"].antennas["<<k<<"] = "<<report->stations[i].strings[j].antennas[k].PeakV[0]<<endl;
+            cout<<"pathtime of stations["<<i<<"].strings["<<j<<"].antennas["<<k<<"] = "<<report->stations[i].strings[j].antennas[k].arrival_time[0]<<endl;
         }
     }
 }
 
 
+cout<<"sum_V2_t : "<<sum_V2_t<<endl;
+cout<<"sum_V2_f : "<<sum_V2_f<<endl;
+
+cout<<"noise Vfft_org : "<<report->Vfft_noise_org<<endl;
+
+cout<<"total_mean_power_noise_before : "<<total_mean_power_noise_before<<endl;
+cout<<"total_mean_power_noise_after : "<<total_mean_power_noise_after<<endl;
+cout<<"total_mean_power_signal : "<<total_mean_power_signal<<endl;
+cout<<"Peak at evt0, 0110 : "<<report->stations[station_n].strings[string_n].antennas[antenna_n].PeakV[0]<<endl;
 
 
 }

@@ -308,6 +308,16 @@ Some minor changes in Detector, RaySolver, Settings class.
 
 ===============================================================================
 
+03/14/12 E. Hong;
+
+Fixed bug in Report->SetRank()
+When there are "0" PeakV, previous SetRank did weird things. (now fixed)
+
+Add filter factor to signal, noise.
+
+Now we have flat thermal noise (when NOISE=0 in setup.txt, by default)
+Currently it looks like noise is pretty big (~mV).
+Will double check if the thermal noise makes sense or not.
 
 
-
+===============================================================================

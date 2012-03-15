@@ -73,6 +73,7 @@ outputdir="outputs"; // directory where outputs go
 
   NFOUR=1024;           // default : 1024, same as in icemc
     
+  NOISE=0;              // degault : 0, flat thermal noise
 
 }
 
@@ -142,6 +143,18 @@ void Settings::ReadFile(string setupfile) {
               }
               else if (label == "TAUDECAY") {
                   TAUDECAY = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "TIMESTEP") {
+                  TIMESTEP = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "PHASE") {
+                  PHASE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "NFOUR") {
+                  NFOUR = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "NOISE") {
+                  NOISE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
               }
           }
       }

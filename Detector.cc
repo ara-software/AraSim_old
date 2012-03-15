@@ -455,6 +455,8 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         ReadVgain("ARA_bicone6in_output.txt");
         // test read H-pol gain file!!
         ReadHgain("ARA_dipoletest1_output.txt");
+        // read filter file!!
+        ReadFilter("./data/filter.csv", settings1);
 
 
     }
@@ -721,6 +723,8 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         ReadVgain("ARA_bicone6in_output.txt");
         // test read H-pol gain file!!
         ReadHgain("ARA_dipoletest1_output.txt");
+        // read filter file!!
+        ReadFilter("./data/filter.csv", settings1);
 
 
     }
@@ -1143,6 +1147,75 @@ inline void Detector::FlattoEarth_ARA(IceModel *icesurface) {
 
 
 }
+
+
+
+inline void Detector::ReadFilter(string filename, Settings *settings1) {    // will return gain (dB) with same freq bin with antenna gain
+
+    ifstream Filter( filename.c_str() );
+
+    string line;
+
+    int N=-1;
+
+    vector <double> xfreq_tmp;
+    vector <double> ygain_tmp;
+
+    if ( Filter.is_open() ) {
+        while (Filter.good() ) {
+
+            getline (Filter, line);
+            //xfreq[N] = atof( line.substr(0, line.find_first_of(",")).c_str() );
+            xfreq_tmp.push_back( atof( line.substr(0, line.find_first_of(",")).c_str() ) );
+            //xfreq.push_back( atof( line.substr(0, line.find_first_of(",")).c_str() ) * 1.E6 );  // from MHz to Hz
+
+            //xfreq[N] = xfreq[N] * 1.E6; // from MHz to Hz
+
+            //ygain[N] = atof( line.substr(line.find_first_of(",") + 1).c_str() );
+            ygain_tmp.push_back( atof( line.substr(line.find_first_of(",") + 1).c_str() ) );
+            //ygain.push_back( pow(pow(10,atof( line.substr(line.find_first_of(",") + 1).c_str() ) /10.),0.5) );  // from dB to unitless gain for voltage
+
+            //ygain[N] = pow(pow(10,yFilter[i]/10.0),0.5);    // from dB to field strength unitless gain
+            
+            N++;
+
+        }
+        Filter.close();
+    }
+
+    else cout<<"Filter file can not opened!!"<<endl;
+
+    double xfreq[N], ygain[N];  // need array for Tools::SimpleLinearInterpolation
+    double xfreq_fft[settings1->NFOUR/4];   // array for FFT freq bin
+    double ygain_fft[settings1->NFOUR/4];   // array for gain in FFT bin
+    double df_fft;
+
+    df_fft = 1./ ( (double)(settings1->NFOUR/2) * settings1->TIMESTEP );
+
+    for (int i=0;i<N;i++) { // copy values
+        xfreq[i] = xfreq_tmp[i];
+        ygain[i] = ygain_tmp[i];
+    }
+    for (int i=0;i<settings1->NFOUR/4;i++) {    // this one is for FFT freq bin
+        xfreq_fft[i] = (double)i * df_fft / (1.E6); // from Hz to MHz
+    }
+
+
+    // Tools::SimpleLinearInterpolation will return Filter array (in dB)
+    Tools::SimpleLinearInterpolation( N, xfreq, ygain, freq_step, Freq, FilterGain );
+
+    Tools::SimpleLinearInterpolation( N, xfreq, ygain, settings1->NFOUR/4, xfreq_fft, ygain_fft );
+
+    for (int i=0;i<settings1->NFOUR/4;i++) {
+        FilterGain_fft.push_back( ygain_fft[i] );
+    }
+
+
+
+
+}
+
+
 
 
 

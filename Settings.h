@@ -56,6 +56,8 @@ class Settings
 
         int NFOUR;              // number of total bins for FFT. has to be power of 2 values
 
+        int NOISE;              // noise condition settings degault 0 ( : thermal flat noise)
+
 
  // below : values from icemc
 

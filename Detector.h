@@ -149,6 +149,10 @@ class Detector {
         double Hgain[freq_step_max][ang_step_max];
         double Freq[freq_step_max];
 
+        void ReadFilter(string filename, Settings *settings1);
+        double FilterGain[freq_step_max];   // Filter gain (dB) for Detector freq bin array
+        vector <double> FilterGain_fft;   // Filter gain (dB) for FFT freq bin array
+
         void FlattoEarth_ARA(IceModel *icesurface);
 
         int freq_step;
@@ -169,6 +173,8 @@ class Detector {
 
         double GetGain(double freq, double theta, double phi, int ant_m, int ant_o);    //read antenna gain at certain angle, certain type, and certain orientation
         double GetGain(double freq, double theta, double phi, int ant_m);   //read antenna gain at certain angle, certain type. (orientation : default)
+        double GetFilterGain(int bin) { return FilterGain[bin]; }   // same bin with Vgain, Hgain
+        double GetFilterGain_fft(int bin) { return FilterGain_fft[bin]; }   // bin for FFT
         
         double Getfreq_init() {return freq_init;}
 

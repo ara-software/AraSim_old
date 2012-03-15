@@ -277,88 +277,39 @@ cout<<"begain looping events!!"<<endl;
  efficiencies->summarize(); // summarize the results in an output file  
 
 
+ double freq[detector->GetFreqBin()], Filter[detector->GetFreqBin()];
+ double Filter_E[detector->GetFreqBin()];
 
- int n1 = 4;
-//--------------------------------------------------
-//  double x1[n1] = {5., 10., 15., 20.};
-//  double y1[n1] = {5., 10., 10., 5.};
-//-------------------------------------------------- 
-
- double x1[n1];
- double y1[n1];
-
- x1[0] = 5.;
- x1[1] = 10.;
- x1[2] = 11.;
- x1[3] = 13;
-
- y1[0] = 5.;
- y1[1] = 10.;
- y1[2] = 10.;
- y1[3] = 5.;
-
- int n2 = 5;
-//--------------------------------------------------
-//  double x2[n2] = {1., 3., 5., 7., 9.};
-//-------------------------------------------------- 
- double x2[n2];
- double y2[n2]; 
-
- x2[0] = 7.;
- x2[1] = 8.;
- x2[2] = 9.;
- x2[3] = 10.;
- x2[4] = 11.;
-
- 
-
- Tools::SimpleLinearInterpolation(n1,x1,y1,n2,x2,y2);
-
- cout<<y2[0]<<" "<<y2[1]<<" "<<y2[2]<<" "<<y2[3]<<" "<<y2[4]<<endl;
-
-
- int N1;
- vector <double> xfreq;
- vector <double> ygain;
-
- report->ReadFilter("./data/filter.csv", N1, xfreq, ygain);
-
- cout<<"N : "<<N1<<endl;
- cout<<"xfreq[0] : "<<xfreq[0]<<endl;
- cout<<"xfreq[N-1] : "<<xfreq[N1-1]<<endl;
- cout<<"ygain[0] : "<<ygain[0]<<endl;
- cout<<"ygain[N-1] : "<<ygain[N1-1]<<endl;
-
- double filterx[N1];
- double filtery[N1];
-
- for (int i=0; i<N1; i++) {
-     filterx[i] = xfreq[i];
-     filtery[i] = ygain[i];
+ for (int i=0; i<detector->GetFreqBin(); i++) {
+     freq[i] = detector->GetFreq(i);    // in Hz
+     Filter[i] = detector->GetFilterGain(i);    // in dB
+     Filter_E[i] = pow(10., (detector->GetFilterGain(i))/20.);
  }
 
- int N2;
- N2 = detector->GetFreqBin();
- double int_filterx[N2];
- double int_filtery[N2];
-
- for (int i=0; i<N2; i++) {
-     int_filterx[i] = detector->GetFreq(i) / (1.E6) ;   // from Hz to MHz
- }
-
- Tools::SimpleLinearInterpolation(N1, filterx, filtery, N2, int_filterx, int_filtery);
 
  TGraph *g_filter;
- g_filter = new TGraph( N2, int_filterx, int_filtery );
+ g_filter = new TGraph( detector->GetFreqBin() , freq, Filter );
 
- TCanvas *c1 = new TCanvas("c1","A Simple Graph Example",200,10,1000,700);
+ TGraph *g_filter_E;
+ g_filter_E = new TGraph( detector->GetFreqBin() , freq, Filter_E );
 
- c1->cd();
+ TCanvas *c1 = new TCanvas("c1","A Simple Graph Example",200,10,2000,700);
+ c1->Divide(2,1);
+
+ c1->cd(1);
 
  g_filter->SetTitle("test Filter interpolation");
  g_filter->GetHistogram()->SetXTitle("MHz");
  g_filter->GetHistogram()->SetYTitle("gain (dB)");
  g_filter->Draw("al");
+
+
+ c1->cd(2);
+
+ g_filter_E->SetTitle("test Filter interpolation");
+ g_filter_E->GetHistogram()->SetXTitle("MHz");
+ g_filter_E->GetHistogram()->SetYTitle("gain (unitless for Voltage)");
+ g_filter_E->Draw("al");
 
  c1->Print("test_SimpleLinearInterpolation.pdf");
 

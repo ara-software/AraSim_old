@@ -46,7 +46,10 @@ class Antenna_r {
         // below freq domain simulation output
         vector < vector <double> > vmmhz;  // signal V/m/MHz for each freq bin
         //
+        vector < vector <double> > VHz_antfactor;  // after applying ApplyAntFactors to vmmhz above ( 1/sqrt2 * 1/dt * 0.5 * heff * pol_factor )
+        vector < vector <double> > VHz_filter;  // after applying ApplyAntFactors above and then apply filter gain from detector->GetFilterGain
         vector < vector <double> > Vfft;  // signal V preparing for FFT
+        vector < vector <double> > Vfft_noise;  // noise V preparing for FFT
 
 
         // below time domain simulation output
@@ -54,7 +57,9 @@ class Antenna_r {
         vector < vector <double> > Ax;     // vector potential x component
         vector < vector <double> > Ay;
         vector < vector <double> > Az;
-        vector < vector <double> > V;   // volt signal at the backend of antenna (from fft)
+        vector < vector <double> > V;   // volt signal with all factors applied (as far as we can) (from fft)
+
+        vector < vector <double> > V_noise; // volt noise signal (with all factors applied as far as we can) (from thermal noise + fft)
         //
         //
         vector <double> PeakV;  // peak voltage in time domain
@@ -90,6 +95,7 @@ class Station_r {
 
 class Report {
     private:
+        vector <double> noise_phase;    // random noise phase generated in GetNoisePhase()
 
     public:
         //int trg;    // if any antenna in entire detectors trg. 0 : no antenna trg
@@ -109,21 +115,27 @@ class Report {
 
         double GaintoHeight(double gain, double freq, double n_medium);
 
-        void ApplyAntFactors(Settings *settings1, double heff, Vector &n_trg_pokey, Vector &n_trg_slappy, Vector &Pol_vector, int ant_type, double &vmmhz);
+        void ApplyAntFactors(double heff, Vector &n_trg_pokey, Vector &n_trg_slappy, Vector &Pol_vector, int ant_type, double &vmmhz);
+
+        void ApplyFilter(int bin_n, Detector *detector, double &vmmhz);
+        void ApplyFilter_fft(int bin_n, Detector *detector, double &vmmhz);
 
         void GetAngleAnt(Vector &rec_vector, Position &antenna, double &ant_theta, double &ant_phi);
 
+        void GetNoiseWaveforms(Settings *settings1, Detector *detector, double vhz_noise, double *vnoise);
+        void GetNoisePhase(Settings *settings1);
+
         void MakeArraysforFFT(Settings *settings1, Detector *detector, vector <double> &vsignal_array, double *vsignal_forfft);
+        void MakeArraysforFFT_noise(Settings *settings1, Detector *detector, vector <double> &vsignal_array, double *vsignal_forfft);
 
-        void MakeNoiseArraysforFFT(Settings *settings1, double vnoise, double *vnoisesignal_forfft);
-
-
-        void ReadFilter (string filename, int &N, vector <double> &xfreq, vector <double> &ygain);
 
         double FindPeak (double *waveform, int n);  // same with icemc; trigger->AntTrigger::FindPeak
 
         void SetRank(Detector *detector); // set rank (rank of strength of signal at each antenna)
 
+        vector <double> Vfft_noise_after;   // noise Vfft after get_random_rician
+        vector <double> Vfft_noise_before;   // noise Vfft before get_random_rician
+        double Vfft_noise_org;              // V/Hz for thermal noise from Johnson-Nyquist
 
 
         vector <Station_r> stations;
