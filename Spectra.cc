@@ -77,6 +77,11 @@ Spectra::Spectra(int EXPONENT) {
       }
   }
 
+  else if (EXPONENT>=10 && EXPONENT<30)
+  {
+      pnu_EXPONENT = EXPONENT;
+  }
+
   else if (EXPONENT==30) // ESS baseline model. Used to be EXPONENT "0"
   {
       E_bin = 9;
@@ -352,6 +357,12 @@ double  Spectra::GetNuEnergy() {
   // this uses the dartboard approach
   //cout << "minenergy, maxenergy are " << minenergy << " " << maxenergy << "\n";
   
+  if (EXPONENT_model>=10 && EXPONENT_model<30) {
+      return pow(10.,pnu_EXPONENT);
+  }
+
+  else {
+  
   while(thisflux>max) {
     // pick an energy  
     thisenergy=Rand3.Rndm()*(maxenergy-minenergy)+minenergy; // pick energy at random between the highest and lowest
@@ -364,6 +375,7 @@ double  Spectra::GetNuEnergy() {
     thisflux=Rand3.Rndm(); // pick the flux at random between 0 and 1, if it's less than max it's a winner
   } //while
   return pow(10.,thisenergy);
+  }
 	
 } //Pick Neutrino Energy
 

@@ -355,3 +355,13 @@ There are many other minor changes in many classes but I can't remember...
 
 
 ===============================================================================
+
+04/16/12 ver2. E. Hong;
+
+One more minor thing fixed.
+Fixed bug when constant neutrino energy case.
+When setup.txt -> EXPONENT= 10 ~ 29, neutrino energy will be constant and the value will be
+pnu = 10^(EXPONENT) eV
+
+
+===============================================================================
