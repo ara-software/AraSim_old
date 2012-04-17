@@ -180,6 +180,12 @@ Primaries::Primaries(){//constructor
   maxe[1]=1.E21; // use the same upper limit for reno as for connolly et al.
 
 
+  // added for air col
+  GetAir(col1);
+
+
+
+
 }
 
 Primaries::~Primaries(){//default deconstructor
@@ -225,7 +231,6 @@ int Primaries::GetSigma(double pnu,double& sigma,double &len_int_kgm2,Settings *
       double pnuGeV=pnu/1.E9;//Convert eV to GeV.
       double epsilon=log10(pnuGeV);
       sigma=settings1->SIGMA_FACTOR*(m_fsigma[nu_nubar][currentint]->Eval(epsilon))/1.E4;//convert cm to meters. multiply by (1m^2/10^4 cm^2).
-      
       
       if(m_hsigma->GetEntries()<2000){
 	m_hsigma->Fill(epsilon, log10(sigma));
@@ -408,6 +413,56 @@ string Primaries::GetNuFlavor() {
   return nuflavor;
 } //GetNuFlavor
 
+
+
+// copied from icemc.cc
+double Primaries::GetThisAirColumn(Settings* settings1, Position r_in,Vector nnu,Position posnu, double& cosalpha,double& mytheta,
+			double& cosbeta0,double& mybeta) {  
+    double myair=0; // this is the output
+    // it is the column of air in kg/m^2
+    cosalpha=(r_in * nnu) / r_in.Mag(); // cosangle that the neutrino enters the earth wrt surface normal at its entrry point
+    mytheta=(double)(acos(cosalpha)*DEGRAD)-90.; // turn this into an angle
+    
+    //------------------added on Dec 8------------------------
+    if (settings1->ATMOSPHERE) {
+	int index11=int(mytheta*10.); // which index this theta corresponds to
+	int index12=index11+1;
+	
+	// find column of air at this theta
+	myair=(col1[index11]+(col1[index12]-col1[index11])*(mytheta*10.-double(index11)))*10.;//unit is kg/m^2
+    }
+    else 
+	myair=0.;//don't include effect of atmosphere
+    
+    //cout<<"mytheta="<<mytheta<<"; myair="<<myair<<endl;
+    //------------------added on Dec 8------------------------
+    
+    
+    cosbeta0= (posnu * nnu) / posnu.Mag(); // cos angle of neutrino wrt person standing over the interaction point
+    mybeta=(double)(acos(cosbeta0)*DEGRAD)-90.; // turn that into a theta
+    
+    return myair;
+    
+}
+
+
+
+// copied from icemc.cc
+void Primaries::GetAir(double *col1) {
+    double nothing;
+    ifstream air1("data/atmosphere.dat"); // length of chord in air vs. theta (deg)
+    //where theta is respect to "up"   
+    // binned in 0.1 degrees
+    for(int iii=0;iii<900;iii++) {
+	air1>>nothing>>col1[iii];
+    } // read in chord lengths
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 Interaction::Interaction() {
     Initialize ();
     //default constructor
@@ -458,20 +513,21 @@ Interaction::Interaction(string inttype,Primaries *primary1,Settings *settings1,
 
 */
 
-Interaction::Interaction (double pnu, string nuflavor, int &n_interactions, IceModel *antarctica, Detector *detector, Settings *settings1, Primaries *primary1, Signal *signal, Secondaries *sec1 ) {
+Interaction::Interaction (double pnu, Vector &nnu_org, string nuflavor, int &n_interactions, IceModel *antarctica, Detector *detector, Settings *settings1, Primaries *primary1, Signal *signal, Secondaries *sec1 ) {
 
     Initialize ();
 
+    cone_axis = nnu_org;
+    nnu = nnu_org;
     setCurrent(primary1);   // set current of interaction (cc or nc) ! (this should be change if this is secondary interaction. if first interaction was cc, then there is no secondary cc)
+    //cout<<"currentint : "<<currentint<<endl;
 
 
-    //prepare for GetSignal
-    //
-    for (int i=0; i<detector->GetFreqBin(); i++) {
-    }
 
 
     // pick posnu (position where nutrino interact with ice
+    // also they will calculate r_in (position nu enter the earth), r_enterice (position nu enter the ice), nuexitice (position nu exit the ice)
+    //
     if (settings1->INTERACTION_MODE == 0) {    // for pickunbiased. posnu will be all around antarctica
         Interaction::PickUnbiased( antarctica );
     }
@@ -479,12 +535,35 @@ Interaction::Interaction (double pnu, string nuflavor, int &n_interactions, IceM
         Interaction::PickNear (antarctica, detector, settings1);
     }
 
+    //cout<<" Finished Pick posnu, r_in, r_enterice, nuexitice!!"<<endl;
+
+
+    sigma_err = primary1->GetSigma( pnu, sigma, len_int_kgm2, settings1, nu_nubar, currentint);
+//--------------------------------------------------
+//     cout<<"len_int_kgm2 from GetSigma : "<<len_int_kgm2<<endl;
+//     cout<<"sigma from GetSigma : "<<sigma<<endl;
+//     cout<<" Finished SetSigma!!"<<endl;
+//-------------------------------------------------- 
+
+    double tmp; // for useless information
+
+    myair = primary1->GetThisAirColumn( settings1, r_in, nnu, posnu, tmp, tmp, tmp, tmp);
+    //cout<<" Finished GetThisAirColumn!!"<<endl;
+
+    //cout<<"test EarthModel, radii[0] : "<<antarctica->radii[0]<<endl;
+
+    //antarctica->Getchord(primary1, settings1, antarctica, sec1, len_int_kgm2, r_in, r_enterice, nuexitice, posnu, 0, chord, weight, nearthlayers, myair, total_kgm2, crust_entered, mantle_entered, core_entered);
+    antarctica->Getchord(len_int_kgm2, r_in, posnu, 0, chord, weight, nearthlayers, myair, total_kgm2, crust_entered, mantle_entered, core_entered );
+
+
+    //cout<<" Finished Getchord!!"<<endl;
+
 
        elast_y = primary1->Gety(settings1, pnu, nu_nubar, currentint);  // set inelasticity
-       cout<<"set inelasticity : "<<elast_y<<endl;
+       //cout<<"set inelasticity : "<<elast_y<<endl;
 
        sec1->GetEMFrac( settings1, nuflavor, current, taudecay, elast_y, pnu, emfrac, hadfrac, n_interactions);   // set em, had frac values.
-       cout<<"set emfrac : "<<emfrac<<" hadfrac : "<<hadfrac<<endl;
+       //cout<<"set emfrac : "<<emfrac<<" hadfrac : "<<hadfrac<<endl;
 
 
        if (settings1->SIMULATION_MODE == 0) { // freq domain simulation (old mode)
@@ -504,11 +583,11 @@ Interaction::Interaction (double pnu, string nuflavor, int &n_interactions, IceM
 
 
                signal->GetSpread(pnu, emfrac, hadfrac, detector->GetFreq(i), d_theta_em[i], d_theta_had[i]);   // get max spread angle and save at d_theta_em[i] and d_theta_had[i]
-               cout<<"Freq : "<<detector->GetFreq(i)<<endl;
-               cout<<"GetSpread, theta_em : "<<d_theta_em[i]<<" theta_had : "<<d_theta_had[i]<<endl;
+               //cout<<"Freq : "<<detector->GetFreq(i)<<endl;
+               //cout<<"GetSpread, theta_em : "<<d_theta_em[i]<<" theta_had : "<<d_theta_had[i]<<endl;
 
                vmmhz1m[i] = signal->GetVmMHz1m( pnu, detector->GetFreq(i) );   // get VmMHz at 1m at cherenkov angle at GetFreq(i)
-               cout<<"GetVmMHZ1m : "<<vmmhz1m[i]<<endl;
+               //cout<<"GetVmMHZ1m : "<<vmmhz1m[i]<<endl;
 
            }    // end detector freq bin numbers loop
 
@@ -723,6 +802,10 @@ Position thisr_enterice_tmp;
     toolow=0;
 
     thisr_in.SetXYZ(antarctica->R_EARTH*thissin*cos(thisphi),antarctica->R_EARTH*thissin*sin(thisphi),antarctica->R_EARTH*thiscos);
+
+    r_in = thisr_in;    // position where nu enter the earth
+
+
     if (thisr_in.Dot(nnu)>0)
       nnu=-1.*nnu;
     // does this intersect any ice
@@ -739,6 +822,7 @@ Position thisr_enterice_tmp;
 
    
     if (Interaction::WhereDoesItLeave(thisr_in,nnu,antarctica,thisnuexitearth)) { // where does it leave Earth
+        nuexit = thisnuexitearth;
       // really want to find where it leaves ice
       int err;
       // Does it leave in an ice bin
@@ -962,6 +1046,83 @@ void Interaction::PickNear (IceModel *antarctica, Detector *detector, Settings *
 
     pickposnu = 1;  // all PickNear sucess for pickposnu
 
+    // set the position where nu enter the earth
+    r_in = antarctica->WhereDoesItEnter(posnu, nnu);
+
+    // set the position where nu exit the earth
+    nuexit = antarctica->WhereDoesItLeave(posnu, nnu);
+
+    // now set the position where nu enter the ice
+    if (antarctica->IceThickness(r_in) && r_in.Lat()<antarctica->GetCOASTLINE()) { // if r_in (position where nu enter the earth) is antarctic ice
+        r_enterice = r_in;  // nu enter the earth is same with nu enter the ice
+    }
+    else {  // nu enter the rock of earth. so we have to calculate the r_enterice
+        Position thisnuenterice_tmp1;
+        Position thisnuenterice_tmp2;
+        // now first rough calculation with step size 5.E4.
+        if (WhereDoesItEnterIce(posnu,nnu,5.E4,
+			    thisnuenterice_tmp1, antarctica)) {
+            thisnuenterice_tmp2=thisnuenterice_tmp1+5.E4*nnu;   // get one more step from 5.E4. calculation
+            
+            if (WhereDoesItEnterIce(thisnuenterice_tmp2,nnu,5.E3, // second pass with finer binning
+			      thisnuenterice_tmp1, antarctica)) {
+                thisnuenterice_tmp2=thisnuenterice_tmp1+5.E3*nnu;   // get one more step from 5.E3. calculation
+        
+                if (WhereDoesItEnterIce(thisnuenterice_tmp2,nnu,5.E2, // third pass with finer binning
+			        thisnuenterice_tmp1, antarctica)) {
+                    thisnuenterice_tmp2=thisnuenterice_tmp1+5.E2*nnu;   // get one more step from 5.E2. calculation
+
+                    if (WhereDoesItEnterIce(thisnuenterice_tmp2,nnu,5.E1, // fourth pass with finer binning (final)
+			            thisnuenterice_tmp1, antarctica)) {
+                        thisnuenterice_tmp2=thisnuenterice_tmp1;   // max 50m step result
+                    }
+                }
+            }
+        }
+        else {  // no result from the first step calculation
+            cout<<"no nuenterice result from calculation!!!"<<endl;
+            thisnuenterice_tmp2 = posnu;
+        }
+        r_enterice = thisnuenterice_tmp2;
+    }// else; nu enter the rock of earth, so calculated the ice enter point
+
+
+    // now we have to calcuate the nu ice exit position
+    if (antarctica->IceThickness(nuexit) && nuexit.Lat()<antarctica->GetCOASTLINE()) { // if nuexit (position where nu exit the earth) is antarctic ice
+        nuexitice = nuexit;  // nu exit the earth is same with nu exit the ice
+    }
+    else {  // nu exit the rock of earth. so we have to calculate the nuexitice
+        Position thisnuexitice_tmp1;
+        Position thisnuexitice_tmp2;
+        // now first rough calculation with step size 5.E4.
+        if (WhereDoesItExitIceForward(posnu,nnu,5.E4,
+			    thisnuexitice_tmp1, antarctica)) {
+            thisnuexitice_tmp2=thisnuexitice_tmp1-5.E4*nnu;   // get one more step from 5.E4. calculation
+            
+            if (WhereDoesItExitIceForward(thisnuexitice_tmp2,nnu,5.E3, // second pass with finer binning
+			      thisnuexitice_tmp1, antarctica)) {
+                thisnuexitice_tmp2=thisnuexitice_tmp1-5.E3*nnu;   // get one more step from 5.E3. calculation
+        
+                if (WhereDoesItExitIceForward(thisnuexitice_tmp2,nnu,5.E2, // third pass with finer binning
+			        thisnuexitice_tmp1, antarctica)) {
+                    thisnuexitice_tmp2=thisnuexitice_tmp1-5.E2*nnu;   // get one more step from 5.E2. calculation
+
+                    if (WhereDoesItExitIceForward(thisnuexitice_tmp2,nnu,5.E1, // fourth pass with finer binning (final)
+			            thisnuexitice_tmp1, antarctica)) {
+                        thisnuexitice_tmp2=thisnuexitice_tmp1;   // max 50m step result
+                    }
+                }
+            }
+        }
+        else {  // no result from the first step calculation
+            cout<<"no nuexitice result from calculation!!!"<<endl;
+            thisnuexitice_tmp2 = posnu;
+        }
+        nuexitice = thisnuexitice_tmp2;
+    }// else; nu enter the rock of earth, so calculated the ice enter point
+
+
+
 }
 
 
@@ -1166,7 +1327,7 @@ int Interaction::WhereDoesItLeave( const Position &posnu, const Vector &ntemp, I
 }
 
 
-int Interaction::WhereDoesItEnterIce ( const Position &posnu, const Vector &nnu, double stepsize, Position &r_enterice, IceModel *antarctica) {
+int Interaction::WhereDoesItEnterIce ( const Position &posnu, const Vector &nnu, double stepsize, Position &r_enterice_output, IceModel *antarctica) {
 
   // now get exit point...
   //   see my geometry notes.
@@ -1233,7 +1394,7 @@ int Interaction::WhereDoesItEnterIce ( const Position &posnu, const Vector &nnu,
 	|| left_edge) {
       //  cout << "lat, antarctica->GetCOASTLINE(), left_edge is " << lat << " " << antarctica->GetCOASTLINE()<< " " << left_edge << "\n";
       //cout << "x_previous2, surface_previous, x2, surface2 are " << x_previous2 << " " << surface_previous2 << " " << x2 << " " << surface2 << "\n";
-      r_enterice = x;
+      r_enterice_output = x;
       // this gets you out of the loop.
       //continue;
       distance=3*antarctica->Geoid(lat);
@@ -1260,7 +1421,7 @@ int Interaction::WhereDoesItEnterIce ( const Position &posnu, const Vector &nnu,
 }//WhereDoesItEnterIce
 
 
-int Interaction::WhereDoesItExitIce ( const Position &posnu, const Vector &nnu, double stepsize, Position &r_enterice, IceModel *antarctica) {
+int Interaction::WhereDoesItExitIce ( const Position &posnu, const Vector &nnu, double stepsize, Position &r_enterice_output, IceModel *antarctica) {
 
   // now get exit point...
   //   see my geometry notes.
@@ -1345,7 +1506,7 @@ int Interaction::WhereDoesItExitIce ( const Position &posnu, const Vector &nnu, 
 	|| left_edge) {
       //  cout << "lat, antarctica->GetCOASTLINE(), left_edge is " << lat << " " << antarctica->GetCOASTLINE()<< " " << left_edge << "\n";
       //cout << "x_previous2, surface_previous, x2, surface2 are " << x_previous2 << " " << surface_previous2 << " " << x2 << " " << surface2 << "\n";
-      r_enterice = x;
+      r_enterice_output = x;
       // this gets you out of the loop.
       //continue;
       distance=3*antarctica->Geoid(lat);
@@ -1372,6 +1533,125 @@ int Interaction::WhereDoesItExitIce ( const Position &posnu, const Vector &nnu, 
 //-------------------------------------------------- 
   return foundit;
 }//WhereDoesItExitIce
+
+
+
+int Interaction::WhereDoesItExitIceForward ( const Position &posnu, const Vector &nnu, double stepsize, Position &r_enterice_output, IceModel *antarctica) { 
+
+    // this is fixed version of icemc -> icemodel -> WhereDoesItExitIceForward
+
+  // now get exit point...
+  //   see my geometry notes.
+  // parameterize the neutrino trajectory and just see where it
+  // crosses the earth radius.
+
+  //  Position r_enterice;
+  double distance=0;
+  int left_edge=0;
+  Position x = posnu;
+  double x2;
+  
+//--------------------------------------------------
+//   if (inu==1491) {
+//    
+//     cout << "posnu is";posnu.Print();
+//     cout << "nnu is ";nnu.Print();
+//   }
+//-------------------------------------------------- 
+   
+
+  Position x_previous = posnu;
+
+  double x_previous2= x_previous * x_previous;
+  x2=x_previous2;
+  
+  double lon = x.Lon(),lat = x.Lat();
+  double lon_old = lon,lat_old = lat;
+  double local_surface = antarctica->Surface(lon,lat);
+//--------------------------------------------------
+//   double local_surface = Surface(lon,lat);
+//-------------------------------------------------- 
+  double rock_previous2= pow((local_surface - antarctica->IceThickness(lon,lat) - antarctica->WaterDepth(lon,lat)),2);
+  double surface_previous2=pow(local_surface,2);
+
+  double rock2=rock_previous2;
+  double surface2=surface_previous2;
+  int foundit=0;  // keeps track of whether you found an ice entrance point
+
+ 
+
+  //  cout << "lon, lat are " << posnu.Lon() << " " << posnu.Lat() << "\n";
+  //cout << "x2 at start is " << x2 << "\n";
+  int nsteps=0;
+  while (distance<2*local_surface+1000) {
+    //cout << "another step.\n";
+    distance+=stepsize;
+    nsteps++;
+    //    cout << "inu, nsteps is " << inu << " " << nsteps << "\n";
+    //x -= stepsize*nnu;
+    x += stepsize*nnu;  // should step forward (not backward)
+    x2=x*x;
+    //cout << "x2 is " << x2 << "\n";
+    lon = x.Lon();
+    lat = x.Lat();
+
+      double ice_thickness=antarctica->IceThickness(lon,lat);
+    if (lon!=lon_old || lat!=lat_old) {
+      local_surface = antarctica->Surface(lon,lat);
+//--------------------------------------------------
+//       local_surface = Surface(lon,lat);
+//-------------------------------------------------- 
+
+      //if (lat>antarctica->GetCOASTLINE()) 
+      //left_edge=1;
+
+      rock2=pow((local_surface - antarctica->IceThickness(lon,lat) - antarctica->WaterDepth(lon,lat)),2);
+      surface2=pow(local_surface,2);    
+
+      if (antarctica->Getice_model()==0) {
+	if ((int)(lat)==antarctica->GetCOASTLINE() && rock_previous2 < x2 && surface2 > x2)
+	  left_edge=1;
+      } //if (Crust 2.0)
+    } //if (neutrino has stepped into new lon/lat bin)
+
+//--------------------------------------------------
+//     if (inu==1491 && nsteps<10)
+//       cout << "inu, x_previous2, rock_previous2, x2, rock2 are " << inu << " " << x_previous2 << " " << rock_previous2 << " " << x2 << " " << rock2 << "\n";
+//-------------------------------------------------- 
+
+    if ((((x_previous2>rock_previous2 && x2<rock2) // crosses rock boundary from above
+	 || (x_previous2<surface_previous2 && x2>surface2)) && ice_thickness>0 && lat<antarctica->GetCOASTLINE()) // crosses surface boundary from above
+	|| left_edge) {
+      //  cout << "lat, antarctica->GetCOASTLINE(), left_edge is " << lat << " " << antarctica->GetCOASTLINE()<< " " << left_edge << "\n";
+      //cout << "x_previous2, surface_previous, x2, surface2 are " << x_previous2 << " " << surface_previous2 << " " << x2 << " " << surface2 << "\n";
+      r_enterice_output = x;
+      // this gets you out of the loop.
+      //continue;
+      distance=3*antarctica->Geoid(lat);
+      foundit=1;
+      //cout << "foundit is " << foundit << "\n";
+      //continue;
+    } //if
+
+    x_previous = x;
+    x_previous2 = x2;
+    //cout << "x_previous, x_previous2 " << x << " " << x2 << "\n";
+
+    if (lon!=lon_old || lat!=lat_old) {
+      rock_previous2 = rock2;
+      surface_previous2 = surface2;
+      lat_old = lat;
+      lon_old = lon;
+    } //if
+
+  } //while
+//--------------------------------------------------
+//   if (inu==0) {
+//     cout << "r_enterice is ";r_enterice.Print();}
+//-------------------------------------------------- 
+  return foundit;
+}//WhereDoesItExitIceForward
+
 
 
 
@@ -1449,9 +1729,11 @@ void  Interaction::setCurrent(Primaries *primary1) {
 
 
       if (current=="cc")   //For outputting to file
-	currentint=1;
+	//currentint=1;
+	currentint=kCC;
       else if(current=="nc")
-	currentint=2;   
+	//currentint=2;   
+	currentint=kNC;
   }//setCurrent
 
 ///////////////////// Y ////////////////////

@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "Constants.h"
+#include "TF1.h"
 
 ClassImp(Detector);
 ClassImp(Parameters);
@@ -36,6 +37,9 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
     // same with icemc anita class initialization function
 
     double freqstep=1./(double)(settings1->NFOUR/2)/(settings1->TIMESTEP);
+
+    NFOUR = settings1->NFOUR;
+    TIMESTEP = settings1->TIMESTEP;
     
     //for (int i=0;i<HALFNFOUR/2;i++) {
     for (int i=0;i<settings1->NFOUR/4;i++) {
@@ -108,7 +112,7 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
     string line, label;
 
 //    IceModel *icesurface = new IceModel;
-    cout<<"Ice surface at 0,0 : "<<icesurface->Geoid(0.)<<endl;
+    //cout<<"Ice surface at 0,0 : "<<icesurface->Geoid(0.)<<endl;
 
 
 ////////////////////////////////////////////////////////////////////////////////////    
@@ -445,7 +449,8 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
 
 
         // change coordinate from flat surface to curved Earth surface
-        FlattoEarth_ARA(icesurface);
+        //FlattoEarth_ARA(icesurface);
+        FlattoEarth_ARA_sharesurface(icesurface);   // this one will share the lowest surface at each station.
 
 
 
@@ -715,7 +720,8 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
 
 
         // change coordinate from flat surface to curved Earth surface
-        FlattoEarth_ARA(icesurface);
+        //FlattoEarth_ARA(icesurface);
+        FlattoEarth_ARA_sharesurface(icesurface);   // this one will share the lowest surface at each station
 
         
         
@@ -734,10 +740,14 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
 
 
 
+        //cout<<"done settings detectors, gain, filters"<<endl;
+
+    getDiodeModel(settings1);    // set diode_real and fdiode_real values.
+
 
 //    return 0;
 
-    cout<<"test2"<<endl;
+    //cout<<"test2"<<endl;
 }
 
 
@@ -866,13 +876,13 @@ double Detector::GetGain(double freq, double theta, double phi, int ant_m, int a
 
     // in case when freq is out of nec2 freq range. use nearest min/max freq bin value. 
     if ( freq < freq_init ) {
-        cout<<"Frequency value is smaller than frequency range with Gain."<<endl;
-        cout<<"Frequency value "<<freq<<" will be replaced to minimum frequency value "<<freq_init<<endl;
+        //cout<<"Frequency value is smaller than frequency range with Gain."<<endl;
+        //cout<<"Frequency value "<<freq<<" will be replaced to minimum frequency value "<<freq_init<<endl;
         freq = freq_init;
     }
     else if ( freq > (freq_init + freq_width*((double)freq_step-1.) ) ) {
-        cout<<"Frequency value is bigger than frequency range with Gain."<<endl;
-        cout<<"Frequency value "<<freq<<" will be replaced to maximum frequency value "<< freq_init + freq_width*((double)freq_step-1.) - 0.01 <<endl;
+        //cout<<"Frequency value is bigger than frequency range with Gain."<<endl;
+        //cout<<"Frequency value "<<freq<<" will be replaced to maximum frequency value "<< freq_init + freq_width*((double)freq_step-1.) - 0.01 <<endl;
         freq = freq_init + freq_width*((double)freq_step-1.) - 0.01;
     }
 
@@ -978,13 +988,13 @@ double Detector::GetGain(double freq, double theta, double phi, int ant_m) {
 
     // in case when freq is out of nec2 freq range. use nearest min/max freq bin value. 
     if ( freq < freq_init ) {
-        cout<<"Frequency value is smaller than frequency range with Gain."<<endl;
-        cout<<"Frequency value "<<freq<<" will be replaced to minimum frequency value "<<freq_init<<endl;
+        //cout<<"Frequency value is smaller than frequency range with Gain."<<endl;
+        //cout<<"Frequency value "<<freq<<" will be replaced to minimum frequency value "<<freq_init<<endl;
         freq = freq_init;
     }
     else if ( freq > (freq_init + freq_width*((double)freq_step - 1.) ) ) {
-        cout<<"Frequency value is bigger than frequency range with Gain."<<endl;
-        cout<<"Frequency value "<<freq<<" will be replaced to maximum frequency value "<< freq_init + freq_width*((double)freq_step-1.) - 0.01 <<endl;
+        //cout<<"Frequency value is bigger than frequency range with Gain."<<endl;
+        //cout<<"Frequency value "<<freq<<" will be replaced to maximum frequency value "<< freq_init + freq_width*((double)freq_step-1.) - 0.01 <<endl;
         freq = freq_init + freq_width*((double)freq_step-1.) - 0.01;
     }
 
@@ -1150,6 +1160,90 @@ inline void Detector::FlattoEarth_ARA(IceModel *icesurface) {
 
 
 
+inline void Detector::FlattoEarth_ARA_sharesurface(IceModel *icesurface) {    // each station share the lowest surface
+    
+    double Dist = 0.;   //for sqrt(x^2 + y^2)
+    double R1 = icesurface->Surface(0.,0.); // from core of earth to surface at theta, phi = 0.
+//--------------------------------------------------
+//     double R1 = icesurface->Geoid(0.); // from core of earth to surface at theta, phi = 0.
+//-------------------------------------------------- 
+    double theta_tmp;
+    double phi_tmp;
+
+    double lowest_surface;  // lowest surface of the string among the station
+
+        // stations
+        // stations, strings, and borehole antennas use geoid surface !!
+        for (int i=0; i<params.number_of_stations; i++) {
+
+            Dist = sqrt( pow(stations[i].GetX(),2) + pow(stations[i].GetY(),2) );
+            theta_tmp = Dist/R1;
+            phi_tmp = atan2(stations[i].GetY(),stations[i].GetX());
+
+            if (phi_tmp<0.) phi_tmp += 2.*PI;
+
+            // set theta, phi for stations.
+            stations[i].SetThetaPhi(theta_tmp, phi_tmp);
+            //set R for stations.
+            stations[i].SetR( icesurface->Surface( stations[i].Lon(), stations[i].Lat()) );
+
+            lowest_surface = 1.E7;  // much bigger than the surface (approx radius of earth 6.E6)
+
+            // strings
+            for (int j=0; j<params.number_of_strings_station; j++) {
+                Dist = sqrt( pow(stations[i].strings[j].GetX(),2) + pow(stations[i].strings[j].GetY(),2) );
+                theta_tmp = Dist/R1;
+                phi_tmp = atan2(stations[i].strings[j].GetY(),stations[i].strings[j].GetX());
+
+                if (phi_tmp<0.) phi_tmp += 2.*PI;
+
+                stations[i].strings[j].SetThetaPhi(theta_tmp, phi_tmp);
+                // string Vector points the position where string meets the ice surface!
+                stations[i].strings[j].SetR( icesurface->Surface( stations[i].strings[j].Lon(), stations[i].strings[j].Lat()) );
+                
+                
+                // find the lowest surface among strings in a station
+                if ( lowest_surface > stations[i].strings[j].R() ) {
+                    lowest_surface = stations[i].strings[j].R();
+                }
+
+
+
+            }
+
+
+            // string loop again for borehole antennas
+            for (int j=0; j<params.number_of_strings_station; j++) {
+                // borehole antennas
+                for (int k=0; k<params.number_of_antennas_string; k++) {
+                    stations[i].strings[j].antennas[k].SetRThetaPhi( lowest_surface + stations[i].strings[j].antennas[k].GetZ() , stations[i].strings[j].Theta(), stations[i].strings[j].Phi() );
+                }
+            } // end string loop for borehole antennas
+
+
+            
+            // surface antennas
+            // surface antennas are on actual ice surface (not geoid surface)
+            for (int l=0; l<params.number_of_surfaces_station; l++) {
+                Dist = sqrt( pow(stations[i].surfaces[l].GetX(),2) + pow(stations[i].surfaces[l].GetY(),2) );
+                theta_tmp = Dist/R1;
+                phi_tmp = atan2(stations[i].surfaces[l].GetY(),stations[i].surfaces[l].GetX());
+
+                if (phi_tmp<0.) phi_tmp += 2.*PI;
+
+                stations[i].surfaces[l].SetThetaPhi(theta_tmp, phi_tmp);
+                stations[i].surfaces[l].SetR( icesurface->Surface( stations[i].surfaces[l].Lon(), stations[i].surfaces[l].Lat()) );
+            }
+
+
+        } // end loop over stations
+
+
+}
+
+
+
+
 inline void Detector::ReadFilter(string filename, Settings *settings1) {    // will return gain (dB) with same freq bin with antenna gain
 
     ifstream Filter( filename.c_str() );
@@ -1186,34 +1280,205 @@ inline void Detector::ReadFilter(string filename, Settings *settings1) {    // w
     else cout<<"Filter file can not opened!!"<<endl;
 
     double xfreq[N], ygain[N];  // need array for Tools::SimpleLinearInterpolation
-    double xfreq_fft[settings1->NFOUR/4];   // array for FFT freq bin
-    double ygain_fft[settings1->NFOUR/4];   // array for gain in FFT bin
+    double xfreq_databin[settings1->DATA_BIN_SIZE/2];   // array for FFT freq bin
+    double ygain_databin[settings1->DATA_BIN_SIZE/2];   // array for gain in FFT bin
     double df_fft;
 
-    df_fft = 1./ ( (double)(settings1->NFOUR/2) * settings1->TIMESTEP );
+    df_fft = 1./ ( (double)(settings1->DATA_BIN_SIZE) * settings1->TIMESTEP );
 
     for (int i=0;i<N;i++) { // copy values
         xfreq[i] = xfreq_tmp[i];
         ygain[i] = ygain_tmp[i];
     }
-    for (int i=0;i<settings1->NFOUR/4;i++) {    // this one is for FFT freq bin
-        xfreq_fft[i] = (double)i * df_fft / (1.E6); // from Hz to MHz
+    for (int i=0;i<settings1->DATA_BIN_SIZE/2;i++) {    // this one is for DATA_BIN_SIZE
+        xfreq_databin[i] = (double)i * df_fft / (1.E6); // from Hz to MHz
     }
 
 
     // Tools::SimpleLinearInterpolation will return Filter array (in dB)
     Tools::SimpleLinearInterpolation( N, xfreq, ygain, freq_step, Freq, FilterGain );
 
-    Tools::SimpleLinearInterpolation( N, xfreq, ygain, settings1->NFOUR/4, xfreq_fft, ygain_fft );
+    Tools::SimpleLinearInterpolation( N, xfreq, ygain, settings1->DATA_BIN_SIZE/2, xfreq_databin, ygain_databin );
 
-    for (int i=0;i<settings1->NFOUR/4;i++) {
-        FilterGain_fft.push_back( ygain_fft[i] );
+    for (int i=0;i<settings1->DATA_BIN_SIZE/2;i++) {
+        FilterGain_databin.push_back( ygain_databin[i] );
     }
 
 
 
 
 }
+
+
+void Detector::getDiodeModel(Settings *settings1) {
+    
+    
+    //  this is our homegrown diode response function which is a downgoing gaussian followed by an upward step function
+    TF1 *fdown1=new TF1("fl_down1","[3]+[0]*exp(-1.*(x-[1])*(x-[1])/(2*[2]*[2]))",-300.E-9,300.E-9);
+    fdown1->SetParameter(0,-0.8);
+    //  fdown1->SetParameter(1,15.E-9);
+    fdown1->SetParameter(1,15.E-9);
+    fdown1->SetParameter(2,2.3E-9);
+    //fdown1->SetParameter(2,0.5E-9);
+    fdown1->SetParameter(3,0.);
+    
+    TF1 *fdown2=new TF1("fl_down2","[3]+[0]*exp(-1.*(x-[1])*(x-[1])/(2*[2]*[2]))",-300.E-9,300.E-9);
+    fdown2->SetParameter(0,-0.2);
+    //  fdown2->SetParameter(1,15.E-9);
+    fdown2->SetParameter(1,15.E-9);
+    fdown2->SetParameter(2,4.0E-9);
+    //fdown2->SetParameter(2,0.5E-9);
+    fdown2->SetParameter(3,0.);
+    
+/*
+    // commented for 5 different banding as in ARA, we only need full band
+    maxt_diode=70.E-9;
+    idelaybeforepeak[0]=(int)(5.E-9/TIMESTEP);
+    iwindow[0]=(int)(20.E-9/TIMESTEP);
+    idelaybeforepeak[1]=(int)(5.E-9/TIMESTEP);
+    iwindow[1]=(int)(20.E-9/TIMESTEP);
+    idelaybeforepeak[2]=(int)(5.E-9/TIMESTEP);
+    iwindow[2]=(int)(20.E-9/TIMESTEP);
+    idelaybeforepeak[3]=(int)(5.E-9/TIMESTEP);
+    iwindow[3]=(int)(20.E-9/TIMESTEP);
+    idelaybeforepeak[4]=(int)(13.E-9/TIMESTEP);
+    iwindow[4]=(int)(4.E-9/TIMESTEP);
+*/
+
+    //maxt_diode=70.E-9;
+    //idelaybeforepeak=(int)(13.E-9/TIMESTEP);
+    //iwindow=(int)(4.E-9/TIMESTEP);
+   
+    maxt_diode= settings1->MAXT_DIODE;
+    maxt_diode_bin = (int)( maxt_diode / TIMESTEP );
+    idelaybeforepeak= settings1->IDELAYBEFOREPEAK_DIODE;
+    iwindow= settings1->IWINDOW_DIODE;
+    ibinshift = NFOUR/4 - (int)( maxt_diode / TIMESTEP );
+    
+    //fdown1->Copy(fdiode);
+    
+    TF1 *f_up=new TF1("f_up","[0]*([3]*(x-[1]))^2*exp(-(x-[1])/[2])",-200.E-9,100.E-9);
+    
+    f_up->SetParameter(2,7.0E-9);
+    f_up->SetParameter(0,1.);
+    f_up->SetParameter(1,18.E-9);
+    f_up->SetParameter(3,1.E9);
+    
+    
+    double sum=0.;
+	
+    f_up->SetParameter(0,-1.*sqrt(2.*PI)*(fdown1->GetParameter(0)*fdown1->GetParameter(2)+fdown2->GetParameter(0)*fdown2->GetParameter(2))/(2.*pow(f_up->GetParameter(2),3.)*1.E18));
+	
+    for (int i=0;i<NFOUR/2;i++) {
+        
+        diode_real.push_back(0.);   // first puchback 0. value  (this is actually not standard way though works fine)
+	    
+	//if (time[i]>0. && time[i]<maxt_diode) {
+	if (i<(int)(maxt_diode/TIMESTEP)) { // think this is same with above commented if
+		
+	    diode_real[i]=fdown1->Eval((double)i*TIMESTEP)+fdown2->Eval((double)i*TIMESTEP);
+	    if (i>(int)(f_up->GetParameter(1)/TIMESTEP))
+		diode_real[i]+=f_up->Eval((double)i*TIMESTEP);
+	    
+            sum+=diode_real[i];
+	}
+        /*
+        // as we set default as 0 above, we dont need to set 0 with extra step
+	else {
+	    diode_real[i]=0.;  
+	} 
+        */
+    }
+
+    //cout<<"done settings diode_real arrays"<<endl;
+    
+    
+    // diode_real is the time domain response of the diode
+    //
+    // now get f domain response with realft
+
+    double diode_real_fft[settings1->DATA_BIN_SIZE*2];  // double sized array for myconvlv
+    //double diode_real_fft[settings1->DATA_BIN_SIZE + 512];  // DATA_BIN_SIZE + 512 bin (zero padding) for myconvlv
+    double diode_real_fft_half[NFOUR];    // double sized array for NFOUR/2
+    double diode_real_fft_double[NFOUR*2];    // test with NFOUR*2 array
+
+
+    //for (int i=0; i<settings1->DATA_BIN_SIZE + 512; i++) {  // 512 bin added for zero padding
+    for (int i=0; i<settings1->DATA_BIN_SIZE*2; i++) {  // 512 bin added for zero padding
+        if ( i<(int)(maxt_diode/TIMESTEP) ) {
+            diode_real_fft[i] = diode_real[i];
+        }
+        else {
+            diode_real_fft[i] = 0.;
+        }
+
+    }
+
+
+    for (int i=0; i<NFOUR; i++) {
+        if ( i<(int)(maxt_diode/TIMESTEP) ) {
+            diode_real_fft_half[i] = diode_real[i];
+        }
+        else {
+            diode_real_fft_half[i] = 0.;
+        }
+    }
+
+
+    // test for double size array
+    for (int i=0; i<NFOUR*2; i++) {
+        if ( i<(int)(maxt_diode/TIMESTEP) ) {
+            diode_real_fft_double[i] = diode_real[i];
+        }
+        else {
+            diode_real_fft_double[i] = 0.;
+        }
+    }
+
+
+    //cout<<"start realft diode_real_fft"<<endl;
+
+    // forward FFT
+    //Tools::realft(diode_real_fft,1,settings1->DATA_BIN_SIZE+512);
+    Tools::realft(diode_real_fft,1,settings1->DATA_BIN_SIZE*2);
+
+    // forward FFT for half size array
+    Tools::realft(diode_real_fft_half,1,NFOUR);
+
+    // forward FFT for double size array
+    Tools::realft(diode_real_fft_double,1,NFOUR*2);
+
+
+    //cout<<"done realft diode_real_fft"<<endl;
+
+
+    fdiode_real_databin.clear();
+    fdiode_real.clear();
+    fdiode_real_double.clear();
+
+    // save f domain diode response in fdiode_real
+    //for (int i=0; i<settings1->DATA_BIN_SIZE+512; i++) {
+    for (int i=0; i<settings1->DATA_BIN_SIZE*2; i++) {
+        fdiode_real_databin.push_back( diode_real_fft[i] );
+    }
+
+
+    // save f domain diode response in fdiode_real_half
+    //for (int i=0; i<NFOUR/2; i++) {
+    for (int i=0; i<NFOUR; i++) {
+        fdiode_real.push_back( diode_real_fft_half[i] );
+    }
+
+    // save f domain diode response in fdiode_real_double
+    //for (int i=0; i<NFOUR; i++) {
+    for (int i=0; i<NFOUR*2; i++) {
+        fdiode_real_double.push_back( diode_real_fft_double[i] );
+    }
+
+
+
+}
+
 
 
 

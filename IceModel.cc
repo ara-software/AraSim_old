@@ -597,6 +597,90 @@ Position IceModel::WhereDoesItEnterIce(const Position &posnu,
 
 
 
+Position IceModel::WhereDoesItEnter(const Position &posnu,const Vector &nnu) const {
+    // now get neutrino entry point...
+    double p = posnu.Mag(); // radius of interaction
+    double costheta = (nnu*posnu) / p; // theta of neutrino at interaction position
+    double sintheta = sqrt(1-costheta*costheta);
+    
+    double lon = posnu.Lon();
+    double lat = posnu.Lat();
+    
+    double a=0; // length of chord
+    
+    double R = Surface(lon,lat);
+    double delta = R - p; // depth of the interaction
+    // if interaction occurs below surface, as it should
+    
+    if (delta>-0.001) {
+	a=p*costheta+sqrt(R*R*costheta*costheta+2*delta*R*sintheta*sintheta); // chord length
+	if (a<0) {
+	    cout << "Negative chord length: " << a << "\n";
+	} //end if
+    } //end if (interaction below surface)  
+    else if (delta<=-0.001) {
+	
+	//cout << "Error in interaction position.  whichray is " << whichray << "\n";
+	cout << "lon, lat from WhereDoesItEnter is " << " " << lon << " " << lat << "\n";
+	cout << "geoid, surface, p, surface-p are " << Geoid(lat) << " " << Surface(lon,lat) << " " << p << " , "<<(Surface(lon,lat)-p)<<"\n";
+	
+    } //else if: error: interaction takes place above the surface
+    
+    Position r_in = posnu - a*nnu;
+    
+    lon = r_in.Lon();
+    lat = r_in.Lat();
+    
+    r_in = Surface(lon,lat) * r_in.Unit();
+    
+    return r_in;
+} //method WhereDoesItEnter
+
+
+
+Position IceModel::WhereDoesItLeave(const Position &posnu,const Vector &nnu) const {
+    // now get neutrino entry point...
+    double p = posnu.Mag(); // radius of interaction
+    double costheta = (nnu*posnu) / p; // theta of neutrino at interaction position
+    double sintheta = sqrt(1-costheta*costheta);
+    
+    double lon = posnu.Lon();
+    double lat = posnu.Lat();
+    
+    double a=0; // length of chord
+    
+    double R = Surface(lon,lat);
+    double delta = R - p; // depth of the interaction
+    // if interaction occurs below surface, as it should
+    
+    if (delta>-0.001) {
+	a=sqrt(R*R*costheta*costheta+2*delta*R*sintheta*sintheta) - p*costheta; // chord length
+	if (a<0) {
+	    cout << "Negative chord length: " << a << "\n";
+	} //end if
+    } //end if (interaction below surface)  
+    else if (delta<=-0.001) {
+	
+	//cout << "Error in interaction position.  whichray is " << whichray << "\n";
+	cout << "lon, lat from WhereDoesItLeave is " << " " << lon << " " << lat << "\n";
+	cout << "geoid, surface, p, surface-p are " << Geoid(lat) << " " << Surface(lon,lat) << " " << p << " , "<<(Surface(lon,lat)-p)<<"\n";
+	
+    } //else if: error: interaction takes place above the surface
+    
+    Position r_in = posnu + a*nnu;
+    
+    lon = r_in.Lon();
+    lat = r_in.Lat();
+    
+    r_in = Surface(lon,lat) * r_in.Unit();
+    
+    return r_in;
+} //method WhereDoesItLeave
+
+
+
+
+
 // Below WhereDoesItEnterIce is from icemodel in icemc.
 //--------------------------------------------------
 // int IceModel::WhereDoesItEnterIce(const Position &posnu,

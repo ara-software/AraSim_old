@@ -18,10 +18,12 @@ void RaySolver::Earth_to_Flat_same_depth (Position &source, Position &target, Ic
     double target_depth = antarctica->Surface(target.Lon(), target.Lat()) - target.R();
     double source_depth = antarctica->Surface(source.Lon(), source.Lat()) - source.R();
 
-    std::cout<<"source R : "<<source.R()<<" source Ice surface : "<<antarctica->Surface(source.Lon(), source.Lat())<<"\n";
-
-    std::cout<<"target_depth : "<<target_depth<<" and source_depth : "<<source_depth<<"\n";
-    std::cout<<"Surface R at source : "<<antarctica->Surface(source.Lon(), source.Lat())<<"\n";
+//--------------------------------------------------
+//     std::cout<<"source R : "<<source.R()<<" source Ice surface : "<<antarctica->Surface(source.Lon(), source.Lat())<<"\n";
+// 
+//     std::cout<<"target_depth : "<<target_depth<<" and source_depth : "<<source_depth<<"\n";
+//     std::cout<<"Surface R at source : "<<antarctica->Surface(source.Lon(), source.Lat())<<"\n";
+//-------------------------------------------------- 
     target.SetX( 0. );
     target.SetY( 0. );
     target.SetZ( -target_depth );
@@ -39,10 +41,12 @@ void RaySolver::Earth_to_Flat_same_angle (Position &source, Position &target, Ic
     double ang_diff = target.Angle(source);
     double depth_diff = target.R() - source.R()*cos(ang_diff);
 
-    std::cout<<"source R : "<<source.R()<<" source Ice surface : "<<antarctica->Surface(source.Lon(), source.Lat())<<"\n";
-
-    std::cout<<"target_depth : "<<target_depth<<" and depth_diff : "<<depth_diff<<"\n";
-    std::cout<<"Surface R at source : "<<antarctica->Surface(source.Lon(), source.Lat())<<"\n";
+//--------------------------------------------------
+//     std::cout<<"source R : "<<source.R()<<" source Ice surface : "<<antarctica->Surface(source.Lon(), source.Lat())<<"\n";
+// 
+//     std::cout<<"target_depth : "<<target_depth<<" and depth_diff : "<<depth_diff<<"\n";
+//     std::cout<<"Surface R at source : "<<antarctica->Surface(source.Lon(), source.Lat())<<"\n";
+//-------------------------------------------------- 
     target.SetX( 0. );
     target.SetY( 0. );
     target.SetZ( -target_depth );
@@ -121,12 +125,15 @@ void RaySolver::Solve_Ray_org (Position &source, Position &target, std::vector <
     std::cout<<"argv[5] : "<<argv[5]<<"\n";
     std::cout<<"argv[6] : "<<argv[6]<<"\n";
 */
-    std::cout<<"src_x : "<<source_tmp.GetX()<<"\n";
-    std::cout<<"src_y : "<<source_tmp.GetY()<<"\n";
-    std::cout<<"src_z : "<<source_tmp.GetZ()<<"\n";
-    std::cout<<"trg_x : "<<target_tmp.GetX()<<"\n";
-    std::cout<<"trg_y : "<<target_tmp.GetY()<<"\n";
-    std::cout<<"trg_z : "<<target_tmp.GetZ()<<"\n";
+
+//--------------------------------------------------
+//     std::cout<<"src_x : "<<source_tmp.GetX()<<"\n";
+//     std::cout<<"src_y : "<<source_tmp.GetY()<<"\n";
+//     std::cout<<"src_z : "<<source_tmp.GetZ()<<"\n";
+//     std::cout<<"trg_x : "<<target_tmp.GetX()<<"\n";
+//     std::cout<<"trg_y : "<<target_tmp.GetY()<<"\n";
+//     std::cout<<"trg_z : "<<target_tmp.GetZ()<<"\n";
+//-------------------------------------------------- 
 
 
 
@@ -264,7 +271,9 @@ void RaySolver::Solve_Ray_org (Position &source, Position &target, std::vector <
     
     surface_reflect = true;
     bedrock_reflect = false;
-    requiredAccuracy = 0.1;
+    //requiredAccuracy = 0.1;
+    //requiredAccuracy = 0.5;
+    requiredAccuracy = 0.2;
     frequency = 300;
     polarization = RayTrace::pi/2;
     refractionModel=boost::shared_ptr<exponentialRefractiveIndex>(new exponentialRefractiveIndex(ns,nd,nc));
@@ -293,44 +302,48 @@ void RaySolver::Solve_Ray_org (Position &source, Position &target, std::vector <
 	paths=tf.findPaths(src,trg,frequency/1.0e3,polarization,refl,requiredAccuracy);
 	if(showLabels){
 		if(!paths.empty()){
-			std::cout << std::fixed 
-			<< "path length (m) "
-			<< "path time (ns) "
-			<< "launch angle "
-			<< "recipt angle "
-			<< "reflect angle "
-			<< "miss dist. "
-			<< "attenuation "
-			<< "amplitude"
-			<< std::endl;
+			//--------------------------------------------------
+			// std::cout << std::fixed 
+			// << "path length (m) "
+			// << "path time (ns) "
+			// << "launch angle "
+			// << "recipt angle "
+			// << "reflect angle "
+			// << "miss dist. "
+			// << "attenuation "
+			// << "amplitude"
+			// << std::endl;
+			//-------------------------------------------------- 
                         solution_toggle = 1;
 		}
 		else {
-			std::cout << "No solutions" << std::endl;
+			//std::cout << "No solutions" << std::endl;
                         solution_toggle = 0;
                 }
 	}
 	if(!dumpPaths){
 		for(std::vector<RayTrace::TraceRecord>::const_iterator it=paths.begin(); it!=paths.end(); ++it){
 			double signal = tf.signalStrength(*it,src,trg,refl);
-			std::cout << std::left << std::fixed 
-			<< std::setprecision(2) << std::setw(15) << it->pathLen << ' '
-			<< std::setprecision(2) << std::setw(14) << 1e9*it->pathTime << ' '
-			<< std::setprecision(4) << std::setw(12) << it->launchAngle << ' '
-			<< std::setprecision(4) << std::setw(12) << it->receiptAngle << ' '
-			<< std::setprecision(3) << std::setw(13) << it->reflectionAngle << ' '
-			<< std::setprecision(2) << std::setw(10) << it->miss << ' ' 
-			<< std::scientific << std::setprecision(4) << std::setw(11) << it->attenuation << ' '
-			//amplitude calculation, ignoring frequency response at both ends, angular response of receiver
-			<< std::setw(10) << (it->attenuation*signal)
-			<< std::endl;
+			//--------------------------------------------------
+			// std::cout << std::left << std::fixed 
+			// << std::setprecision(2) << std::setw(15) << it->pathLen << ' '
+			// << std::setprecision(2) << std::setw(14) << 1e9*it->pathTime << ' '
+			// << std::setprecision(4) << std::setw(12) << it->launchAngle << ' '
+			// << std::setprecision(4) << std::setw(12) << it->receiptAngle << ' '
+			// << std::setprecision(3) << std::setw(13) << it->reflectionAngle << ' '
+			// << std::setprecision(2) << std::setw(10) << it->miss << ' ' 
+			// << std::scientific << std::setprecision(4) << std::setw(11) << it->attenuation << ' '
+			// //amplitude calculation, ignoring frequency response at both ends, angular response of receiver
+			// << std::setw(10) << (it->attenuation*signal)
+			// << std::endl;
+			//-------------------------------------------------- 
 
                         outputs.resize(3);
 
                         outputs[0].push_back(it->pathLen);
                         outputs[1].push_back(it->launchAngle);
                         outputs[2].push_back(it->receiptAngle);
-                        std::cout<<"outputs[0]["<<sol_no<<"] : "<<outputs[0][sol_no]<<"pathLen : "<<it->pathLen<<"\n";
+                        //std::cout<<"outputs[0]["<<sol_no<<"] : "<<outputs[0][sol_no]<<"pathLen : "<<it->pathLen<<"\n";
                         sol_no++;
 
 		}
@@ -339,7 +352,7 @@ void RaySolver::Solve_Ray_org (Position &source, Position &target, std::vector <
 		pathPrinter<RayTrace::minimalRayPosition> print;
 		for(std::vector<RayTrace::TraceRecord>::const_iterator it=paths.begin(); it!=paths.end(); ++it){
 			tf.doTrace<RayTrace::minimalRayPosition>(src_z, it->launchAngle, RayTrace::rayTargetRecord(trg_z,sqrt((trg_x-src_x)*(trg_x-src_x)+(trg_y-src_y)*(trg_y-src_y))), refl, 0.0, 0.0, &print);
-			std::cout << "\n\n";
+			//std::cout << "\n\n";
 		}
 	}
 	//--------------------------------------------------
@@ -424,12 +437,15 @@ void RaySolver::Solve_Ray (Position &source, Position &target, IceModel *antarct
     std::cout<<"argv[6] : "<<argv[6]<<"\n";
 */
 
-    std::cout<<"src_x : "<<source_tmp.GetX()<<"\n";
-    std::cout<<"src_y : "<<source_tmp.GetY()<<"\n";
-    std::cout<<"src_z : "<<source_tmp.GetZ()<<"\n";
-    std::cout<<"trg_x : "<<target_tmp.GetX()<<"\n";
-    std::cout<<"trg_y : "<<target_tmp.GetY()<<"\n";
-    std::cout<<"trg_z : "<<target_tmp.GetZ()<<"\n";
+
+//--------------------------------------------------
+//     std::cout<<"src_x : "<<source_tmp.GetX()<<"\n";
+//     std::cout<<"src_y : "<<source_tmp.GetY()<<"\n";
+//     std::cout<<"src_z : "<<source_tmp.GetZ()<<"\n";
+//     std::cout<<"trg_x : "<<target_tmp.GetX()<<"\n";
+//     std::cout<<"trg_y : "<<target_tmp.GetY()<<"\n";
+//     std::cout<<"trg_z : "<<target_tmp.GetZ()<<"\n";
+//-------------------------------------------------- 
 
 
 
@@ -571,7 +587,9 @@ void RaySolver::Solve_Ray (Position &source, Position &target, IceModel *antarct
     
     surface_reflect = true;
     bedrock_reflect = false;
-    requiredAccuracy = 0.1;
+    //requiredAccuracy = 0.1;
+    //requiredAccuracy = 0.5;
+    requiredAccuracy = 0.2;
     frequency = 300;
     polarization = RayTrace::pi/2;
     refractionModel=boost::shared_ptr<exponentialRefractiveIndex>(new exponentialRefractiveIndex(ns,nd,nc));
@@ -599,37 +617,41 @@ void RaySolver::Solve_Ray (Position &source, Position &target, IceModel *antarct
 	paths=tf.findPaths(src,trg,frequency/1.0e3,polarization,refl,requiredAccuracy);
 	if(showLabels){
 		if(!paths.empty()){
-			std::cout << std::fixed 
-			<< "path length (m) "
-			<< "path time (ns) "
-			<< "launch angle "
-			<< "recipt angle "
-			<< "reflect angle "
-			<< "miss dist. "
-			<< "attenuation "
-			<< "amplitude"
-			<< std::endl;
+			//--------------------------------------------------
+			// std::cout << std::fixed 
+			// << "path length (m) "
+			// << "path time (ns) "
+			// << "launch angle "
+			// << "recipt angle "
+			// << "reflect angle "
+			// << "miss dist. "
+			// << "attenuation "
+			// << "amplitude"
+			// << std::endl;
+			//-------------------------------------------------- 
                         solution_toggle = 1;
 		}
 		else {
-			std::cout << "No solutions" << std::endl;
+			//std::cout << "No solutions" << std::endl;
                         solution_toggle = 0;
                 }
 	}
 	if(!dumpPaths){
 		for(std::vector<RayTrace::TraceRecord>::const_iterator it=paths.begin(); it!=paths.end(); ++it){
 			double signal = tf.signalStrength(*it,src,trg,refl);
-			std::cout << std::left << std::fixed 
-			<< std::setprecision(2) << std::setw(15) << it->pathLen << ' '
-			<< std::setprecision(2) << std::setw(14) << 1e9*it->pathTime << ' '
-			<< std::setprecision(4) << std::setw(12) << it->launchAngle << ' '
-			<< std::setprecision(4) << std::setw(12) << it->receiptAngle << ' '
-			<< std::setprecision(3) << std::setw(13) << it->reflectionAngle << ' '
-			<< std::setprecision(2) << std::setw(10) << it->miss << ' ' 
-			<< std::scientific << std::setprecision(4) << std::setw(11) << it->attenuation << ' '
-			//amplitude calculation, ignoring frequency response at both ends, angular response of receiver
-			<< std::setw(10) << (it->attenuation*signal)
-			<< std::endl;
+			//--------------------------------------------------
+			// std::cout << std::left << std::fixed 
+			// << std::setprecision(2) << std::setw(15) << it->pathLen << ' '
+			// << std::setprecision(2) << std::setw(14) << 1e9*it->pathTime << ' '
+			// << std::setprecision(4) << std::setw(12) << it->launchAngle << ' '
+			// << std::setprecision(4) << std::setw(12) << it->receiptAngle << ' '
+			// << std::setprecision(3) << std::setw(13) << it->reflectionAngle << ' '
+			// << std::setprecision(2) << std::setw(10) << it->miss << ' ' 
+			// << std::scientific << std::setprecision(4) << std::setw(11) << it->attenuation << ' '
+			// //amplitude calculation, ignoring frequency response at both ends, angular response of receiver
+			// << std::setw(10) << (it->attenuation*signal)
+			// << std::endl;
+			//-------------------------------------------------- 
 
                         outputs.resize(5);
 
@@ -638,7 +660,7 @@ void RaySolver::Solve_Ray (Position &source, Position &target, IceModel *antarct
                         outputs[2].push_back(it->receiptAngle);
                         outputs[3].push_back(it->reflectionAngle);
                         outputs[4].push_back( it->pathTime );   // time in s (not ns)
-                        std::cout<<"outputs[0]["<<sol_no<<"] : "<<outputs[0][sol_no]<<"\n";
+                        //std::cout<<"outputs[0]["<<sol_no<<"] : "<<outputs[0][sol_no]<<"\n";
                         sol_no++;
 
 		}
@@ -647,7 +669,7 @@ void RaySolver::Solve_Ray (Position &source, Position &target, IceModel *antarct
 		pathPrinter<RayTrace::minimalRayPosition> print;
 		for(std::vector<RayTrace::TraceRecord>::const_iterator it=paths.begin(); it!=paths.end(); ++it){
 			tf.doTrace<RayTrace::minimalRayPosition>(src_z, it->launchAngle, RayTrace::rayTargetRecord(trg_z,sqrt((trg_x-src_x)*(trg_x-src_x)+(trg_y-src_y)*(trg_y-src_y))), refl, 0.0, 0.0, &print);
-			std::cout << "\n\n";
+			//std::cout << "\n\n";
 		}
 	}
 	//--------------------------------------------------

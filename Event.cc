@@ -4,6 +4,7 @@
 #include "Spectra.h"
 #include "Primaries.h"
 
+ClassImp(Event);
 
 using namespace std;
 
@@ -42,7 +43,7 @@ Event::Event (Settings *settings1, Spectra *spectra1, Primaries *primary1, IceMo
 
         Interaction *Nu_temp;
 
-        Nu_temp = new Interaction (pnu, nuflavor, n_interactions, icemodel, detector, settings1, primary1, signal, sec1 );
+        Nu_temp = new Interaction (pnu, nnu, nuflavor, n_interactions, icemodel, detector, settings1, primary1, signal, sec1 );
 
         Nu_Interaction.push_back(*Nu_temp);  // for the first interaction
 
@@ -70,7 +71,7 @@ Event::Event (Settings *settings1, Spectra *spectra1, Primaries *primary1, IceMo
 void Event::Choose_Evt_Type (Settings *settings1) {
 
     if (settings1->EVENT_TYPE==0) {
-        cout<<"Only Neutrino Evnets!"<<endl;
+        //cout<<"Only Neutrino Evnets!"<<endl;
         Event_type = 0;
     }
     else {

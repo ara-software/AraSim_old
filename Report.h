@@ -15,6 +15,7 @@ class Signal;
 class IceModel;
 class Settings;
 class Vector;
+class Trigger;
 
 using namespace std;
 
@@ -37,6 +38,7 @@ class Antenna_r {
         vector <double> rec_ang;     //receiving angle
         vector <double> reflect_ang; // surface reflection angle (if 100 : no reflection case)
         vector <double> Dist;        //Distance between posnu and antenna
+        vector <double> L_att;        //Attenuation factor
         vector <double> arrival_time;        //time from posnu to antenna (t:0 at posnu)
         vector <int> reflection;     // non-reflected : 0,  reflected : 1
         vector <Position> Pol_vector;   // polarization vector at the antenna
@@ -46,6 +48,11 @@ class Antenna_r {
         // below freq domain simulation output
         vector < vector <double> > vmmhz;  // signal V/m/MHz for each freq bin
         //
+        vector < vector <double> > Heff;  // effective height for each freq bin
+        vector <double> Mag;  // magnification factor
+        vector <double> Fresnel;  // Fresnel factor
+        vector <double> Pol_factor;  // Polarization factor
+        
         vector < vector <double> > VHz_antfactor;  // after applying ApplyAntFactors to vmmhz above ( 1/sqrt2 * 1/dt * 0.5 * heff * pol_factor )
         vector < vector <double> > VHz_filter;  // after applying ApplyAntFactors above and then apply filter gain from detector->GetFilterGain
         vector < vector <double> > Vfft;  // signal V preparing for FFT
@@ -53,20 +60,32 @@ class Antenna_r {
 
 
         // below time domain simulation output
-        vector < vector <double> > time;   // time of time domain Askaryan radiation
+        vector <double> time;   // time of time domain Askaryan radiation
+        vector <double> V_mimic;    // signal + noise waveform which mimics the data (size : NFOUR/2 bin)
+
         vector < vector <double> > Ax;     // vector potential x component
         vector < vector <double> > Ay;
         vector < vector <double> > Az;
         vector < vector <double> > V;   // volt signal with all factors applied (as far as we can) (from fft)
 
         vector < vector <double> > V_noise; // volt noise signal (with all factors applied as far as we can) (from thermal noise + fft)
+
+        vector < vector <double> > V_total; // volt signal + noise with all factors applied as far as we can
+
+        vector < vector <double> > V_total_diode;   // volt signal + noise with all factors (as far as we can) and convlution with diode (time domain)
+
+        vector < vector <double> > V_total_timedelay;   // volt signal + noise with all factors applied and time delay between antennas
         //
         //
         vector <double> PeakV;  // peak voltage in time domain
         vector <int> Rank;      // rank of peak voltage between antennas (Rank = 0 for 0 signal)
+        int Trig_Pass; // 0 if not passed the trigger, 1 if passed the trigger
+        //vector <int> Trig_Pass; // 0 if not passed the trigger, 1 if passed the trigger
+        vector <int> TooMuch_Tdelay;    // 0 is PeakV is located inside the DATA_BIN_SIZE array,  1 is when PeakV is located outside the DATA_BIN_SIZE so that we can't correctly check if it is triggered or not
 
         
         void clear ();  // clear all vector format information for next event
+        void clear_useless ();  // clear all vector information which are useless
 
         ClassDef(Antenna_r,1);
 };
@@ -88,6 +107,12 @@ class Station_r {
         vector <String_r> strings;
         vector <Surface_antenna_r> surfaces;
 
+        double min_arrival_time;    // for each station, minimum arrival time (include all ray_solves). this will be used for time delay between antennas.
+        double max_arrival_time;    // for each station, maximum arrival time (include all ray_solves). this will be used for time delay between antennas.
+        double max_PeakV;           // for each station, maximum PeakV value (include all ray_solves). this will also be used for time delay plot (to set same vertical scale)
+        int Total_ray_sol;          // total number of ray_sols in the stations. If there is 0 Total_ray_sol, we don't need to do trigger check while there is any Total_ray_sol, we do trigger check.
+        int Global_Pass;    // if global trigger passed or not
+
         ClassDef(Station_r,1);
 };
 
@@ -97,7 +122,27 @@ class Report {
     private:
         vector <double> noise_phase;    // random noise phase generated in GetNoisePhase()
 
+
+        // variables we need for trigger
+           // test selecting noise waveform
+
+           int N_noise;     // needed number of noise waveforms (most cases, we will need only 1)
+           int noise_ID[5];    // selected noise waveform ID (we should not need 5 noise waveforms, but just in case)
+           int ch_ID;   // channel ID
+           //double Full_window[detector->params.number_of_strings_station * detector->params.number_of_antennas_string][settings1->DATA_BIN_SIZE];    // entire window for trigger check (diode convlv results for all antennas in a station)
+           //vector < vector <double> > Full_window;  // entire window for trigger check (diode convlv results for all antennas in a station)
+           int max_total_bin;   // to save time, use only necessary number of bins
+           int remain_bin;      // the bin number for not using entire DATA_BIN_SIZE array
+           vector <int> signal_bin;      // the center of bin where signal should locate
+           vector <int> signal_dbin;     // the bin difference between signal bins
+           vector <int> connect_signals;    // if ray_sol time delay is small enough to connect each other
+
+
+
     public:
+           double Full_window[16][16384];  // test with array, not vector, diode response
+           double Full_window_V[16][16384];  // test with array, not vector, voltage waveform
+           vector <int> Passed_chs;
         //int trg;    // if any antenna in entire detectors trg. 0 : no antenna trg
                     //                                         1 : 1 or more antenna trg
 
@@ -107,7 +152,13 @@ class Report {
         void Initialize (Detector *detector, Settings *settings1);
 
 
-        void Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1);
+        void Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1, Trigger *trigger);
+
+        void Select_Wave_Convlv_Exchange(Settings *settings1, Trigger *trigger, Detector *detector, int signalbin, vector <double> &V, int *noise_ID, int ID);   // literally get noise waveform from trigger class and add signal voltage "V" and do convlv. convlv result will replace the value in Full_window array
+        
+        void Select_Wave_Convlv_Exchange(Settings *settings1, Trigger *trigger, Detector *detector, int signalbin_1, int signalbin_2, vector <double> &V1, vector <double> &V2, int *noise_ID, int ID);   // literally get noise waveform from trigger class and add signal voltage "V" and do convlv. convlv result will replace the value in Full_window array
+
+        void Select_Wave_Convlv_Exchange(Settings *settings1, Trigger *trigger, Detector *detector, int signalbin_0, int signalbin_1, int signalbin_2, vector <double> &V0, vector <double> &V1, vector <double> &V2, int *noise_ID, int ID);   // literally get noise waveform from trigger class and add signal voltage "V" and do convlv. convlv result will replace the value in Full_window array
 
         Vector GetPolarization (Vector &nnu, Vector &launch_vector);
 
@@ -115,10 +166,10 @@ class Report {
 
         double GaintoHeight(double gain, double freq, double n_medium);
 
-        void ApplyAntFactors(double heff, Vector &n_trg_pokey, Vector &n_trg_slappy, Vector &Pol_vector, int ant_type, double &vmmhz);
+        void ApplyAntFactors(double heff, Vector &n_trg_pokey, Vector &n_trg_slappy, Vector &Pol_vector, int ant_type, double &pol_factor, double &vmmhz);
 
         void ApplyFilter(int bin_n, Detector *detector, double &vmmhz);
-        void ApplyFilter_fft(int bin_n, Detector *detector, double &vmmhz);
+        void ApplyFilter_databin(int bin_n, Detector *detector, double &vmmhz);
 
         void GetAngleAnt(Vector &rec_vector, Position &antenna, double &ant_theta, double &ant_phi);
 
@@ -133,8 +184,11 @@ class Report {
 
         void SetRank(Detector *detector); // set rank (rank of strength of signal at each antenna)
 
+        int MixSignalNoise_Tdelay(Settings *settings1, Detector *detector, double min_arrival_time, double arrival_time, vector <double> &V_signal, double *V_noise, vector <double> &V_total);
+
         vector <double> Vfft_noise_after;   // noise Vfft after get_random_rician
         vector <double> Vfft_noise_before;   // noise Vfft before get_random_rician
+        vector <double> V_noise_timedomain;   // noise V timedomain after get_random_rician and inverse fft
         double Vfft_noise_org;              // V/Hz for thermal noise from Johnson-Nyquist
 
 

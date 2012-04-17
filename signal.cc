@@ -158,14 +158,14 @@ Signal::Signal(Settings *settings1) : N_DEPTH(1.79) {
       *pnu_reference/1.E6 // energy in MeV
       *1./sin(changle); 
 
-    cout << "multiplying by 1/changle which is " << 1./sin(changle) << "\n";
+    //cout << "multiplying by 1/changle which is " << 1./sin(changle) << "\n";
 
     //    vmmhz1m*=1./(1.+pow(freq/NU_R,ALPHAMEDIUM));
     vmmhz1m_reference*=1./(1.+pow(freq_reference/nu_r,ALPHAMEDIUM));
 
   }
   else {
-      cout<<"whichparameterization : "<<WHICHPARAMETERIZATION<<"\n";
+      //cout<<"whichparameterization : "<<WHICHPARAMETERIZATION<<"\n";
   }
 
   
@@ -223,14 +223,14 @@ Signal::Signal(Settings *settings1) : N_DEPTH(1.79) {
       *pnu_reference/1.E6 // energy in MeV
       *1./sin(changle); 
 
-    cout << "multiplying by 1/changle which is " << 1./sin(changle) << "\n";
+    //cout << "multiplying by 1/changle which is " << 1./sin(changle) << "\n";
 
     //    vmmhz1m*=1./(1.+pow(freq/NU_R,ALPHAMEDIUM));
     vmmhz1m_reference*=1./(1.+pow(freq_reference/nu_r,ALPHAMEDIUM));
 
   }
   else {
-      cout<<"whichparameterization : "<<WHICHPARAMETERIZATION<<"\n";
+      //cout<<"whichparameterization : "<<WHICHPARAMETERIZATION<<"\n";
   }
 
   
@@ -338,7 +338,7 @@ void Signal::GetSpread(double pnu,
 //-------------------------------------------------- 
   double elpm=GetELPM();
 
-    cout << "elpm is " << elpm << "\n";
+    //cout << "elpm is " << elpm << "\n";
 
 
   //  cout << "elpm is " << elpm << "\n";
@@ -385,7 +385,7 @@ void Signal::GetSpread(double pnu,
       // note that 12.32/sqrt(pow(n_depth,2)-1)*RADDEG/showerlength=2.7 degrees.
       // remember that Jaime has a factor of ln2 in the exponential here which we'll have to correct for further down
       deltheta_em_max=12.32/sqrt(pow(N_DEPTH,2)-1)*(nu0/freq)*RADDEG/showerlength;
-      cout<<"1) daltheta_em_max : "<<deltheta_em_max<<endl;
+      //cout<<"1) daltheta_em_max : "<<deltheta_em_max<<endl;
 
       if (hadfrac>0.00001) { // if there is a hadronic component
 	
@@ -419,7 +419,7 @@ void Signal::GetSpread(double pnu,
 	deltheta_had_max=1.E-10;
 
       deltheta_em_max/=sqrt(log(2.)); // in astro-ph/9706064, Jaime uses exp(-0.5 (theta-theta_c)^2/delta_had^2)
-      cout<<"2) daltheta_em_max : "<<deltheta_em_max<<endl;
+      //cout<<"2) daltheta_em_max : "<<deltheta_em_max<<endl;
 
     }
     else if (WHICHPARAMETERIZATION==1) {

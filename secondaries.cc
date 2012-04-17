@@ -1021,7 +1021,7 @@ static Vector z_axis = Vector(0,0,1);
   had_secondaries_max=hadfrac;
 
   
-  cout<<"settings1->FORSECKEL = "<<settings1->FORSECKEL<<endl;
+  //cout<<"settings1->FORSECKEL = "<<settings1->FORSECKEL<<endl;
   
   if (SECONDARIES==1 && current=="cc" && settings1->FORSECKEL!=1) {
 

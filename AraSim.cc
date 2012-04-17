@@ -118,6 +118,7 @@ int main() {
   cout<<"MOOREBAY : "<<settings1->MOOREBAY<<endl;
   cout<<"EXPONENT : "<<settings1->EXPONENT<<endl;
   cout<<"DETECTOR : "<<settings1->DETECTOR<<endl;
+  cout<<"POSNU_RADIUS : "<<settings1->POSNU_RADIUS<<endl;
 
 
 //  IceModel *icemodel=new IceModel(ICE_MODEL + NOFZ*10,CONSTANTICETHICKNESS * 1000 + CONSTANTCRUST * 100 + FIXEDELEVATION * 10 + 0,MOOREBAY);// creates Antarctica ice model
@@ -133,7 +134,7 @@ int main() {
   cout<<"end calling detector"<<endl;
 //  Detector *detector=new Detector(settings1->DETECTOR); // builds antenna array, 0 for testbed
 
-  //  Trigger *trigger=new Trigger(detector); // builds the trigger  
+  Trigger *trigger=new Trigger(detector, settings1); // builds the trigger  
 //  Efficiencies *efficiencies=new Efficiencies(detector->getnRx(),outputdir); // keeps track of efficiencies at each stage of the simulation
   Efficiencies *efficiencies=new Efficiencies(100,outputdir); // keeps track of efficiencies at each stage of the simulation
   cout<<"called Efficiencies"<<endl;
@@ -176,6 +177,8 @@ int main() {
   cout<<"branch detector"<<endl;
   AraTree->Branch("icemodel",&icemodel);
   cout<<"branch icemodel"<<endl;
+  AraTree->Branch("trigger",&trigger);
+  cout<<"branch trigger"<<endl;
   AraTree->Branch("settings",&settings1);
   cout<<"branch settings"<<endl;
   AraTree->Branch("spectra",&spectra);
@@ -208,6 +211,51 @@ cout<<"finish calling secondaries and signal"<<endl;
 // TH1F *hy=new TH1F("hy","hy",100,0.,1.); // histogram for inelasticity
 //-------------------------------------------------- 
 
+// before start looping events set noise values (this case, thermal)
+trigger->SetMeanRmsDiode(settings1, detector, report);
+// now in Trigger class, there will be meandiode, rmsdiode values for noise (we need this for trigger later)
+
+
+double max_dt = 0.; // max arrival time difference
+
+int Total_Global_Pass = 0;  // total global trigger passed number 
+double Total_Weight = 0.;
+
+
+ TCanvas *cFull_window = new TCanvas("cFull_window","A Simple Graph Example",200,10,10000,11200);
+ cFull_window->Divide(1,16);
+
+ TGraph *g_Full_window;
+
+
+ TCanvas *cFull_window_V = new TCanvas("cFull_window_V","A Simple Graph Example",200,10,3200,2400);
+ cFull_window_V->Divide(4,4);
+
+ TGraph *g_Full_window_V;
+
+ double x_V[settings1->NFOUR/2];
+ double y_V[settings1->NFOUR/2];
+
+
+
+ double xbin[settings1->DATA_BIN_SIZE];
+ for (int i=0; i<settings1->DATA_BIN_SIZE; i++) {
+     xbin[i] = i;
+ }
+
+double threshold_y[2];
+double threshold_x[2];
+
+threshold_x[0] = 0.;
+threshold_x[1] = (double)settings1->DATA_BIN_SIZE-1.;
+threshold_y[0] = (trigger->rmsdiode) * (trigger->powerthreshold);
+threshold_y[1] = (trigger->rmsdiode) * (trigger->powerthreshold);
+
+
+TGraph *G_V_threshold_diode;
+G_V_threshold_diode = new TGraph(2, threshold_x, threshold_y);
+
+
 
 
 
@@ -217,19 +265,26 @@ cout<<"begain looping events!!"<<endl;
 
        event = new Event ( settings1, spectra, primary1, icemodel, detector, signal, sec1 );
 
-       cout<<"inu : "<<inu<<endl;
-       cout<<"event->pnu : "<<event->pnu<<endl;
-       cout<<"posnu : ";
-       event->Nu_Interaction[0].posnu.Print();
-       cout<<"nnu : ";
-       event->Nu_Interaction[0].nnu.Print();
-       cout<<"event->n_interactions : "<<event->n_interactions<<endl;
-       cout<<"nu_flavor : "<<event->nuflavor<<endl;
-       cout<<"event->Nu_Interaction[0].vmmhz1m[0] : "<<event->Nu_Interaction[0].vmmhz1m[0]<<endl;
-       cout<<"pickposnu : "<<event->Nu_Interaction[0].pickposnu<<endl;
+//--------------------------------------------------
+//        cout<<"inu : "<<inu<<endl;
+//        cout<<"event->pnu : "<<event->pnu<<endl;
+//        cout<<"posnu : ";
+//        event->Nu_Interaction[0].posnu.Print();
+//        cout<<"nnu : ";
+//        event->Nu_Interaction[0].nnu.Print();
+//        cout<<"event->n_interactions : "<<event->n_interactions<<endl;
+//        cout<<"nu_flavor : "<<event->nuflavor<<endl;
+//        cout<<"event->Nu_Interaction[0].vmmhz1m[0] : "<<event->Nu_Interaction[0].vmmhz1m[0]<<endl;
+//        cout<<"pickposnu : "<<event->Nu_Interaction[0].pickposnu<<endl;
+//-------------------------------------------------- 
 
+       // connect Interaction class (nu interaction with ice) and Detector class (detector properties and layout)
+       // save signal, noise at each antennas to Report class
+       report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1, trigger);
 
-       report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1);
+       
+
+       /*
 
        
        for (int i=0;i<1;i++) {  // there are only 1 station for the test!!!
@@ -257,14 +312,116 @@ cout<<"begain looping events!!"<<endl;
 
 
 
+
+
+
+
+
+       cout<<"r_in : ";
+       event->Nu_Interaction[0].r_in.Print();
+       cout<<"nuexit : ";
+       event->Nu_Interaction[0].nuexit.Print();
+       cout<<"r_enterice : ";
+       event->Nu_Interaction[0].r_enterice.Print();
+       cout<<"nuexitice : ";
+       event->Nu_Interaction[0].nuexitice.Print();
+       cout<<"weight : "<<event->Nu_Interaction[0].weight<<endl;
+
+
+       cout<<"In trigger, NFOUR : "<<trigger->NFOUR<<"  TIMESTEP : "<<trigger->TIMESTEP<<"  maxt_diode : "<<trigger->maxt_diode<<endl;
+       cout<<"meandiode : "<<trigger->meandiode<<"  rmsdiode : "<<trigger->rmsdiode<<endl;
+       cout<<"powerthreshold : "<<trigger->powerthreshold<<endl;
+
+       cout<<"\nmaxt_diode : "<<detector->maxt_diode<<"  idelaybefore_peak : "<<detector->idelaybeforepeak<<"  iwindow : "<<detector->iwindow<<endl;
+
+
+       */
+
+
+
+
+       for (int i=0; i<detector->params.number_of_stations; i++) {
+           if (max_dt < report->stations[i].max_arrival_time - report->stations[i].min_arrival_time) max_dt = report->stations[i].max_arrival_time - report->stations[i].min_arrival_time;
+           // check the total global trigger passed
+           if (report->stations[i].Global_Pass) {
+               cout<<"Global_Pass : "<<report->stations[i].Global_Pass<<" added weight : "<<event->Nu_Interaction[0].weight;
+               Total_Global_Pass ++;
+               Total_Weight += event->Nu_Interaction[0].weight;
+               // make plots for all channels
+               for (int string=0; string<4; string++) {
+                   for (int antenna=0; antenna<4; antenna++) {
+                       //cout<<"plot cd "<<4*string + antenna<<endl;
+                       cFull_window->cd( 4*string + antenna + 1 );
+                       //g_Full_window = new TGraph( settings1->DATA_BIN_SIZE , xbin, report->Full_window[4*string + antenna] );
+                       g_Full_window = new TGraph( settings1->DATA_BIN_SIZE , xbin, trigger->Full_window[4*string + antenna] );
+                       g_Full_window->Draw("al");
+
+                       G_V_threshold_diode -> SetLineColor(kRed);
+                       G_V_threshold_diode -> Draw("l");
+
+
+
+
+                       cFull_window_V->cd( 4*string + antenna + 1 );
+                       for (int p=0; p<settings1->NFOUR/2; p++) {
+                           x_V[p] = report->stations[i].strings[string].antennas[antenna].time[p];
+                           y_V[p] = report->stations[i].strings[string].antennas[antenna].V_mimic[p];
+                       }
+                       //cout<<"x_V[0] : "<<x_V[0]<<endl;
+                       g_Full_window_V = new TGraph( settings1->NFOUR/2 , x_V, y_V );
+                       g_Full_window_V->GetXaxis()->SetLimits(x_V[0],x_V[settings1->NFOUR/2-1]);
+                       g_Full_window_V->Draw("al");
+
+
+
+
+                   }
+               }
+
+           }
+
+       }
+
+
+
     AraTree2->Fill();   //fill interaction every events
 
+
+
+//--------------------------------------------------
+// 
+//  for (int i=0; i<4; i++) { // for strings
+//      for (int j=0; j<4; j++) { // for antennas
+//          if (report->stations[0].strings[i].antennas[j].ray_sol_cnt == 0 && report->stations[0].Total_ray_sol) { // if there's no raysol (should be only noise)
+//              cout<<"evt : "<<inu<<" ch : "<<i*4+j<<endl;
+//              //g_Full_window = new TGraph( settings1->DATA_BIN_SIZE , xbin, report->Full_window[i*4+j] );
+//              g_Full_window = new TGraph( settings1->DATA_BIN_SIZE , xbin, report->Full_window[0] );
+//              cout<<"ray_sol_cnt for 0.0 (plotted?) : "<<report->stations[0].strings[0].antennas[0].ray_sol_cnt<<endl;
+//              i = 10;
+//              j = 10;
+//          }
+//      }
+//  }
+//-------------------------------------------------- 
+
+ cout<<"evt "<<inu<<endl;
+
+
+ delete event;
 
 
   } // end loop over neutrinos
 
 
    cout<<" end loop"<<endl;
+   cout<<"Total_Global_Pass : "<<Total_Global_Pass<<endl;
+   cout<<"Total_Weight : "<<Total_Weight<<endl;
+   double IceVolume;
+   IceVolume = PI * (settings1->POSNU_RADIUS) * (settings1->POSNU_RADIUS) * icemodel->IceThickness( detector->stations[0] );
+
+   double Veff_test;
+   Veff_test = IceVolume * 4. * PI * signal->RHOICE / signal->RHOH20 * Total_Weight / (double)(settings1->NNU);
+   cout<<"test Veff : "<<Veff_test<<" m3sr, "<<Veff_test*1.E-9<<" km3sr"<<endl;
 //--------------------------------------------------
 //   cout<<"Total NNU : "<<settings1->NNU<<", PickUnbiased passed NNU : "<<nnu_pass<<endl;
 //-------------------------------------------------- 
@@ -315,7 +472,22 @@ cout<<"begain looping events!!"<<endl;
 
 
 
+//--------------------------------------------------
+//  TCanvas *cFull_window = new TCanvas("cFull_window","A Simple Graph Example",200,10,10000,700*16);
+//  cFull_window->Divide(1,16);
+//-------------------------------------------------- 
+//--------------------------------------------------
+//  g_Full_window->SetTitle("test Full window");
+//  g_Full_window->GetHistogram()->SetXTitle("bin");
+//  g_Full_window->GetHistogram()->SetYTitle("diode convlv");
+//  g_Full_window->Draw("al");
+//-------------------------------------------------- 
+ cFull_window->Print("test_Full_window.pdf");
 
+ cFull_window_V->Print("test_Full_window_V.pdf");
+
+
+ cout<<"max_dt : "<<max_dt<<endl;
 
 
 //--------------------------------------------------
@@ -327,16 +499,22 @@ cout<<"begain looping events!!"<<endl;
 //--------------------------------------------------
 //  delete raysolver;
 //-------------------------------------------------- 
- delete icemodel;
- delete efficiencies;
- delete ray;
- 
- delete detector;
- delete settings1;
- delete count1;
- delete primary1;
- delete event;
- delete report;
+
+
+//--------------------------------------------------
+//  delete icemodel;
+//  delete efficiencies;
+//  delete ray;
+//  
+//  delete detector;
+//  delete settings1;
+//  delete count1;
+  delete primary1;
+//  delete event;
+//  delete report;
+//  delete trigger;
+//-------------------------------------------------- 
+
 //--------------------------------------------------
 //  delete interaction1;
 //-------------------------------------------------- 

@@ -39,6 +39,7 @@ const double Z_AIR=377;            // resistance of air = sqrt(epsilon/mu)
 const double NFIRN=1.3250;                   // index of refraction at the very surface - Peter
 const double NICE=1.79;                      // index of refraction of ice
 
+enum {kCC, kNC};    // neutrino interaction constant cc : 0, nc :1
 
 
 #endif //CONSTANTS_H

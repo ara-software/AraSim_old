@@ -7,6 +7,7 @@
 #include "Settings.h"
 #include "Vector.h"
 #include "Tools.h"
+#include "Trigger.h"
 
 #include <iostream>
 #include <sstream>
@@ -14,6 +15,7 @@
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
+#include "TRandom3.h"
 #include "Constants.h"
 
 ClassImp(Report);
@@ -35,7 +37,7 @@ Report::Report(Detector *detector, Settings *settings1) {
 
 void Report::Initialize(Detector *detector, Settings *settings1) {
     
-    // clear information stored in previous event
+    // clear information stored in (but there shouldn't be. just to make sure)
     //
     stations.clear();
 
@@ -73,30 +75,68 @@ void Antenna_r::clear() {   // if any vector variable added in Antenna_r, need t
     rec_ang.clear();
     reflect_ang.clear();
     Dist.clear();
+    L_att.clear();
     arrival_time.clear();
     reflection.clear();
     Pol_vector.clear();
     vmmhz.clear();
+    Heff.clear();
+    Mag.clear();
+    Fresnel.clear();
+    Pol_factor.clear();
     VHz_antfactor.clear();
     VHz_filter.clear();
     Vfft.clear();
     Vfft_noise.clear();
 
     time.clear();
+    V_mimic.clear();
     Ax.clear();
     Ay.clear();
     Az.clear();
 
     V.clear();
     V_noise.clear();
+    V_total.clear();
+    V_total_diode.clear();
+    V_total_timedelay.clear();
 
     PeakV.clear();
     Rank.clear();
+    //Trig_Pass.clear();
+    TooMuch_Tdelay.clear();
 
 }
 
 
-void Report::Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1) {
+
+void Antenna_r::clear_useless() {   // to reduce the size of output AraOut.root, remove some information
+
+    Heff.clear();
+    VHz_antfactor.clear();
+    VHz_filter.clear();
+    Vfft.clear();
+    Vfft_noise.clear();
+
+    Ax.clear();
+    Ay.clear();
+    Az.clear();
+
+    V_noise.clear();
+    V_total.clear();
+    V_total_diode.clear();
+    V_total_timedelay.clear();
+
+    //Trig_Pass.clear();
+    TooMuch_Tdelay.clear();
+
+}
+
+
+    
+
+
+void Report::Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1, Trigger *trigger) {
 
     int ray_sol_cnt;
     double viewangle;
@@ -110,14 +150,30 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
     Position Pol_vector;                            // polarization vector at the source
     double mag;                                     // magnification factor. it can vary in case of plane / spherical wave
     double fresnel;                                 // fresnel factor
+    double Pol_factor;                              // polarization factor
     double tmp; // for non use return values
 
     double freq_tmp, heff, antenna_theta, antenna_phi;  // values needed for apply antenna gain factor and prepare fft, trigger
     double volts_forfft[settings1->NFOUR/2];       // array for fft
-    double volts_noise_forfft[settings1->NFOUR/2]; // t domain noise voltage array
+    //double V_total_forconvlv[settings1->DATA_BIN_SIZE];   // 
+    int check_toomuch_Tdelay;   // return value from MixSignalNoise_Tdelay
 
+    double min_arrival_time_tmp;   // min arrival time between all antennas, raysolves
+    double max_arrival_time_tmp;   // max arrival time between all antennas, raysolves
+    double max_PeakV_tmp;       // max PeakV of all antennas in the station
+
+    int trig_window_bin = (int)(settings1->TRIG_WINDOW / settings1->TIMESTEP);   // coincidence window bin for trigger
+
+    int N_pass; // number of trigger passed channels (antennas)
 
            for (int i = 0; i< detector->params.number_of_stations; i++) {
+
+               min_arrival_time_tmp = 10.;      // first min_arrival_time is unreasonably big value
+               max_arrival_time_tmp = 0.;      // first max_arrival_time is unreasonably small value
+               max_PeakV_tmp = 0.;  // first max_PeakV_tmp is 0.
+
+               stations[i].Total_ray_sol=0; // initial Total_ray_sol value
+
 
                for (int j=0; j< detector->params.number_of_strings_station; j++) {
 
@@ -137,10 +193,10 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                            ray_sol_cnt = 0;
                            
                            if (raysolver->solution_toggle) {  // if there are solution from raysolver
-                              cout<<"ray_output size : "<<ray_output[0].size()<<endl;
+                              //cout<<"ray_output size : "<<ray_output[0].size()<<endl;
                                
                                while ( ray_sol_cnt < ray_output[0].size() ) {   // for number of soultions (could be 1 or 2)
-                                  cout<<"Path length : "<<ray_output[0][ray_sol_cnt]<<"\tView angle : "<<ray_output[1][ray_sol_cnt]<<"\tReceipt angle : "<<ray_output[2][ray_sol_cnt]<<"\tpath time : "<<ray_output[4][ray_sol_cnt]<<endl;
+                                  //cout<<"Path length : "<<ray_output[0][ray_sol_cnt]<<"\tView angle : "<<ray_output[1][ray_sol_cnt]<<"\tReceipt angle : "<<ray_output[2][ray_sol_cnt]<<"\tpath time : "<<ray_output[4][ray_sol_cnt]<<endl;
 
                                   // set viewangle, launch_vector, receive vectors
                                   viewangle = ray_output[1][ray_sol_cnt];
@@ -156,17 +212,20 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                   // check viewangle that if ray in near Cherenkov cone
                                   //
                                   if (viewangle*DEGRAD >55. && viewangle*DEGRAD <57.) { // if viewangle is 56 deg +- 1 deg
-                                      cout<<"near cone! view angle : "<<viewangle*DEGRAD<<"station["<<i<<"].string["<<j<<"].antenna["<<k<<"] with  ray_sol_cnt : "<<ray_sol_cnt<<endl;
+                                      //cout<<"near cone! view angle : "<<viewangle*DEGRAD<<"  station["<<i<<"].string["<<j<<"].antenna["<<k<<"] with  ray_sol_cnt : "<<ray_sol_cnt<<endl;
                                   }
 
                                    // store information to report
                                    stations[i].strings[j].antennas[k].view_ang.push_back(viewangle);
                                    stations[i].strings[j].antennas[k].rec_ang.push_back(ray_output[2][ray_sol_cnt]);
                                    stations[i].strings[j].antennas[k].Dist.push_back(ray_output[0][ray_sol_cnt]);
+                                   stations[i].strings[j].antennas[k].L_att.push_back( icemodel->EffectiveAttenuationLength(settings1, event->Nu_Interaction[0].posnu, 0) );
                                    stations[i].strings[j].antennas[k].arrival_time.push_back(ray_output[4][ray_sol_cnt]);
                                    stations[i].strings[j].antennas[k].reflect_ang.push_back(ray_output[3][ray_sol_cnt]);
                                    
                                    stations[i].strings[j].antennas[k].vmmhz.resize(ray_sol_cnt+1);
+
+                                   stations[i].strings[j].antennas[k].Heff.resize(ray_sol_cnt+1);
                                    
                                    stations[i].strings[j].antennas[k].VHz_antfactor.resize(ray_sol_cnt+1);
                                    stations[i].strings[j].antennas[k].VHz_filter.resize(ray_sol_cnt+1);
@@ -175,7 +234,10 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                                    stations[i].strings[j].antennas[k].V.resize(ray_sol_cnt+1);
                                    stations[i].strings[j].antennas[k].V_noise.resize(ray_sol_cnt+1);
-                                   stations[i].strings[j].antennas[k].time.resize(ray_sol_cnt+1);
+                                   stations[i].strings[j].antennas[k].V_total.resize(ray_sol_cnt+1);
+                                   stations[i].strings[j].antennas[k].V_total_diode.resize(ray_sol_cnt+1);
+                                   stations[i].strings[j].antennas[k].V_total_timedelay.resize(ray_sol_cnt+1);
+                                   //stations[i].strings[j].antennas[k].time.resize(ray_sol_cnt+1);
 
                                    // calculate the polarization vector at the source
                                    Pol_vector = GetPolarization (event->nnu, launch_vector);
@@ -202,6 +264,8 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
 
                                    stations[i].strings[j].antennas[k].Pol_vector.push_back(Pol_vector); // this Pol_vector is for the target antenna
+                                   stations[i].strings[j].antennas[k].Mag.push_back(mag); // magnification factor
+                                   stations[i].strings[j].antennas[k].Fresnel.push_back(fresnel); // Fresnel factor
 
 
 
@@ -209,7 +273,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
 
                                    GetAngleAnt(receive_vector, detector->stations[i].strings[j].antennas[k], antenna_theta, antenna_phi);   // get theta, phi for signal ray arrived at antenna
-                                   cout<<"antenna theta : "<<antenna_theta<<"  phi : "<<antenna_phi<<endl;  
+                                   //cout<<"antenna theta : "<<antenna_theta<<"  phi : "<<antenna_phi<<endl;  
 
 
 
@@ -217,17 +281,17 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                    for (int l=0; l<detector->GetFreqBin(); l++) {   // for detector freq bin numbers
 
 
-                                      cout<<"TaperVmMHz inputs VA:"<<viewangle<<" th_em:"<<event->Nu_Interaction[0].d_theta_em[l]<<" th_had:"<<event->Nu_Interaction[0].d_theta_had[l]<<" emfrac:"<<event->Nu_Interaction[0].emfrac<<" hadfrac:"<<event->Nu_Interaction[0].hadfrac<<" vmmhz1m:"<<event->Nu_Interaction[0].vmmhz1m[l]<<endl;
+                                      //cout<<"TaperVmMHz inputs VA:"<<viewangle<<" th_em:"<<event->Nu_Interaction[0].d_theta_em[l]<<" th_had:"<<event->Nu_Interaction[0].d_theta_had[l]<<" emfrac:"<<event->Nu_Interaction[0].emfrac<<" hadfrac:"<<event->Nu_Interaction[0].hadfrac<<" vmmhz1m:"<<event->Nu_Interaction[0].vmmhz1m[l]<<endl;
 
                                        vmmhz1m_tmp = event->Nu_Interaction[0].vmmhz1m[l];
 
                                        signal->TaperVmMHz( viewangle, event->Nu_Interaction[0].d_theta_em[l], event->Nu_Interaction[0].d_theta_had[l], event->Nu_Interaction[0].emfrac, event->Nu_Interaction[0].hadfrac, vmmhz1m_tmp, vmmhz1m_em);
-                                      cout<<"TaperVmMHz (1m at view angle) at "<<l<<"th bin : "<<vmmhz1m_tmp<<endl;
+                                      //cout<<"TaperVmMHz (1m at view angle) at "<<l<<"th bin : "<<vmmhz1m_tmp<<endl;
 
 
                                       // multiply all factors for traveling ice
                                       vmmhz1m_tmp = vmmhz1m_tmp / ray_output[0][ray_sol_cnt] * exp(-ray_output[0][ray_sol_cnt]/icemodel->EffectiveAttenuationLength(settings1, event->Nu_Interaction[0].posnu, 0)) * mag * fresnel;  // assume whichray = 0, now vmmhz1m_tmp has all factors except for the detector properties (antenna gain, etc)
-                                      cout<<"AttenLength : "<<icemodel->EffectiveAttenuationLength(settings1, event->Nu_Interaction[0].posnu, 0)<<endl;
+                                      //cout<<"AttenLength : "<<icemodel->EffectiveAttenuationLength(settings1, event->Nu_Interaction[0].posnu, 0)<<endl;
 
 
                                       vmmhz1m_sum += vmmhz1m_tmp;
@@ -241,12 +305,13 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                        heff = GaintoHeight(detector->stations[i].strings[j].antennas[k].GetG(detector, freq_tmp*1.E-6, // to MHz
                                                    antenna_theta, antenna_phi), 
                                                    freq_tmp, icemodel->GetN(detector->stations[i].strings[j].antennas[k]) );
-                                       cout<<"n_medium : "<<icemodel->GetN(detector->stations[i].strings[j].antennas[k])<<endl;
-                                       cout<<"gain : "<<detector->stations[i].strings[j].antennas[k].GetG(detector, freq_tmp*1.E-6, antenna_theta, antenna_phi)<<endl;
-                                       cout<<"heff : "<<heff<<endl;
+                                       //cout<<"n_medium : "<<icemodel->GetN(detector->stations[i].strings[j].antennas[k])<<endl;
+                                       //cout<<"gain : "<<detector->stations[i].strings[j].antennas[k].GetG(detector, freq_tmp*1.E-6, antenna_theta, antenna_phi)<<endl;
+                                       //cout<<"heff : "<<heff<<endl;
+                                       stations[i].strings[j].antennas[k].Heff[ray_sol_cnt].push_back( heff );
 
                                        // apply pol factor, heff
-                                       ApplyAntFactors(heff, n_trg_pokey, n_trg_slappy, Pol_vector, detector->stations[i].strings[j].antennas[k].type, vmmhz1m_tmp);
+                                       ApplyAntFactors(heff, n_trg_pokey, n_trg_slappy, Pol_vector, detector->stations[i].strings[j].antennas[k].type, Pol_factor, vmmhz1m_tmp);
 
                                        //stations[i].strings[j].antennas[k].Vfft[ray_sol_cnt].push_back( vmmhz1m_tmp );
                                        stations[i].strings[j].antennas[k].VHz_antfactor[ray_sol_cnt].push_back( vmmhz1m_tmp );
@@ -262,6 +327,9 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                                    }// end for freq bin
                                    
+                                   stations[i].strings[j].antennas[k].Pol_factor.push_back( Pol_factor );
+
+
                                    //cout<<"station["<<i<<"].strings["<<j<<"].antennas["<<k<<"].vmmhz1m["<<ray_sol_cnt<<"][0] : "<<stations[i].strings[j].antennas[k].vmmhz[ray_sol_cnt][0]<<endl;
 
                                    MakeArraysforFFT(settings1, detector, stations[i].strings[j].antennas[k].VHz_filter[ray_sol_cnt], volts_forfft);
@@ -280,38 +348,48 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                    //Tools::realft(volts_forfft,1,settings1->NFOUR/2);
 
 
-                                   cout<<"Finished getting V signal part!!"<<endl;
+                                   //cout<<"Finished getting V signal part!!"<<endl;
                                    
                                    stations[i].strings[j].antennas[k].PeakV.push_back( FindPeak(volts_forfft, settings1->NFOUR/2) );
 
-                                   // test; noise from flat spectrum Kb * T
-                                   // T_ice = 240K
-                                   double T_noise = 240.;
-                                   Vfft_noise_org = sqrt( (double)(settings1->NFOUR/2) * 50. * KBOLTZ * T_noise / (settings1->TIMESTEP * 2.) );
                                    // Vfft_noise_org is in fft freq bin!!
                                    // same unit with Vfft [V] but filter not applied
 
                                    
 
-                                   cout<<"start GetNoiseWaveforms!!"<<endl;
-                                   // from Vfft_noise_org (flat thermal noise), get random noise waveform
-                                   // GetNoiseWaveforms will apply filter in it.
-                                   GetNoiseWaveforms(settings1, detector, Vfft_noise_org, volts_noise_forfft);
-                                   cout<<"Finished GetNoiseWaveforms!!"<<endl;
 
                                    Tools::NormalTimeOrdering(settings1->NFOUR/2, volts_forfft);
-                                   Tools::NormalTimeOrdering(settings1->NFOUR/2, volts_noise_forfft);
-                                   cout<<"finished NormalTimeOrdering!!"<<endl;
+                                   //cout<<"finished NormalTimeOrdering!!"<<endl;
+
 
 
                                    for (int n=0; n<settings1->NFOUR/2; n++) {
                                        stations[i].strings[j].antennas[k].V[ray_sol_cnt].push_back( volts_forfft[n] );
-                                       stations[i].strings[j].antennas[k].V_noise[ray_sol_cnt].push_back( volts_noise_forfft[n] );
-                                       stations[i].strings[j].antennas[k].time[ray_sol_cnt].push_back( stations[i].strings[j].antennas[k].arrival_time[ray_sol_cnt] + (double)(n - settings1->NFOUR/4)* settings1->TIMESTEP );   // time at 0 s is when ray started at the posnu
+
+                                       //stations[i].strings[j].antennas[k].time[ray_sol_cnt].push_back( stations[i].strings[j].antennas[k].arrival_time[ray_sol_cnt] + (double)(n - settings1->NFOUR/4)* settings1->TIMESTEP );   // time at 0 s is when ray started at the posnu
                                    }
-                                   cout<<"finished push_back V, V_noise, and time!!"<<endl;
+                                   //cout<<"finished push_back V, V_noise V_total, and time!!"<<endl;
                                    
-                                       
+
+
+
+
+                                   // check min_arrival_time
+                                   if (min_arrival_time_tmp > stations[i].strings[j].antennas[k].arrival_time[ray_sol_cnt]) {
+                                       min_arrival_time_tmp = stations[i].strings[j].antennas[k].arrival_time[ray_sol_cnt];
+                                   }
+
+
+                                   // check max_arrival_time
+                                   if (max_arrival_time_tmp < stations[i].strings[j].antennas[k].arrival_time[ray_sol_cnt]) {
+                                       max_arrival_time_tmp = stations[i].strings[j].antennas[k].arrival_time[ray_sol_cnt];
+                                   }
+
+                                   // check max_PeakV
+                                   if (max_PeakV_tmp < stations[i].strings[j].antennas[k].PeakV[ray_sol_cnt]) {
+                                       max_PeakV_tmp = stations[i].strings[j].antennas[k].PeakV[ray_sol_cnt];
+                                   }
+
 
                                    ray_sol_cnt++;
                                
@@ -333,11 +411,22 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
 
                            stations[i].strings[j].antennas[k].ray_sol_cnt = ray_sol_cnt;    // save number of RaySolver solutions
+               
+                           stations[i].Total_ray_sol += ray_sol_cnt; // add ray_sol_cnt to Total_ray_sol
                        
 
                    }// for number_of_antennas_string
 
                }// for number_of_strings_station
+
+
+               // set each station's min/max arrival time
+               stations[i].min_arrival_time = min_arrival_time_tmp;
+               stations[i].max_arrival_time = max_arrival_time_tmp;
+
+               // set each station's max PeakV
+               stations[i].max_PeakV = max_PeakV_tmp;
+
 
            }// for number_of_stations
 
@@ -347,7 +436,525 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
 
 
+/*
+
+           // test selecting noise waveform
+
+           int N_noise;     // needed number of noise waveforms (most cases, we will need only 1)
+           int noise_ID[5];    // selected noise waveform ID (we should not need 5 noise waveforms, but just in case)
+           int ch_ID;   // channel ID
+           //double Full_window[detector->params.number_of_strings_station * detector->params.number_of_antennas_string][settings1->DATA_BIN_SIZE];    // entire window for trigger check (diode convlv results for all antennas in a station)
+           vector < vector <double> > Full_window;  // entire window for trigger check (diode convlv results for all antennas in a station)
+           int max_total_bin;   // to save time, use only necessary number of bins
+           int remain_bin;      // the bin number for not using entire DATA_BIN_SIZE array
+           vector <int> signal_bin;      // the center of bin where signal should locate
+           vector <int> signal_dbin;     // the bin difference between signal bins
+           vector <int> connect_signals;    // if ray_sol time delay is small enough to connect each other
+
+
+*/
+
+
+
+
+
+           // now loop over all antennas again to make DATA_BIN_SIZE array for signal + noise. (with time delay)
+           // with that signal + noise array, we'll do convolution with diode response.
+           // with the convolution result, we'll do trigger check
+        for (int i = 0; i< detector->params.number_of_stations; i++) {
+
+
+           N_pass = 0;
+           stations[i].Global_Pass = 0;
+
+
+
+           if (stations[i].Total_ray_sol) { // if there is any ray_sol (don't check trigger if there is no ray_sol at all)
+
+               //clear Full_window for previous station data
+               //Full_window.clear();
+               //Full_window.resize(detector->params.number_of_strings_station * detector->params.number_of_antennas_string);
+
+
+               // calculate total number of bins we need to do trigger check
+               max_total_bin = (stations[i].max_arrival_time - stations[i].min_arrival_time)/settings1->TIMESTEP + settings1->NFOUR/2 + trigger->maxt_diode_bin;
+
+
+               // now, check if DATA_BIN_SIZE is enough for total time delay between antennas
+               //N_noise = (stations[i].max_arrival_time - stations[i].min_arrival_time)/settings1->TIMESTEP;
+               N_noise = (int)( max_total_bin / settings1->DATA_BIN_SIZE ) + 1;
+               //cout<<"N_noise : "<<N_noise<<endl;
+               if (N_noise > 1) cout<<"N_noise : "<<N_noise<<" might cause error!!"<<endl;
+               // mostly N_noise should be "1"
+
+               // now, check the number of bins we need for portion of noise waveforms
+               remain_bin = max_total_bin % settings1->DATA_BIN_SIZE;
+
+               ch_ID = 0;
+
+               for (int j=0; j< detector->params.number_of_strings_station; j++) {
+
+                   for (int k=0; k< detector->params.number_of_antennas_string; k++) {
+
+
+                       // select noise waveform from trigger class
+                       for (int l=0; l<N_noise; l++) {
+                           noise_ID[l] = (int)(settings1->NOISE_EVENTS * gRandom->Rndm() );
+                           //cout<<"noise_ID for "<<l<<"th noisewaveform is : "<<noise_ID[l]<<"  N_noise : "<<N_noise<<" ray_sol_cnt : "<<stations[i].strings[j].antennas[k].ray_sol_cnt<<endl;
+
+                           if (l == N_noise-1) {    // when it's final noise waveform
+                               //Full_window[ch_ID].insert( Full_window[ch_ID].end(), trigger->v_noise_timedomain_diode[noise_ID[l]].begin(), trigger->v_noise_timedomain_diode[noise_ID[l]].begin() + remain_bin );
+                               //for (int bin=0; bin<remain_bin; bin++) {
+                               for (int bin=0; bin<settings1->DATA_BIN_SIZE; bin++) {   // test for full window
+                                   trigger->Full_window[ch_ID][bin] = ( trigger->v_noise_timedomain_diode[noise_ID[l]][bin] );
+                                   trigger->Full_window_V[ch_ID][bin] = ( trigger->v_noise_timedomain[noise_ID[l]][bin] );
+                               }
+                               //cout<<"last noise filled in Full_window!"<<endl;
+                           }
+                           else {   // when it's not final noise waveform
+                               //cout<<"full noise will fill in Full_window!"<<endl;
+                               //Full_window[ch_ID].insert( Full_window[ch_ID].end(), trigger->v_noise_timedomain_diode[noise_ID[l]].begin(), trigger->v_noise_timedomain_diode[noise_ID[l]].begin() + settings1->DATA_BIN_SIZE );
+                               for (int bin=0; bin<settings1->DATA_BIN_SIZE; bin++) {
+                                   trigger->Full_window[ch_ID][bin] = ( trigger->v_noise_timedomain_diode[noise_ID[l]][bin] );
+                                   trigger->Full_window_V[ch_ID][bin] = ( trigger->v_noise_timedomain[noise_ID[l]][bin] );
+                               }
+                           }
+
+                       }
+                       // currently there is a initial spoiled bins (maxt_diode_bin) at the initial Full_window "AND" at the initial of connected noisewaveform (we can fix this by adding values but not accomplished yet)
+
+                       //cout<<"done filling noise diode arrays for trigger!"<<endl;
+
+
+
+
+                       // now we need to calculate bin values for the signal
+                       // with the bin values, grap noise voltage waveform (NFOUR/2) and do myconvlv
+                       // and replace by init : bin + maxt_diode_bin, fin : bin + NFOUR/2
+                       //
+                       // after we do this for all channels, do trigger check
+
+
+
+
+                       // calculate the bin values for the signal
+                       signal_bin.clear();
+                       signal_dbin.clear();
+                       connect_signals.clear();
+
+                       //cout<<"ch_ID : "<<ch_ID;
+
+                       for (int m=0; m<stations[i].strings[j].antennas[k].ray_sol_cnt; m++) {   // loop over raysol numbers
+                           //signal_bin.push_back( (stations[i].strings[j].antennas[k].arrival_time[m] - stations[i].min_arrival_time)/(settings1->TIMESTEP) + settings1->NFOUR/4 );
+                           signal_bin.push_back( (stations[i].strings[j].antennas[k].arrival_time[m] - stations[i].min_arrival_time)/(settings1->TIMESTEP) + settings1->NFOUR/2 + trigger->maxt_diode_bin );
+                           //signal_bin.push_back( (stations[i].strings[j].antennas[k].arrival_time[m] - stations[i].min_arrival_time)/(settings1->TIMESTEP) + settings1->NFOUR/2 + trigger->maxt_diode_bin + 1000);
+                           //cout<<" signal_bin["<<m<<"] : "<<signal_bin[m];
+
+                           if (m>0) {
+                               signal_dbin.push_back( signal_bin[m] - signal_bin[m-1] );
+                               //cout<<"  signal_dbin["<<m-1<<"] : "<<signal_dbin[m-1];
+                               if (signal_dbin[m-1] < settings1->NFOUR/2) { // if two ray_sol time delay is smaller than time window
+                                   connect_signals.push_back(1);
+                                   //cout<<"need two signal connection!!"<<endl;
+                               }
+                               else {
+                                   connect_signals.push_back(0);
+                               }
+                           }
+                           else if (stations[i].strings[j].antennas[k].ray_sol_cnt == 1 && m==0) {// if only one solution
+                               connect_signals.push_back(0);
+                           }
+                           //cout<<"\n";
+
+                       }
+                       //
+
+                       //cout<<"done calculating signal bins / connect or not"<<endl;
+
+
+
+
+
+                       // grap noise waveform (NFOUR/2 bins or NFOUR) for diode convlv
+                       for (int m=0; m<stations[i].strings[j].antennas[k].ray_sol_cnt; m++) {   // loop over raysol numbers
+                           // when ray_sol_cnt == 0, this loop inside codes will not run
+
+                           
+                           if ( m==0 ) {    // if it's first sol
+
+                               if ( connect_signals[m] == 1 ) {
+
+                                   // do two convlv with double array m, m+1
+                                   //
+                                   Select_Wave_Convlv_Exchange(settings1, trigger, detector, signal_bin[m], signal_bin[m+1], stations[i].strings[j].antennas[k].V[m], stations[i].strings[j].antennas[k].V[m+1], noise_ID, ch_ID);
+                               }
+                               else if ( connect_signals[m] == 0 ) {
+
+                                   // do NFOUR/2 size array convlv (m)
+                                   //
+                                   Select_Wave_Convlv_Exchange(settings1, trigger, detector, signal_bin[m], stations[i].strings[j].antennas[k].V[m], noise_ID, ch_ID);
+
+                               }
+                           }
+
+                           else {   // if it's not the first sol
+
+                               if ( m+1 < stations[i].strings[j].antennas[k].ray_sol_cnt ) {    // if there is next raysol
+
+                                   if ( connect_signals[m] == 1 ) { // next raysol is connected
+
+                                       if ( connect_signals[m-1] == 1 ) {   // and previous raysol also connected
+
+                                           // double size array with m-1, m, m+1 raysols all added
+                                           //
+                                           Select_Wave_Convlv_Exchange(settings1, trigger, detector, signal_bin[m-1], signal_bin[m], signal_bin[m+1], stations[i].strings[j].antennas[k].V[m-1], stations[i].strings[j].antennas[k].V[m], stations[i].strings[j].antennas[k].V[m+1], noise_ID, ch_ID);
+
+                                       }
+
+                                       else if ( connect_signals[m-1] == 0 ) {  // and previous raysol not connected
+
+                                           // double size array with m , m+1 raysols
+                                           //
+                                           Select_Wave_Convlv_Exchange(settings1, trigger, detector, signal_bin[m], signal_bin[m+1], stations[i].strings[j].antennas[k].V[m], stations[i].strings[j].antennas[k].V[m+1], noise_ID, ch_ID);
+
+                                       }
+                                   }
+                                   else if ( connect_signals[m] == 0 ) {    // next raysol is not connected
+
+                                       if ( connect_signals[m-1] == 1 ) {   // and previous raysol is connected
+
+                                           // skip the process as this should have done before
+                                           //
+
+                                       }
+
+                                       else if ( connect_signals[m-1] == 0 ) {  // and previous raysol not connected
+
+                                           // single size array with only m raysol
+                                           //
+                                           Select_Wave_Convlv_Exchange(settings1, trigger, detector, signal_bin[m], stations[i].strings[j].antennas[k].V[m], noise_ID, ch_ID);
+
+                                       }
+                                   }
+                               }
+
+                               else {   // there is no next raysol (this "m" is the last raysol)
+
+                                   if ( connect_signals[m-1] == 1 ) {   // and previous raysol is connected
+
+                                       // skip the process as this should have done before
+                                       //
+
+                                   }
+                                   else if ( connect_signals[m-1] == 0 ) {  // and previous raysol is not connected
+
+                                       // single size array with only m raysol
+                                       //
+                                       Select_Wave_Convlv_Exchange(settings1, trigger, detector, signal_bin[m], stations[i].strings[j].antennas[k].V[m], noise_ID, ch_ID);
+
+                                   }
+                               }
+
+                           } // if not the first raysol (all other raysols)
+
+                       } // end loop over raysols
+
+
+
+
+                       //cout<<"done convlv for signal + noise"<<endl;
+
+
+                       ch_ID++; // now to next channel
+
+                   } // for antennas
+
+               } // for strings
+
+
+
+
+               //
+               // before we move to next station, do trigger check here!!!
+               //
+
+               int trig_i, trig_j, trig_bin;
+
+               int check_ch;
+               
+               //for ( trig_i=trigger->maxt_diode_bin; trig_i<settings1->DATA_BIN_SIZE - trig_window_bin; trig_i++) {
+               trig_i = trigger->maxt_diode_bin;
+               //while (trig_i < settings1->DATA_BIN_SIZE - trig_window_bin ) {
+               while (trig_i < max_total_bin - trig_window_bin ) {
+
+                   N_pass = 0;
+                   Passed_chs.clear();
+
+
+                   //for ( trig_j=0; trig_j<ch_ID; trig_j++) {    // loop over all channels
+                   trig_j = 0;
+                   while (trig_j < ch_ID ) { 
+
+                       //for ( trig_bin=0; trig_bin<trig_window_bin; trig_bin++) {
+                       trig_bin = 0;
+                       while (trig_bin < trig_window_bin ) {
+
+                           //cout<<"trig_bin : "<<trig_bin<<endl;
+
+                           if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode) ) {   // if this channel passed the trigger!
+                               //cout<<"trigger passed at bin "<<trig_i+trig_bin<<" ch : "<<trig_j<<endl;
+                               stations[i].strings[(int)((trig_j)/4)].antennas[(int)((trig_j)%4)].Trig_Pass = trig_i+trig_bin;
+                               N_pass++;
+                               trig_bin = trig_window_bin;  // if confirmed this channel passed the trigger, no need to do rest of bins
+                               Passed_chs.push_back(trig_j);
+                           }
+
+                           trig_bin++;
+
+                       }
+
+                       // check all triggered channels not just 3
+                       //if ( N_pass > 2 ) trig_j += ch_ID;    // if the number of passed channels is 3 or more, no need to check other remaining channels as this station is trigged!
+                       //else trig_j++;   // if station not passed the trigger, just go to next channel
+                       trig_j++;   // if station not passed the trigger, just go to next channel
+
+                   }    // while trig_j < ch_ID
+
+                   if ( N_pass > 2 ) {  // now as global trigged!!
+                       check_ch = 0;
+                       stations[i].Global_Pass = trig_i;
+                       //trig_i = settings1->DATA_BIN_SIZE;    // also if we know this station is trigged, don't need to check rest of time window
+                       trig_i = max_total_bin;    // also if we know this station is trigged, don't need to check rest of time window
+                       for (int ch_loop=0; ch_loop<ch_ID; ch_loop++) {
+                           if (ch_loop == Passed_chs[check_ch] ) {
+                               //skip this passed ch as it already has bin info
+                               cout<<"trigger passed at bin "<<stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].Trig_Pass<<"  passed ch : "<<ch_loop<<endl;
+                               check_ch++;
+
+                               // now save the voltage waveform to V_mimic
+                               for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
+                                   stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].V_mimic.push_back( trigger->Full_window_V[ch_loop][ stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].Trig_Pass - settings1->NFOUR/4 + mimicbin ] );
+                                   stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].time.push_back( stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].Trig_Pass - settings1->NFOUR/4 + mimicbin );
+                               }
+
+                           }
+                           else {
+                               //stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].Trig_Pass = stations[i].Global_Pass + settings1->NFOUR/4;   // so that global trig is 
+                               stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].Trig_Pass = 0.;
+                               // now save the voltage waveform to V_mimic
+                               for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
+                                   stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].V_mimic.push_back( trigger->Full_window_V[ch_loop][ stations[i].Global_Pass + trig_window_bin/2 - settings1->NFOUR/4 + mimicbin ] );
+                                   stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].time.push_back( stations[i].Global_Pass + trig_window_bin/2 - settings1->NFOUR/4 + mimicbin );
+                               }
+                           }
+                       }
+
+                       //cout<<"Global trigger passed!!, N_pass : "<<N_pass<<endl;
+
+                   } // if N_Pass > 2
+                   else trig_i++;   // also if station not passed the trigger, just go to next bin
+
+
+               }    // while trig_i
+
+
+
+               //Full_window.clear();
+
+
+           }// if there is any ray_sol in the station
+
+
+
+
+               // now remove all information which are useless
+               for (int c_j=0; c_j< detector->params.number_of_strings_station; c_j++) {
+
+                   for (int c_k=0; c_k< detector->params.number_of_antennas_string; c_k++) {
+
+                       stations[i].strings[c_j].antennas[c_k].clear_useless();  // clear data in antenna which stored in previous event
+
+                   }
+               }
+               // clear useless done
+
+
+        } // for stations
+
+
+
+
+
 }   // end Connect_Interaction_Detector
+
+
+
+
+
+// this one is for single signal
+void Report::Select_Wave_Convlv_Exchange(Settings *settings1, Trigger *trigger, Detector *detector, int signalbin, vector <double> &V, int *noise_ID, int ID ) {
+
+    int BINSIZE = settings1->NFOUR/2;
+    int bin_value;
+    vector <double> V_total_forconvlv;   // total time domain waveform (noise + signal)
+    
+    V_total_forconvlv.clear();
+    
+    // first, fill the noise values
+    for (int bin=0; bin<BINSIZE; bin++) {   //BINSIZE should be NFOUR/2
+        bin_value = signalbin - BINSIZE/2 + bin;
+
+        // save the noise + signal waveform
+        V_total_forconvlv.push_back( trigger->v_noise_timedomain[ noise_ID[ (int)( bin_value / settings1->DATA_BIN_SIZE) ] ][ (int)( bin_value % settings1->DATA_BIN_SIZE ) ]  + V[bin] );
+
+    }
+
+    // do myconvlv and replace the diode response array
+    trigger->myconvlv( V_total_forconvlv, BINSIZE, detector->fdiode_real, V_total_forconvlv);
+
+    // do replace the part we get from noise + signal
+    for (int bin=signalbin-BINSIZE/2+(trigger->maxt_diode_bin); bin<signalbin+BINSIZE/2; bin++) {
+        trigger->Full_window[ID][bin] = V_total_forconvlv[bin - signalbin + BINSIZE/2];
+        trigger->Full_window_V[ID][bin] += V[bin - signalbin + BINSIZE/2];
+        //Full_window[ID][bin] = 0.;
+    }
+
+
+    V_total_forconvlv.clear();
+
+}
+
+
+
+
+// this one is for two connected signals 
+void Report::Select_Wave_Convlv_Exchange(Settings *settings1, Trigger *trigger, Detector *detector, int signalbin1, int signalbin2, vector <double> &V1, vector <double> &V2, int *noise_ID, int ID) {
+
+    int BINSIZE = settings1->NFOUR/2;
+    int bin_value;
+    int signal_dbin = signalbin2 - signalbin1;
+    vector <double> V_total_forconvlv;   // total time domain waveform (noise + signal)
+    double V_tmp[BINSIZE*2];
+    for(int bin_tmp=0; bin_tmp<BINSIZE*2; bin_tmp++) {
+        V_tmp[bin_tmp] = 0.;
+    }
+    
+    V_total_forconvlv.clear();
+    
+    // first, fill the noise values
+    for (int bin=0; bin<BINSIZE*2; bin++) {
+        bin_value = signalbin1 - BINSIZE/2 + bin;
+
+        // save the noise waveform
+        V_total_forconvlv.push_back( trigger->v_noise_timedomain[ noise_ID[ (int)( bin_value / settings1->DATA_BIN_SIZE) ] ][ (int)( bin_value % settings1->DATA_BIN_SIZE ) ] );
+
+
+        // exchange from pure noise to noise + signal
+        if (bin < signal_dbin) {  // bins where only first signal is shown
+            V_total_forconvlv[bin] = V_total_forconvlv[bin] + V1[bin];
+            V_tmp[bin] = V1[bin];
+        }
+        else if (bin < BINSIZE) { // bins where first + second signal is shown
+            V_total_forconvlv[bin] = V_total_forconvlv[bin] + V1[bin] + V2[bin - signal_dbin];
+            V_tmp[bin] = V1[bin] + V2[bin - signal_dbin];
+        }
+        else if (bin < BINSIZE + signal_dbin) { // bins where only second signal is shown
+            V_total_forconvlv[bin] = V_total_forconvlv[bin] + V2[bin - signal_dbin];
+            V_tmp[bin] = V2[bin - signal_dbin];
+        }
+
+    }
+
+    // do myconvlv and replace the diode response array
+    trigger->myconvlv( V_total_forconvlv, BINSIZE*2, detector->fdiode_real_double, V_total_forconvlv);
+
+    // do replace the part we get from noise + signal
+    for (int bin=signalbin1-BINSIZE/2+(trigger->maxt_diode_bin); bin<signalbin1+BINSIZE/2+BINSIZE; bin++) {
+        trigger->Full_window[ID][bin] = V_total_forconvlv[bin - signalbin1 + BINSIZE/2];
+        trigger->Full_window_V[ID][bin] += V_tmp[bin - signalbin1 + BINSIZE/2];
+        //Full_window[ID][bin] = 0.;
+    }
+
+
+    V_total_forconvlv.clear();
+
+
+}
+
+
+
+
+// this one is for three connected signals 
+void Report::Select_Wave_Convlv_Exchange(Settings *settings1, Trigger *trigger, Detector *detector, int signalbin0, int signalbin1, int signalbin2, vector <double> &V0, vector <double> &V1, vector <double> &V2, int *noise_ID, int ID) {
+
+    int BINSIZE = settings1->NFOUR/2;
+    int bin_value;
+    int signal_dbin = signalbin2 - signalbin1;
+    int signal_dbin0 = signalbin1 - signalbin0;
+    vector <double> V_total_forconvlv;   // total time domain waveform (noise + signal)
+    double V_tmp[BINSIZE*2];
+    for(int bin_tmp=0; bin_tmp<BINSIZE*2; bin_tmp++) {
+        V_tmp[bin_tmp] = 0.;
+    }
+    
+    V_total_forconvlv.clear();
+    
+    // first, fill the noise values
+    for (int bin=0; bin<BINSIZE*2; bin++) {
+        bin_value = signalbin1 - BINSIZE/2 + bin;
+
+        // save the noise waveform
+        V_total_forconvlv.push_back( trigger->v_noise_timedomain[ noise_ID[ (int)( bin_value / settings1->DATA_BIN_SIZE) ] ][ (int)( bin_value % settings1->DATA_BIN_SIZE ) ] );
+
+
+        // exchange from pure noise to noise + signal
+        if (bin < signal_dbin) {  // bins where no second signal is shown
+            if ( signal_dbin0 + bin < BINSIZE ) {   // previous signal is also here!
+                V_total_forconvlv[bin] = V_total_forconvlv[bin] + V1[bin] + V0[ signal_dbin0 + bin];
+                V_tmp[bin] = V1[bin] + V0[ signal_dbin0 + bin];
+            }
+            else {  // no previous signal, and next signal
+                V_total_forconvlv[bin] = V_total_forconvlv[bin] + V1[bin];
+                V_tmp[bin] = V1[bin];
+            }
+        }
+        else if (bin < BINSIZE) { // bins where first + second signal is shown
+            if ( signal_dbin0 + bin < BINSIZE ) {   // previous signal is also here!
+                V_total_forconvlv[bin] = V_total_forconvlv[bin] + V1[bin] + V0[ signal_dbin0 + bin] + V2[bin - signal_dbin];
+                V_tmp[bin] = V1[bin] + V0[ signal_dbin0 + bin] + V2[bin - signal_dbin];
+            }
+            else {  // no previous signal, and next signal
+                V_total_forconvlv[bin] = V_total_forconvlv[bin] + V1[bin] + V2[bin - signal_dbin];
+                V_tmp[bin] = V1[bin] + V2[bin - signal_dbin];
+            }
+        }
+        else if (bin < BINSIZE + signal_dbin) { // bins where only second signal is shown
+            V_total_forconvlv[bin] = V_total_forconvlv[bin] + V2[bin - signal_dbin];
+            V_tmp[bin] = V2[bin - signal_dbin];
+        }
+
+    }
+
+    // do myconvlv and replace the diode response array
+    trigger->myconvlv( V_total_forconvlv, BINSIZE*2, detector->fdiode_real_double, V_total_forconvlv);
+
+    // do replace the part we get from noise + signal
+    for (int bin=signalbin1-BINSIZE/2+(trigger->maxt_diode_bin); bin<signalbin1+BINSIZE/2+BINSIZE; bin++) {
+        trigger->Full_window[ID][bin] = V_total_forconvlv[bin - signalbin1 + BINSIZE/2];
+        trigger->Full_window_V[ID][bin] += V_tmp[bin - signalbin1 + BINSIZE/2];
+        //Full_window[ID][bin] = 0.;
+    }
+
+
+    V_total_forconvlv.clear();
+
+
+}
+
+
+
+
+
 
 
 Vector Report::GetPolarization (Vector &nnu, Vector &launch_vector) {
@@ -383,7 +990,7 @@ void Report::GetParameters( Position &src, Position &trg, Vector &nnu, double &v
     launch_vector = launch_vector.Unit();
     viewangle = launch_vector.Angle(nnu);
 
-                                   cout<<"launch_vector angle between R1 (trg) : "<<launch_vector.Angle(trg)<<"\n";
+                                   //cout<<"launch_vector angle between R1 (trg) : "<<launch_vector.Angle(trg)<<"\n";
 
     receive_vector = trg.Rotate( receive_angle, src.Cross(trg) );
     receive_vector = receive_vector.Unit();
@@ -406,9 +1013,9 @@ double Report::GaintoHeight(double gain, double freq, double n_medium) {
 }
 
 
-void Report::ApplyAntFactors(double heff, Vector &n_trg_pokey, Vector &n_trg_slappy, Vector &Pol_vector, int ant_type, double &vmmhz) {  // vmmhz is input and output. output will have some antenna factors on it
+void Report::ApplyAntFactors(double heff, Vector &n_trg_pokey, Vector &n_trg_slappy, Vector &Pol_vector, int ant_type, double &pol_factor, double &vmmhz) {  // vmmhz is input and output. output will have some antenna factors on it
 
-    double pol_factor;
+    //double pol_factor;
 
     if (ant_type == 0) {    // if v pol
         pol_factor = n_trg_pokey * Pol_vector;
@@ -416,6 +1023,7 @@ void Report::ApplyAntFactors(double heff, Vector &n_trg_pokey, Vector &n_trg_sla
     else if (ant_type == 1) {   // if h pol
         pol_factor = n_trg_slappy * Pol_vector;
     }
+    pol_factor = abs(pol_factor);
 
     // apply 3dB spliter, d nu to prepare FFT
     // now actually vmmhz is not V/m/MHz but V/m/Hz unit
@@ -426,7 +1034,7 @@ void Report::ApplyAntFactors(double heff, Vector &n_trg_pokey, Vector &n_trg_sla
 
     // apply antenna effective height and 0.5 (to calculate power with heff), and polarization factor
     // not vmmhz is actually V/Hz unit
-    vmmhz = vmmhz * 0.5 * heff * abs(pol_factor);
+    vmmhz = vmmhz * 0.5 * heff * pol_factor;
 
     // now we have to use MakeArraysforFFT to change signal arrays for FFT
 }
@@ -439,9 +1047,9 @@ void Report::ApplyFilter(int bin_n, Detector *detector, double &vmmhz) {  // rea
 }
 
 
-void Report::ApplyFilter_fft(int bin_n, Detector *detector, double &vmmhz) {  // read filter gain in dB and apply unitless gain to vmmhz
+void Report::ApplyFilter_databin(int bin_n, Detector *detector, double &vmmhz) {  // read filter gain in dB and apply unitless gain to vmmhz
 
-    vmmhz = vmmhz * pow(10., ( detector->GetFilterGain_fft(bin_n) )/20.);   // from dB to unitless gain for voltage
+    vmmhz = vmmhz * pow(10., ( detector->GetFilterGain_databin(bin_n) )/20.);   // from dB to unitless gain for voltage
 
 }
 
@@ -472,6 +1080,7 @@ void Report::GetAngleAnt(Vector &rec_vector, Position &antenna, double &ant_thet
 }
 
 
+// generate DATA_BIN_SIZE sized noise waveform array in time domain
 void Report::GetNoiseWaveforms(Settings *settings1, Detector *detector, double v_noise, double *vnoise) {
 
     if (settings1->NOISE == 0) {    // NOISE == 0 : flat thermal noise with Johnson-Nyquist noise
@@ -479,6 +1088,7 @@ void Report::GetNoiseWaveforms(Settings *settings1, Detector *detector, double v
 
         Vfft_noise_after.clear();  // remove previous Vfft_noise values
         Vfft_noise_before.clear();  // remove previous Vfft_noise values
+        V_noise_timedomain.clear(); // remove previous V_noise_timedomain values
 
 
         double V_tmp; // copy original flat H_n [V] value
@@ -489,17 +1099,19 @@ void Report::GetNoiseWaveforms(Settings *settings1, Detector *detector, double v
         //MakeArraysforFFT_noise(settings1, detector, vhz_noise_tmp , vnoise);
         // returned array vnoise currently have real value = imag value as no phase term applied
 
-        for (int k=0; k<settings1->NFOUR/4; k++) {
+        //for (int k=0; k<settings1->NFOUR/4; k++) {
+        for (int k=0; k<settings1->DATA_BIN_SIZE/2; k++) {
 
-            V_tmp = v_noise; // copy original flat H_n [V] value
+            V_tmp = v_noise / sqrt(2.) ; // copy original flat H_n [V] value, and apply 1/sqrt2 for SURF/TURF divide same as signal
 
-            ApplyFilter_fft(k, detector, V_tmp);
+            ApplyFilter_databin(k, detector, V_tmp);
             Vfft_noise_before.push_back( V_tmp );
 
 
             current_phase = noise_phase[k];
 
-            Tools::get_random_rician( 0., 0., sqrt(2./ M_PI) * V_tmp, current_amplitude, current_phase);    // use real value array value
+            //Tools::get_random_rician( 0., 0., sqrt(2./ M_PI) * V_tmp, current_amplitude, current_phase);    // use real value array value
+            Tools::get_random_rician( 0., 0., sqrt(2./M_PI)/1.177 * V_tmp, current_amplitude, current_phase);    // use real value array value, extra 1/1.177 to make total power same with "before random_rician".
 
             // vnoise is currently noise spectrum (before fft, unit : V)
            //vnoise[2 * k] = sqrt(current_amplitude) * cos(noise_phase[k]);
@@ -517,15 +1129,21 @@ void Report::GetNoiseWaveforms(Settings *settings1, Detector *detector, double v
             Vfft_noise_after.push_back( vnoise[2*k+1] );
 
             // inverse FFT normalization factor!
-            vnoise[2 * k] *= 2./((double)settings1->NFOUR/2);
-            vnoise[2 * k + 1] *= 2./((double)settings1->NFOUR/2);
+            vnoise[2 * k] *= 2./((double)settings1->DATA_BIN_SIZE);
+            vnoise[2 * k + 1] *= 2./((double)settings1->DATA_BIN_SIZE);
 
 
         }
 
 
         // now vnoise is time domain waveform
-        Tools::realft( vnoise, -1, settings1->NFOUR/2);
+        Tools::realft( vnoise, -1, settings1->DATA_BIN_SIZE);
+
+        
+        // save timedomain noise to Report class
+        for (int k=0; k<settings1->DATA_BIN_SIZE; k++) {
+            V_noise_timedomain.push_back( vnoise[k] );
+        }
 
     }
     else {  // currently there are no more options!
@@ -540,7 +1158,8 @@ void Report::GetNoisePhase(Settings *settings1) {
 
     noise_phase.clear();    // remove all previous noise_phase vector values
 
-    for (int i=0; i<settings1->NFOUR/4; i++) {
+    //for (int i=0; i<settings1->NFOUR/4; i++) {
+    for (int i=0; i<settings1->DATA_BIN_SIZE/2; i++) {  // noise with DATA_BIN_SIZE bin array
         noise_phase.push_back(2*PI*gRandom->Rndm());  // get random phase for flat thermal noise
     }
 }
@@ -745,24 +1364,27 @@ void Report::SetRank(Detector *detector) {
     double pre_maxpeak; // maxpeak at previous round
 
 
+    //cout<<"SetRank step1) : find all PeakV == 0"<<endl;
         for (int i = 0; i< detector->params.number_of_stations; i++) {
 
             for (int j=0; j< detector->params.number_of_strings_station; j++) {
 
                 for (int k=0; k< detector->params.number_of_antennas_string; k++) {
 
+                    if (stations[i].strings[j].antennas[k].ray_sol_cnt) {
                     if (stations[i].strings[j].antennas[k].PeakV[0] == 0.) {
                         stations[i].strings[j].antennas[k].Rank.push_back(0);  // rank 0, PeakV is 0, non-countable rank.
                     }
                     else {
                         stations[i].strings[j].antennas[k].Rank.push_back(current+1);  // elses, if PeakV is not 0, set Rank as 1 (for now)
                     }
+                    }   // if ray_sol_cnt != 0
                 }
             }
         }
 
 
-    cout<<"Start while loop for Ranking!!"<<endl;
+    //cout<<"Start while loop for Ranking!!"<<endl;
 
     check = 1;
     pre_maxpeak = 1.E5; // unreasonably big value which real PeakV will never reach
@@ -780,7 +1402,8 @@ void Report::SetRank(Detector *detector) {
                     //lets start with 1st ray_sol only
                     //
 
-                    if (stations[i].strings[j].antennas[k].Rank[0] != 0) {  // there is non-zero value!
+                    if (stations[i].strings[j].antennas[k].ray_sol_cnt) {
+                    if (stations[i].strings[j].antennas[k].Rank[0] != 0) {  // there is non-zero value! and ray_sol_cnt also non-zero!
                     if (stations[i].strings[j].antennas[k].PeakV[0] < pre_maxpeak) {
 
                         if (maxpeak < stations[i].strings[j].antennas[k].PeakV[0] ) {
@@ -795,6 +1418,7 @@ void Report::SetRank(Detector *detector) {
 
                     } // if rank > current
                     }
+                    }
 
                 } // for antennas
             } // for strings
@@ -807,7 +1431,7 @@ void Report::SetRank(Detector *detector) {
     }   // while
 
 
-    cout<<"END Ranking!!"<<endl;
+    //cout<<"END Ranking!!"<<endl;
 
 
 
@@ -817,5 +1441,55 @@ void Report::SetRank(Detector *detector) {
 
 
 
+
+int Report::MixSignalNoise_Tdelay(Settings *settings1, Detector *detector, double min_arrival_time, double arrival_time, vector <double> &V_signal, double *V_noise, vector <double> &V_total) {
+
+    double signal_bin;
+    int check_toomuch_delay = 1;
+
+
+if (settings1->PURE_NOISE_ANALYSIS!=1) { // if not pure noise analysis (signal with time delay + noise)
+
+    //cout<<" not pure noise analysis! PURE_NOISE_ANALYSIS : "<<settings1->PURE_NOISE_ANALYSIS<<endl;
+
+    for (int ibin=0; ibin<settings1->DATA_BIN_SIZE; ibin++) {
+        
+        signal_bin = detector->ibinshift - (int)( (arrival_time - min_arrival_time) / settings1->TIMESTEP) + ibin;
+
+        if (signal_bin>=0 && signal_bin<settings1->NFOUR/2) {   // if calculated bin is inside V_signal bin
+            V_noise[ibin] = V_noise[ibin] + V_signal[signal_bin];
+
+            if (signal_bin == settings1->NFOUR/4) { // if PeakV (located at NFOUR/4) is included in V_noise, say it's not too much delayed.
+                check_toomuch_delay = 0;
+            }
+
+        }
+        // else // we don't need to change anything where (bins) there is no signal at all
+        
+        V_total.push_back( V_noise[ibin] ); // save signal (t delay) + noise
+
+    }
+
+}
+else if (settings1->PURE_NOISE_ANALYSIS==1) {    // if we are doing pure noise analysis
+
+    //cout<<" pure noise analysis! PURE_NOISE_ANALYSIS : "<<settings1->PURE_NOISE_ANALYSIS<<endl;
+
+    for (int ibin=0; ibin<settings1->DATA_BIN_SIZE; ibin++) {
+
+        V_total.push_back( V_noise[ibin] ); // save pure noise
+    }
+
+    check_toomuch_delay = 0;    // for pure noise, there is no too much time delay case
+
+}
+
+
+    return check_toomuch_delay; // 1 : PeakV is not in V_noise, and V_total array, 0 : PeakV is included in V_noise and V_total array
+
+}
+
+
+                        
 
 

@@ -118,6 +118,11 @@ public:
 	~Primaries();//destructor //default
 	//*primary1 must be manually deleted in icemc for deconstructor to actually be called.
 
+
+        double col1[900]; // array for air density
+        void GetAir(double *col1);
+        double GetThisAirColumn(Settings* settings1, Position r_in,Vector nnu,Position posnu, double& cosalpha,double& mytheta, double& cosbeta0,double& mybeta);
+
         // GetAnyDirection for selecting nnu
         //
         Vector GetAnyDirection();   // get random direction for nnu. Added this function instead of removing PickAnyDirection in Interaction to prevent confliction
@@ -199,7 +204,7 @@ class Interaction  {
  Interaction(); // default constructor
  //Interaction(string inttype,Primaries *primary1,Settings *settings1,int whichray,Counting *count1);
 
- Interaction (double pnu, string nuflavor, int &n_interactions, IceModel *antarctica, Detector *detector, Settings *settings1, Primaries *primary1, Signal *signal, Secondaries *sec1 ); // constructor for setting posnu, y, emfrac, hadfrac, vmmhz1m at cherenkov angle, etc
+ Interaction (double pnu, Vector &nnu_org, string nuflavor, int &n_interactions, IceModel *antarctica, Detector *detector, Settings *settings1, Primaries *primary1, Signal *signal, Secondaries *sec1 ); // constructor for setting posnu, y, emfrac, hadfrac, vmmhz1m at cherenkov angle, etc
 
  //
  //
@@ -232,8 +237,9 @@ class Interaction  {
   // calculating posnu part moved from IceModel
   int PickUnbiased (IceModel *antarctica);
   int WhereDoesItLeave( const Position &posnu, const Vector &ntemp, IceModel *antarctica, Position &r_out);
-  int WhereDoesItEnterIce ( const Position &posnu, const Vector &nnu, double stepsize, Position &r_enterice, IceModel *antarctica);
-  int WhereDoesItExitIce ( const Position &posnu, const Vector &nnu, double stepsize, Position &r_enterice, IceModel *antarctica);
+  int WhereDoesItEnterIce ( const Position &posnu, const Vector &nnu, double stepsize, Position &r_enterice_output, IceModel *antarctica);
+  int WhereDoesItExitIce ( const Position &posnu, const Vector &nnu, double stepsize, Position &r_enterice_output, IceModel *antarctica);
+  int WhereDoesItExitIceForward ( const Position &posnu, const Vector &nnu, double stepsize, Position &r_enterice_output, IceModel *antarctica);
   void FlattoEarth ( IceModel *antarctica, double X, double Y, double D);
   void PickNear(IceModel *antarctica, Detector *detector, Settings *settings1);
   // end move from IceModel
@@ -243,6 +249,8 @@ class Interaction  {
   double pathlength_inice;
 
  Vector nnu;  // direction of neutrino (+z in south pole direction)
+ Vector cone_axis;  // cone axis which can be same with neutrino direction or not
+ 
  double costheta_nutraject; //theta of nnu with earth center to balloon as z axis 
  double phi_nutraject; //phi of nnu with earth center to balloon as z axis
 
@@ -253,6 +261,21 @@ Position nuexitice; // place where neutrino would have left the ice
   double chord;  // chord in m from earth entrance to rock-ice boundary
   double logchord; // log_10 of chord length earth entrance to where it enters ice
   double weight_bestcase; // what weight1 would be if whole earth had density of crust - for quick and dirty calculation of best case scenario
+  int sigma_err;    // 0 if energy too low for the parameterization from GetSigma, otherwise 1
+  double sigma;
+
+  // input information for Getchord
+  double len_int_kgm2;
+  double weight;
+  double nearthlayers;
+  double myair;
+  double total_kgm2;
+  int crust_entered;
+  int mantle_entered;
+  int core_entered;
+  // input information for Getchord
+
+
   double chord_kgm2_bestcase; // the chord the neutrino would traverse if it all was crust density
   double chord_kgm2_ice; // from ice entrance to interaction point
   double d1;  //same as chord in m (earth entrance to rock-ice boundary)

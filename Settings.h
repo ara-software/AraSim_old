@@ -58,6 +58,27 @@ class Settings
 
         int NOISE;              // noise condition settings degault 0 ( : thermal flat noise)
 
+        int ATMOSPHERE;         // include atmosphere 1, no 0
+
+        double POWERTHRESHOLD;  // power threshold value. default -4.41 (same with icemc powerthreshold)
+
+        double MAXT_DIODE;      // diode model max time, default : 70.e-9s
+
+        int IDELAYBEFOREPEAK_DIODE; // diode model bins before the peak, default : (int) 13.e-9 / TIMESTEP = 33
+
+        int IWINDOW_DIODE;            // diode model interesting bins after the peak, default : (int) 4.e-9 / TIMESTEP = 10
+
+        int DATA_BIN_SIZE;          // bin size which mimic the data (time delay between antennas), default : 2048
+
+        double NOISE_TEMP;          // noise temperature (default : 325 K = 230K (ice) + 95K (receiver), from Peter's spreadsheet)
+
+        int PURE_NOISE_ANALYSIS; // if you want pure noise analysis (which is not-efficient as signal will generated anyway), default : 0
+
+        double TRIG_TIMEOUT;    // time out after the trigger (we have to wait this amount of time to trig next event), default : 1us = 1.E-6
+        double TRIG_WINDOW;     // coincidence time window for trigger default : 250 ns
+
+        int NOISE_EVENTS;       // number of noise events which will be stored in Trigger class for later use. This will also used to calculate mean, rms noise (with diode convlv).
+
 
  // below : values from icemc
 

@@ -371,6 +371,11 @@ EarthModel::~EarthModel() {} //EarthModel destructor - no dynamic variables, not
     double altitude=0;
     weight1=1;
     double step=Tools::dMin(len_int_kgm2/densities[1]/10,500.); //how big is the step size
+//--------------------------------------------------
+//     cout<<"len_int_kgm2 = "<<len_int_kgm2<<endl;
+//     cout<<"densities[1] = "<<densities[1]<<endl;
+//     cout<<"Getchord.step = "<<step<<endl;
+//-------------------------------------------------- 
     // either 1/10 of an interaction length in the mantle or 500 m, whichever is smaller.
     // 500 m is approximately the feature size in Crust 2.0.
     //------------------added on Dec 8------------------------

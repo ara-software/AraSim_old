@@ -23,6 +23,7 @@ using namespace std;
 class Detector;
 class IceModel;
 class Settings;
+class TF1;
 
 //struct Parameters {
 //class Parameters : public TObject {
@@ -151,9 +152,10 @@ class Detector {
 
         void ReadFilter(string filename, Settings *settings1);
         double FilterGain[freq_step_max];   // Filter gain (dB) for Detector freq bin array
-        vector <double> FilterGain_fft;   // Filter gain (dB) for FFT freq bin array
+        vector <double> FilterGain_databin;   // Filter gain (dB) for DATA_BIN_SIZE bin array
 
         void FlattoEarth_ARA(IceModel *icesurface);
+        void FlattoEarth_ARA_sharesurface(IceModel *icesurface);  // each station share the lowest surface
 
         int freq_step;
         int ang_step;
@@ -174,7 +176,7 @@ class Detector {
         double GetGain(double freq, double theta, double phi, int ant_m, int ant_o);    //read antenna gain at certain angle, certain type, and certain orientation
         double GetGain(double freq, double theta, double phi, int ant_m);   //read antenna gain at certain angle, certain type. (orientation : default)
         double GetFilterGain(int bin) { return FilterGain[bin]; }   // same bin with Vgain, Hgain
-        double GetFilterGain_fft(int bin) { return FilterGain_fft[bin]; }   // bin for FFT
+        double GetFilterGain_databin(int bin) { return FilterGain_databin[bin]; }   // bin for FFT
         
         double Getfreq_init() {return freq_init;}
 
@@ -182,6 +184,23 @@ class Detector {
 
         int GetFreqBin() {return freq_step;}
         double GetFreq(int bin) {return Freq[bin]*1.e6;} //from MHz to Hz
+
+        vector <double> diode_real; // NFOUR/2 array of t domain tunnel diode response. same with icemc -> anita -> diode_real  but only full bandwidth array 4
+        vector <double> fdiode_real_databin;    // NFOUR array of f domain tunnel diode response (FFT of diode_real). also same with icemc -> anita -> fdiode_real  but only full bandwidth array 4
+        vector <double> fdiode_real;    // NFOUR/2 array of f domain tunnel diode response (FFT of diode_real). also same with icemc -> anita -> fdiode_real  but only full bandwidth array 4
+        vector <double> fdiode_real_double;    // NFOUR array of f domain tunnel diode response (FFT of diode_real). also same with icemc -> anita -> fdiode_real  but only full bandwidth array 4
+        
+        double TIMESTEP;    // will copy TIMESTEP from Settings
+        int NFOUR;          // also will copy NFOUR from Settings
+
+        //TF1 fdiode;   // removed. so not exactly same as icemc, but I believe it doesn't matter
+        double maxt_diode;
+        int maxt_diode_bin; // above maxt_diode in bin
+        int idelaybeforepeak;
+        int iwindow;
+        int ibinshift;
+
+        void getDiodeModel(Settings *settings1);   // similar with icemc -> anita -> getDiodeModel().  set diode_real and fdiode_real values.
 
 
         ~Detector();    //destructor

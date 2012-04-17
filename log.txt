@@ -321,3 +321,37 @@ Will double check if the thermal noise makes sense or not.
 
 
 ===============================================================================
+
+04/16/12 E. Hong;
+
+This one is a big release.
+
+Many things are updated.
+
+1) The most big one is "trigger" added. Now there is a global trigger function added. Still I have to fix some parts though.
+Now we can check if the global trigger passed in report->stations[i].Global_Pass.
+The "report->stations[i].Global_Pass" will return the trigger passed bin value from long noise waveforms.
+Or if the station didn't passed the global trigger, return value will be "0".
+
+Now, "WHEN" global trigger is passed, in each antennas, V_mimic and time array will have information in it.
+ex) report->stations[0].strings[1].antennas[2].V_mimic[ bin_value ]
+ex) report->stations[0].strings[1].antennas[2].time[ bin_value ]
+
+V_mimic array will have voltage information where triggered bin (for this antenna) will located at the center of the window.
+time array will have bin information and it can represent the time difference between antennas as all antennas (channels) share the bin values
+Both V_mimic and time arrays will have size of NFOUR/2 (which is 512 currently).
+
+For channels which didn't passed the trigger (but global trigger is passed), V_mimic will show the middle NFOUR/2 (currently 512) bins of the trigger window.
+
+
+2) another noticable change is that I removed most of bug checking print outs from most of channels.
+This means when you run araSim, other than event numbers and notice about global trigger is passed, nothing much information will show up.
+
+Also I added new function in Report class named "stations[].strings[].antennas[].clear_useless()".
+Literally, it will remove (do vector clear() ) useless data which did blow up the size of output AraOut.root file.
+
+
+There are many other minor changes in many classes but I can't remember...
+
+
+===============================================================================

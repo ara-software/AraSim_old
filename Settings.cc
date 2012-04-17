@@ -26,6 +26,7 @@ outputdir="outputs"; // directory where outputs go
  FREQ_HIGH_SEAVEYS=1200.E6;
  BW_SEAVEYS=FREQ_HIGH_SEAVEYS-FREQ_LOW_SEAVEYS;
  SIGMAPARAM=1;  // Connolly et al. 2011 default cross section parametrization
+ SIGMA_FACTOR=1.;   // default sigma factor : 1
  YPARAM=1;  // Connolly et al. 2011 default y parametrization
  UNBIASED_SELECTION=1.; // (0) pick neutrino interaction in the ice and neutrino from any direction or (1) choose neutrino interaction point in the horizon on the balloon in the ice and neutrino direction on the cerenkov cone
 
@@ -74,6 +75,28 @@ outputdir="outputs"; // directory where outputs go
   NFOUR=1024;           // default : 1024, same as in icemc
     
   NOISE=0;              // degault : 0, flat thermal noise
+
+  ATMOSPHERE=1;         // default : 1, include atmosphere
+
+  POWERTHRESHOLD=-4.41; // default : -4.41 (same as icemc).
+
+  MAXT_DIODE=70.E-9;    // default : 70 ns
+
+  IDELAYBEFOREPEAK_DIODE=(int)(13.E-9 / TIMESTEP);    // default : 13.e-9/TIMESTEP = 33
+
+  IWINDOW_DIODE=(int)(4.E-9 / TIMESTEP);           // default : 4.e-9 / TIMESTEP = 10
+
+  DATA_BIN_SIZE=2048;   // default : 2048
+
+  NOISE_TEMP=325.;      // default : 325 K
+
+  PURE_NOISE_ANALYSIS=0;    // default : 0, no pure noise analysis
+
+  TRIG_TIMEOUT=1.E-6;       // default : 1us
+
+  TRIG_WINDOW=2.5E-7;       // default : 250 ns
+
+  NOISE_EVENTS=1000;        // default : 1000 events
 
 }
 
@@ -155,6 +178,30 @@ void Settings::ReadFile(string setupfile) {
               }
               else if (label == "NOISE") {
                   NOISE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "ATMOSPHERE") {
+                  ATMOSPHERE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "POWERTHRESHOLD") {
+                  POWERTHRESHOLD = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "DATA_BIN_SIZE") {
+                  DATA_BIN_SIZE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "NOISE_TEMP") {
+                  NOISE_TEMP = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "PURE_NOISE_ANALYSIS") {
+                  PURE_NOISE_ANALYSIS = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "TRIG_TIMEOUT") {
+                  TRIG_TIMEOUT = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "TRIG_WINDOW") {
+                  TRIG_WINDOW = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "NOISE_EVENTS") {
+                  NOISE_EVENTS = atof( line.substr(line.find_first_of("=") + 1).c_str() );
               }
           }
       }

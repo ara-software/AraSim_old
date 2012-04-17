@@ -139,6 +139,9 @@ public:
 			       const Vector &nnu,
 			       double stepsize) const;
 
+  Position WhereDoesItEnter(const Position &posnu,const Vector &nnu) const;
+  Position WhereDoesItLeave(const Position &posnu,const Vector &nnu) const;
+
   //void CreateHorizons(int whichpath,int reduceballoonpositions,Balloon *bn1,double theta_bn,double phi_bn,double altitude_bn,ofstream &foutput);
   Vector GetSurfaceNormal(const Position &r_out) const; //overloaded from EarthModel to include procedures for new ice models.
   double GetN(double depth) const;
