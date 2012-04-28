@@ -27,6 +27,7 @@ class Surface_antenna_r {
 
 class Antenna_r {
     public:
+
         // one dimention for number of solutions, (if there,) another dimention for array of information
         //
 
@@ -85,7 +86,7 @@ class Antenna_r {
 
         
         void clear ();  // clear all vector format information for next event
-        void clear_useless ();  // clear all vector information which are useless
+        void clear_useless ( Settings *settings1 );  // clear all vector information which are useless
 
         ClassDef(Antenna_r,1);
 };
@@ -140,8 +141,10 @@ class Report {
 
 
     public:
+           /*
            double Full_window[16][16384];  // test with array, not vector, diode response
            double Full_window_V[16][16384];  // test with array, not vector, voltage waveform
+           */
            vector <int> Passed_chs;
         //int trg;    // if any antenna in entire detectors trg. 0 : no antenna trg
                     //                                         1 : 1 or more antenna trg
@@ -184,7 +187,6 @@ class Report {
 
         void SetRank(Detector *detector); // set rank (rank of strength of signal at each antenna)
 
-        int MixSignalNoise_Tdelay(Settings *settings1, Detector *detector, double min_arrival_time, double arrival_time, vector <double> &V_signal, double *V_noise, vector <double> &V_total);
 
         vector <double> Vfft_noise_after;   // noise Vfft after get_random_rician
         vector <double> Vfft_noise_before;   // noise Vfft before get_random_rician

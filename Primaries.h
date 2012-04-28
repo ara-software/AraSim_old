@@ -145,6 +145,7 @@ class Interaction  {
  private:
 
 
+     /*
 
   Vector tmp_banana; //Intermediate vector
 
@@ -165,6 +166,7 @@ class Interaction  {
  static const double nu_banana_phi_angle; 
  
 
+ */
 
 
 
@@ -194,6 +196,7 @@ class Interaction  {
 
 
 
+ /*
 
  static const double phi_nu_banana; //Location in phi
 
@@ -201,6 +204,12 @@ class Interaction  {
  static const double theta_nu_banana;//Location of banana neutrino in theta
  double banana_phi_obs;
  Vector banana_obs; //Vector from the neutrino interaction to the observation point
+
+ */
+
+
+
+
  Interaction(); // default constructor
  //Interaction(string inttype,Primaries *primary1,Settings *settings1,int whichray,Counting *count1);
 
@@ -276,6 +285,10 @@ Position nuexitice; // place where neutrino would have left the ice
   // input information for Getchord
 
 
+
+  
+
+  /*
   double chord_kgm2_bestcase; // the chord the neutrino would traverse if it all was crust density
   double chord_kgm2_ice; // from ice entrance to interaction point
   double d1;  //same as chord in m (earth entrance to rock-ice boundary)
@@ -292,6 +305,8 @@ static const double banana_signal_fluct;//Turn off noise for banana plots (setti
  
  double pnu;    // energy of neutrino
 
+ */
+
  // NuFlavor is determined in Event class
 //--------------------------------------------------
 //   void  setNuFlavor(Primaries *primary1,Settings *settings1,int whichray,Counting *count1);
@@ -306,6 +321,8 @@ static const double banana_signal_fluct;//Turn off noise for banana plots (setti
   string  current;                    //  CC or NC?
   int currentint;                 // Ditto - Stephen
   
+  
+  /*
 
   double surface_over_banana_nu;
  
@@ -331,6 +348,8 @@ double dnutries; //product of dtryingdirection and dtryingposition
  double r_exit2bn; // exit to balloon
  double r_exit2bn_measured; // exit to balloon deduced from measured theta
  int iceinteraction;// whether or not there is an interaction in the ice
+
+ */
 
  ClassDef(Interaction,1);
 

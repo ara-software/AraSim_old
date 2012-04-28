@@ -86,7 +86,7 @@ outputdir="outputs"; // directory where outputs go
 
   IWINDOW_DIODE=(int)(4.E-9 / TIMESTEP);           // default : 4.e-9 / TIMESTEP = 10
 
-  DATA_BIN_SIZE=2048;   // default : 2048
+  DATA_BIN_SIZE=16384;   // default : 16384
 
   NOISE_TEMP=325.;      // default : 325 K
 
@@ -97,6 +97,8 @@ outputdir="outputs"; // directory where outputs go
   TRIG_WINDOW=2.5E-7;       // default : 250 ns
 
   NOISE_EVENTS=1000;        // default : 1000 events
+
+  DATA_SAVE_MODE=0;         // default : 0 (full mode)
 
 }
 
@@ -202,6 +204,9 @@ void Settings::ReadFile(string setupfile) {
               }
               else if (label == "NOISE_EVENTS") {
                   NOISE_EVENTS = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "DATA_SAVE_MODE") {
+                  DATA_SAVE_MODE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
               }
           }
       }

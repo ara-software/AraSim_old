@@ -42,6 +42,7 @@ const double Y::maxy_low(0.001);
 const double Y::miny_high(0.001);
 const double Y::maxy_high(1.);
 
+/*
 const double Interaction::nu_banana_theta_angle(-0.413 * 3.14159/180.);// don't let me use RADDEG which is annoying 
 const double Interaction::altitude_nu_banana(-400.);//Depth of interaction of banana neutrino
 const double Interaction::lat_nu_banana(0.); 
@@ -56,6 +57,7 @@ const double Interaction::banana_y(0.2);//Elasticity.  0.2 is an average number.
 const double Interaction::banana_signal_fluct(0.);//Turn off noise for banana plots (settings1->SIGNAL_FLUCT) (shouldn't matter)
 const double Interaction::banana_sigma(0.);//NSIGMA in the case of a banana plot
 
+*/
 
 
 

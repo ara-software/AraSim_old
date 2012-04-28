@@ -183,8 +183,8 @@ int main() {
   cout<<"branch settings"<<endl;
   AraTree->Branch("spectra",&spectra);
   cout<<"branch spectra"<<endl;
-  AraTree2->Branch("event",&event);
-  cout<<"branch Evt"<<endl;
+  //AraTree2->Branch("event",&event);
+  //cout<<"branch Evt"<<endl;
   AraTree2->Branch("report",&report);
   cout<<"branch report"<<endl;
 
@@ -344,7 +344,7 @@ cout<<"begain looping events!!"<<endl;
            if (max_dt < report->stations[i].max_arrival_time - report->stations[i].min_arrival_time) max_dt = report->stations[i].max_arrival_time - report->stations[i].min_arrival_time;
            // check the total global trigger passed
            if (report->stations[i].Global_Pass) {
-               cout<<"Global_Pass : "<<report->stations[i].Global_Pass<<" added weight : "<<event->Nu_Interaction[0].weight;
+               cout<<"Global_Pass : "<<report->stations[i].Global_Pass<<" evt : "<<inu<<" added weight : "<<event->Nu_Interaction[0].weight<<"\n"<<endl;
                Total_Global_Pass ++;
                Total_Weight += event->Nu_Interaction[0].weight;
                // make plots for all channels
@@ -383,6 +383,8 @@ cout<<"begain looping events!!"<<endl;
        }
 
 
+       // test memory
+       //report->stations.clear();
 
     AraTree2->Fill();   //fill interaction every events
 
@@ -404,7 +406,7 @@ cout<<"begain looping events!!"<<endl;
 //  }
 //-------------------------------------------------- 
 
- cout<<"evt "<<inu<<endl;
+ //cout<<"evt "<<inu<<endl;
 
 
  delete event;
@@ -418,6 +420,7 @@ cout<<"begain looping events!!"<<endl;
    cout<<"Total_Weight : "<<Total_Weight<<endl;
    double IceVolume;
    IceVolume = PI * (settings1->POSNU_RADIUS) * (settings1->POSNU_RADIUS) * icemodel->IceThickness( detector->stations[0] );
+   cout<<"IceVolume : "<<IceVolume<<endl;
 
    double Veff_test;
    Veff_test = IceVolume * 4. * PI * signal->RHOICE / signal->RHOH20 * Total_Weight / (double)(settings1->NNU);
@@ -471,6 +474,38 @@ cout<<"begain looping events!!"<<endl;
  c1->Print("test_SimpleLinearInterpolation.pdf");
 
 
+
+ // plot effective volume from current AraSim.
+ 
+ double eff_Vx[4];
+ double eff_Vy[4];
+
+ eff_Vx[0] = 17.;
+ eff_Vx[1] = 18.;
+ eff_Vx[2] = 19.;
+ eff_Vx[3] = 20.;
+
+ eff_Vy[0] = 1.7;
+ eff_Vy[1] = 11.4;
+ eff_Vy[2] = 30.;
+ eff_Vy[3] = 53.3;
+
+ TCanvas *cVeff = new TCanvas("cVeff","A Simple Graph Example",200,10,1000,700);
+
+ TGraph *g_Veff;
+ g_Veff = new TGraph( 4 , eff_Vx, eff_Vy );
+
+ cVeff->cd();
+
+ cVeff->SetLogy();
+ g_Veff->SetTitle("Effective volume from ARA station 1");
+ g_Veff->GetHistogram()->SetXTitle("log E");
+ g_Veff->GetHistogram()->SetYTitle("km^3 sr");
+ g_Veff->GetHistogram()->SetMaximum(100);
+ g_Veff->GetHistogram()->SetMinimum(0.1);
+ g_Veff->Draw("al*");
+
+ cVeff->Print("test_Veff_ara1.pdf");
 
 //--------------------------------------------------
 //  TCanvas *cFull_window = new TCanvas("cFull_window","A Simple Graph Example",200,10,10000,700*16);

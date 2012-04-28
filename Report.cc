@@ -110,8 +110,10 @@ void Antenna_r::clear() {   // if any vector variable added in Antenna_r, need t
 
 
 
-void Antenna_r::clear_useless() {   // to reduce the size of output AraOut.root, remove some information
+void Antenna_r::clear_useless(Settings *settings1) {   // to reduce the size of output AraOut.root, remove some information
 
+
+    if (settings1->DATA_SAVE_MODE = 1) {
     Heff.clear();
     VHz_antfactor.clear();
     VHz_filter.clear();
@@ -122,6 +124,7 @@ void Antenna_r::clear_useless() {   // to reduce the size of output AraOut.root,
     Ay.clear();
     Az.clear();
 
+    V.clear();
     V_noise.clear();
     V_total.clear();
     V_total_diode.clear();
@@ -129,6 +132,16 @@ void Antenna_r::clear_useless() {   // to reduce the size of output AraOut.root,
 
     //Trig_Pass.clear();
     TooMuch_Tdelay.clear();
+
+    // need or not?
+    Pol_vector.clear();
+    vmmhz.clear();
+    Mag.clear();
+    Fresnel.clear();
+    Pol_factor.clear();
+    }
+
+
 
 }
 
@@ -431,29 +444,11 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
            }// for number_of_stations
 
 
+           // clear ray_output info
+           ray_output.clear();
+
            // after all values are stored in Report, set ranking of signal between antennas
            SetRank(detector);
-
-
-
-/*
-
-           // test selecting noise waveform
-
-           int N_noise;     // needed number of noise waveforms (most cases, we will need only 1)
-           int noise_ID[5];    // selected noise waveform ID (we should not need 5 noise waveforms, but just in case)
-           int ch_ID;   // channel ID
-           //double Full_window[detector->params.number_of_strings_station * detector->params.number_of_antennas_string][settings1->DATA_BIN_SIZE];    // entire window for trigger check (diode convlv results for all antennas in a station)
-           vector < vector <double> > Full_window;  // entire window for trigger check (diode convlv results for all antennas in a station)
-           int max_total_bin;   // to save time, use only necessary number of bins
-           int remain_bin;      // the bin number for not using entire DATA_BIN_SIZE array
-           vector <int> signal_bin;      // the center of bin where signal should locate
-           vector <int> signal_dbin;     // the bin difference between signal bins
-           vector <int> connect_signals;    // if ray_sol time delay is small enough to connect each other
-
-
-*/
-
 
 
 
@@ -726,9 +721,9 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                        //trig_i = settings1->DATA_BIN_SIZE;    // also if we know this station is trigged, don't need to check rest of time window
                        trig_i = max_total_bin;    // also if we know this station is trigged, don't need to check rest of time window
                        for (int ch_loop=0; ch_loop<ch_ID; ch_loop++) {
-                           if (ch_loop == Passed_chs[check_ch] ) {
+                           if (ch_loop == Passed_chs[check_ch] && check_ch<N_pass ) {    // added one more condition (check_ch<N_Pass) for bug in vector Passed_chs.clear()???
                                //skip this passed ch as it already has bin info
-                               cout<<"trigger passed at bin "<<stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].Trig_Pass<<"  passed ch : "<<ch_loop<<endl;
+                               cout<<"trigger passed at bin "<<stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].Trig_Pass<<"  passed ch : "<<ch_loop<<" Direct dist btw posnu : "<<event->Nu_Interaction[0].posnu.Distance( detector->stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)] )<<endl;
                                check_ch++;
 
                                // now save the voltage waveform to V_mimic
@@ -750,6 +745,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                        }
 
                        //cout<<"Global trigger passed!!, N_pass : "<<N_pass<<endl;
+                       Passed_chs.clear();
 
                    } // if N_Pass > 2
                    else trig_i++;   // also if station not passed the trigger, just go to next bin
@@ -772,7 +768,8 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                    for (int c_k=0; c_k< detector->params.number_of_antennas_string; c_k++) {
 
-                       stations[i].strings[c_j].antennas[c_k].clear_useless();  // clear data in antenna which stored in previous event
+                       stations[i].strings[c_j].antennas[c_k].clear_useless(settings1);  // clear data in antenna which stored in previous event
+                       //stations[i].strings[c_j].antennas[c_k].clear();  // clear data in antenna which stored in previous event
 
                    }
                }
@@ -780,6 +777,19 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
 
         } // for stations
+
+
+        // also clear all vector info to reduce output root file size
+        noise_phase.clear();
+        signal_bin.clear();
+        signal_dbin.clear();
+        connect_signals.clear();
+        Passed_chs.clear();
+        Vfft_noise_after.clear();
+        Vfft_noise_before.clear();
+        V_noise_timedomain.clear();
+        // done clear vector info in report head
+
 
 
 
@@ -1435,59 +1445,11 @@ void Report::SetRank(Detector *detector) {
 
 
 
-
 }
 
 
 
 
-
-int Report::MixSignalNoise_Tdelay(Settings *settings1, Detector *detector, double min_arrival_time, double arrival_time, vector <double> &V_signal, double *V_noise, vector <double> &V_total) {
-
-    double signal_bin;
-    int check_toomuch_delay = 1;
-
-
-if (settings1->PURE_NOISE_ANALYSIS!=1) { // if not pure noise analysis (signal with time delay + noise)
-
-    //cout<<" not pure noise analysis! PURE_NOISE_ANALYSIS : "<<settings1->PURE_NOISE_ANALYSIS<<endl;
-
-    for (int ibin=0; ibin<settings1->DATA_BIN_SIZE; ibin++) {
-        
-        signal_bin = detector->ibinshift - (int)( (arrival_time - min_arrival_time) / settings1->TIMESTEP) + ibin;
-
-        if (signal_bin>=0 && signal_bin<settings1->NFOUR/2) {   // if calculated bin is inside V_signal bin
-            V_noise[ibin] = V_noise[ibin] + V_signal[signal_bin];
-
-            if (signal_bin == settings1->NFOUR/4) { // if PeakV (located at NFOUR/4) is included in V_noise, say it's not too much delayed.
-                check_toomuch_delay = 0;
-            }
-
-        }
-        // else // we don't need to change anything where (bins) there is no signal at all
-        
-        V_total.push_back( V_noise[ibin] ); // save signal (t delay) + noise
-
-    }
-
-}
-else if (settings1->PURE_NOISE_ANALYSIS==1) {    // if we are doing pure noise analysis
-
-    //cout<<" pure noise analysis! PURE_NOISE_ANALYSIS : "<<settings1->PURE_NOISE_ANALYSIS<<endl;
-
-    for (int ibin=0; ibin<settings1->DATA_BIN_SIZE; ibin++) {
-
-        V_total.push_back( V_noise[ibin] ); // save pure noise
-    }
-
-    check_toomuch_delay = 0;    // for pure noise, there is no too much time delay case
-
-}
-
-
-    return check_toomuch_delay; // 1 : PeakV is not in V_noise, and V_total array, 0 : PeakV is included in V_noise and V_total array
-
-}
 
 
                         

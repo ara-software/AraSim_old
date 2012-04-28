@@ -68,7 +68,7 @@ class Settings
 
         int IWINDOW_DIODE;            // diode model interesting bins after the peak, default : (int) 4.e-9 / TIMESTEP = 10
 
-        int DATA_BIN_SIZE;          // bin size which mimic the data (time delay between antennas), default : 2048
+        int DATA_BIN_SIZE;          // bin size which mimic the data (time delay between antennas), default : 16384
 
         double NOISE_TEMP;          // noise temperature (default : 325 K = 230K (ice) + 95K (receiver), from Peter's spreadsheet)
 
@@ -77,7 +77,9 @@ class Settings
         double TRIG_TIMEOUT;    // time out after the trigger (we have to wait this amount of time to trig next event), default : 1us = 1.E-6
         double TRIG_WINDOW;     // coincidence time window for trigger default : 250 ns
 
-        int NOISE_EVENTS;       // number of noise events which will be stored in Trigger class for later use. This will also used to calculate mean, rms noise (with diode convlv).
+        int NOISE_EVENTS;       // number of noise events which will be stored in Trigger class for later use. This will also used to calculate mean, rms noise (with diode convlv). default : 1000
+
+        int DATA_SAVE_MODE;     // 0 : save all information which are generated during the processes. 1 : light mode, remove most of data before the final global trigger (most of data except geometric info, final data V_mimic will be removed)
 
 
  // below : values from icemc

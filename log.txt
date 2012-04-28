@@ -365,3 +365,13 @@ pnu = 10^(EXPONENT) eV
 
 
 ===============================================================================
+
+04/27/12 E. Hong;
+
+Minor update.
+Added "DATA_SAVE_MODE" to Settings class. DATA_SAVE_MODE=0 is the default value, and this mode will save "all" information in report class (ex. spectrum before antenna, after antenna, after filter...)
+DATA_SAVE_MODE=1 will remove most of intermediate state information in report class except geometric information (things related to RaySolver) and final waveform from global trigger (V_mimic).
+As DATA_SAVE_MODE=1 is not a default mode, you have to put this setting in setup.txt file if you want.
+
+
+===============================================================================
