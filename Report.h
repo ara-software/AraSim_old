@@ -36,6 +36,7 @@ class Antenna_r {
         //vector <int> trg;    // if antenna recieved any signal or not. 0 : no signal,  1 : yes signal
 
         vector <double> view_ang;    //viewing angle
+        vector <double> launch_ang;     //launching angle
         vector <double> rec_ang;     //receiving angle
         vector <double> reflect_ang; // surface reflection angle (if 100 : no reflection case)
         vector <double> Dist;        //Distance between posnu and antenna

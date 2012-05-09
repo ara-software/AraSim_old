@@ -375,3 +375,11 @@ As DATA_SAVE_MODE=1 is not a default mode, you have to put this setting in setup
 
 
 ===============================================================================
+
+05/09/12 E. Hong;
+
+minor modification in Report class.
+Fixed launch_ang variable in Report class.
+
+===============================================================================
+

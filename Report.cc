@@ -72,6 +72,7 @@ void Report::Initialize(Detector *detector, Settings *settings1) {
 
 void Antenna_r::clear() {   // if any vector variable added in Antenna_r, need to be added here!
     view_ang.clear();
+    launch_ang.clear();
     rec_ang.clear();
     reflect_ang.clear();
     Dist.clear();
@@ -230,6 +231,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                                    // store information to report
                                    stations[i].strings[j].antennas[k].view_ang.push_back(viewangle);
+                                   stations[i].strings[j].antennas[k].launch_ang.push_back(ray_output[1][ray_sol_cnt]);
                                    stations[i].strings[j].antennas[k].rec_ang.push_back(ray_output[2][ray_sol_cnt]);
                                    stations[i].strings[j].antennas[k].Dist.push_back(ray_output[0][ray_sol_cnt]);
                                    stations[i].strings[j].antennas[k].L_att.push_back( icemodel->EffectiveAttenuationLength(settings1, event->Nu_Interaction[0].posnu, 0) );
