@@ -383,3 +383,9 @@ Fixed launch_ang variable in Report class.
 
 ===============================================================================
 
+05/10/12 E. Hong;
+
+Fixed some commented lines in AraSim.cc.
+Fixed compile error for some machines in Trigger class.
+
+===============================================================================

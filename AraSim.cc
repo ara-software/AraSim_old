@@ -183,8 +183,8 @@ int main() {
   cout<<"branch settings"<<endl;
   AraTree->Branch("spectra",&spectra);
   cout<<"branch spectra"<<endl;
-  //AraTree2->Branch("event",&event);
-  //cout<<"branch Evt"<<endl;
+  AraTree2->Branch("event",&event);
+  cout<<"branch Evt"<<endl;
   AraTree2->Branch("report",&report);
   cout<<"branch report"<<endl;
 
