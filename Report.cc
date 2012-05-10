@@ -114,7 +114,7 @@ void Antenna_r::clear() {   // if any vector variable added in Antenna_r, need t
 void Antenna_r::clear_useless(Settings *settings1) {   // to reduce the size of output AraOut.root, remove some information
 
 
-    if (settings1->DATA_SAVE_MODE = 1) {
+    if (settings1->DATA_SAVE_MODE == 1) {
     Heff.clear();
     VHz_antfactor.clear();
     VHz_filter.clear();
