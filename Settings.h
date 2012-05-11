@@ -81,6 +81,8 @@ class Settings
 
         int DATA_SAVE_MODE;     // 0 : save all information which are generated during the processes. 1 : light mode, remove most of data before the final global trigger (most of data except geometric info, final data V_mimic will be removed)
 
+        int N_TRIG;         // number of coincidence channels triggered in TRIG_WINDOW default : 3
+
 
  // below : values from icemc
 

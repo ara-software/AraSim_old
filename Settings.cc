@@ -100,6 +100,8 @@ outputdir="outputs"; // directory where outputs go
 
   DATA_SAVE_MODE=0;         // default : 0 (full mode)
 
+  N_TRIG=3;                 // default : 3 (3 out of all channels in a station)
+
 }
 
 void Settings::ReadFile(string setupfile) {
@@ -207,6 +209,9 @@ void Settings::ReadFile(string setupfile) {
               }
               else if (label == "DATA_SAVE_MODE") {
                   DATA_SAVE_MODE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "N_TRIG") {
+                  N_TRIG = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
               }
           }
       }

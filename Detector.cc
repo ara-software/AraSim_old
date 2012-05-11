@@ -243,6 +243,7 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         params.stations_per_side = 4;       // total 37 stations
         params.station_spacing = 2000.;     // 2km spacing
         params.antenna_orientation = 0;     // all antenna facing x
+        params.bore_hole_antenna_layout = 0;    // default : VHVH
         // finish initialization
         //
 
@@ -295,11 +296,31 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
                         params.antenna_orientation = atoi( line.substr( line.find_first_of("=") + 1).c_str() );
                         cout<<"read antenna_orientation"<<endl;
                     }
+                    else if (label == "BORE_HOLE_ANTENNA_LAYOUT") {
+                        params.bore_hole_antenna_layout = atoi( line.substr( line.find_first_of("=") + 1).c_str() );
+                        cout<<"read antenna_orientation"<<endl;
+                    }
                 }
             }
             ARA_N.close();
         }
         // finished reading new parameters
+
+
+
+        // set number of antennas in a string
+        if (params.bore_hole_antenna_layout == 0) { // VHVH layout
+            params.number_of_antennas_string = 4;
+        }
+        else if (params.bore_hole_antenna_layout == 1) { // VHV layout
+            params.number_of_antennas_string = 3;
+        }
+        else if (params.bore_hole_antenna_layout == 2) { // VHVV layout
+            params.number_of_antennas_string = 4;
+        }
+        else if (params.bore_hole_antenna_layout == 3) { // VHHH layout
+            params.number_of_antennas_string = 4;
+        }
 
 
 
@@ -391,9 +412,11 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
             stations[i].strings[3].SetX( stations[i].GetX() + (R_string * cos(PI/4.)) );
             stations[i].strings[3].SetY( stations[i].GetY() - (R_string * sin(PI/4.)) );
 
+
             //
             // set antenna postions in borehole
             // and set type (h or v pol antenna) and set orientation (facing x or y)
+        if ( params.bore_hole_antenna_layout == 0 || params.bore_hole_antenna_layout == 1) {
             for (int j=0; j<params.number_of_strings_station; j++) {
                 for (int k=0; k<params.number_of_antennas_string; k++) {
                     stations[i].strings[j].antennas[k].SetZ( -z_max + z_btw*k );
@@ -429,6 +452,88 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
                     }// end facing different. I know it only works with 4 strings, 4 antennas on each strings but couldn't find a better way than this. -Eugene
                 }
             }
+        } // end if bore hole antenna layout = 0 or 1 (where VHVH way but different numbers)
+
+
+        else if ( params.bore_hole_antenna_layout == 2) {   // it's V-H-V-V
+            for (int j=0; j<params.number_of_strings_station; j++) {
+                for (int k=0; k<params.number_of_antennas_string; k++) {
+                    stations[i].strings[j].antennas[k].SetZ( -z_max + z_btw*k );
+
+                    if (k == 1) {   // only the second antenna is H pol
+                        stations[i].strings[j].antennas[k].type = 1;   // h-pol
+                    }
+                    else {  // other antennas are V pol
+                        stations[i].strings[j].antennas[k].type = 0;   // v-pol
+                    }
+
+                    if ( params.antenna_orientation == 0 ) {    // all borehole antennas facing same x
+                        stations[i].strings[j].antennas[k].orient = 0;
+                    }
+                    else if ( params.antenna_orientation == 1 ) {   // borehole antennas one next facing different way
+                        if ( j==0||j==3 ) {
+                            if ( k==0||k==1 ) {
+                                stations[i].strings[j].antennas[k].orient = 0;
+                            }
+                            else {
+                                stations[i].strings[j].antennas[k].orient = 1;
+                            }
+                        }
+                        else {
+                            if ( k==0||k==1 ) {
+                                stations[i].strings[j].antennas[k].orient = 1;
+                            }
+                            else {
+                                stations[i].strings[j].antennas[k].orient = 0;
+                            }
+                        }
+
+                    }// end facing different. I know it only works with 4 strings, 4 antennas on each strings but couldn't find a better way than this. -Eugene
+                }
+            }
+        } // end if bore hole antenna layout = 2 (where VHVV way but different numbers)
+
+
+        else if ( params.bore_hole_antenna_layout == 3) {   // it's V-H-H-H
+            for (int j=0; j<params.number_of_strings_station; j++) {
+                for (int k=0; k<params.number_of_antennas_string; k++) {
+                    stations[i].strings[j].antennas[k].SetZ( -z_max + z_btw*k );
+
+                    if (k == 0) {   // only the first antenna is V pol
+                        stations[i].strings[j].antennas[k].type = 0;   // v-pol
+                    }
+                    else {  // other antennas are H pol
+                        stations[i].strings[j].antennas[k].type = 1;   // h-pol
+                    }
+
+                    if ( params.antenna_orientation == 0 ) {    // all borehole antennas facing same x
+                        stations[i].strings[j].antennas[k].orient = 0;
+                    }
+                    else if ( params.antenna_orientation == 1 ) {   // borehole antennas one next facing different way
+                        if ( j==0||j==3 ) {
+                            if ( k==0||k==1 ) {
+                                stations[i].strings[j].antennas[k].orient = 0;
+                            }
+                            else {
+                                stations[i].strings[j].antennas[k].orient = 1;
+                            }
+                        }
+                        else {
+                            if ( k==0||k==1 ) {
+                                stations[i].strings[j].antennas[k].orient = 1;
+                            }
+                            else {
+                                stations[i].strings[j].antennas[k].orient = 0;
+                            }
+                        }
+
+                    }// end facing different. I know it only works with 4 strings, 4 antennas on each strings but couldn't find a better way than this. -Eugene
+                }
+            }
+        } // end if bore hole antenna layout = 3 (where VHHH way)
+
+
+
 
             //
             // set surface antenna postions
@@ -501,6 +606,7 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         params.stations_per_side = 4;       // total 37 stations
         params.station_spacing = 2000.;     // 2km spacing
         params.antenna_orientation = 0;     // all antenna facing x
+        params.bore_hole_antenna_layout = 0;    // default : VHVH
         // finish initialization
         //
 
@@ -553,11 +659,32 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
                         params.antenna_orientation = atoi( line.substr( line.find_first_of("=") + 1).c_str() );
                         cout<<"read antenna_orientation"<<endl;
                     }
+                    else if (label == "BORE_HOLE_ANTENNA_LAYOUT") {
+                        params.bore_hole_antenna_layout = atoi( line.substr( line.find_first_of("=") + 1).c_str() );
+                        cout<<"read antenna_orientation"<<endl;
+                    }
                 }
             }
             ARA37.close();
         }
         // finished reading new parameters
+
+
+
+        // set number of antennas in a string
+        if (params.bore_hole_antenna_layout == 0) { // VHVH layout
+            params.number_of_antennas_string = 4;
+        }
+        else if (params.bore_hole_antenna_layout == 1) { // VHV layout
+            params.number_of_antennas_string = 3;
+        }
+        else if (params.bore_hole_antenna_layout == 2) { // VHVV layout
+            params.number_of_antennas_string = 4;
+        }
+        else if (params.bore_hole_antenna_layout == 3) { // VHHH layout
+            params.number_of_antennas_string = 4;
+        }
+
 
 
 
@@ -657,9 +784,11 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
 
 
 
+
             //
             // set antenna postions in borehole
             // and set type (h or v pol antenna) and set orientation (facing x or y)
+        if ( params.bore_hole_antenna_layout == 0 || params.bore_hole_antenna_layout == 1) {
             for (int j=0; j<params.number_of_strings_station; j++) {
                 for (int k=0; k<params.number_of_antennas_string; k++) {
                     stations[i].strings[j].antennas[k].SetZ( -z_max + z_btw*k );
@@ -695,6 +824,88 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
                     }// end facing different. I know it only works with 4 strings, 4 antennas on each strings but couldn't find a better way than this. -Eugene
                 }
             }
+        } // end if bore hole antenna layout = 0 or 1 (where VHVH way but different numbers)
+
+
+        else if ( params.bore_hole_antenna_layout == 2) {   // it's V-H-V-V
+            for (int j=0; j<params.number_of_strings_station; j++) {
+                for (int k=0; k<params.number_of_antennas_string; k++) {
+                    stations[i].strings[j].antennas[k].SetZ( -z_max + z_btw*k );
+
+                    if (k == 1) {   // only the second antenna is H pol
+                        stations[i].strings[j].antennas[k].type = 1;   // h-pol
+                    }
+                    else {  // other antennas are V pol
+                        stations[i].strings[j].antennas[k].type = 0;   // v-pol
+                    }
+
+                    if ( params.antenna_orientation == 0 ) {    // all borehole antennas facing same x
+                        stations[i].strings[j].antennas[k].orient = 0;
+                    }
+                    else if ( params.antenna_orientation == 1 ) {   // borehole antennas one next facing different way
+                        if ( j==0||j==3 ) {
+                            if ( k==0||k==1 ) {
+                                stations[i].strings[j].antennas[k].orient = 0;
+                            }
+                            else {
+                                stations[i].strings[j].antennas[k].orient = 1;
+                            }
+                        }
+                        else {
+                            if ( k==0||k==1 ) {
+                                stations[i].strings[j].antennas[k].orient = 1;
+                            }
+                            else {
+                                stations[i].strings[j].antennas[k].orient = 0;
+                            }
+                        }
+
+                    }// end facing different. I know it only works with 4 strings, 4 antennas on each strings but couldn't find a better way than this. -Eugene
+                }
+            }
+        } // end if bore hole antenna layout = 0 or 1 (where VHVH way but different numbers)
+
+
+
+        else if ( params.bore_hole_antenna_layout == 3) {   // it's V-H-H-H
+            for (int j=0; j<params.number_of_strings_station; j++) {
+                for (int k=0; k<params.number_of_antennas_string; k++) {
+                    stations[i].strings[j].antennas[k].SetZ( -z_max + z_btw*k );
+
+                    if (k == 0) {   // only the first antenna is V pol
+                        stations[i].strings[j].antennas[k].type = 0;   // v-pol
+                    }
+                    else {  // other antennas are H pol
+                        stations[i].strings[j].antennas[k].type = 1;   // h-pol
+                    }
+
+                    if ( params.antenna_orientation == 0 ) {    // all borehole antennas facing same x
+                        stations[i].strings[j].antennas[k].orient = 0;
+                    }
+                    else if ( params.antenna_orientation == 1 ) {   // borehole antennas one next facing different way
+                        if ( j==0||j==3 ) {
+                            if ( k==0||k==1 ) {
+                                stations[i].strings[j].antennas[k].orient = 0;
+                            }
+                            else {
+                                stations[i].strings[j].antennas[k].orient = 1;
+                            }
+                        }
+                        else {
+                            if ( k==0||k==1 ) {
+                                stations[i].strings[j].antennas[k].orient = 1;
+                            }
+                            else {
+                                stations[i].strings[j].antennas[k].orient = 0;
+                            }
+                        }
+
+                    }// end facing different. I know it only works with 4 strings, 4 antennas on each strings but couldn't find a better way than this. -Eugene
+                }
+            }
+        } // end if bore hole antenna layout = 3 (where VHHH way)
+
+
 
 
 

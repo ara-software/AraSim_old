@@ -396,3 +396,22 @@ Added error calculation function.
 It will show (cout) the effective volume and +- error value.
 
 ===============================================================================
+
+05/11/12_2 E. Hong;
+
+Added bore hole antenna layout selection mode.
+In ARA_N_info.txt or ARA37_info.txt file, you can change the borehole layout with variable
+BORE_HOLE_ANTENNA_LAYOUT
+
+0 for V-H-V-H (default)
+1 for V-H-V
+2 for V-H-V-V
+3 for V-H-H-H
+
+Also, added the coincidence number of antenna trigger for global trigger.
+This can be changed in setup.txt file variable
+N_TRIG
+
+for example, N_TRIG=3 (which is the default value) will set global trigger when 3 or more antennas are trigger in TRIG_WINDOW time.
+
+===============================================================================

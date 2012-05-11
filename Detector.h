@@ -42,6 +42,8 @@ class Parameters {
     int number_of_antennas_string;  //antennas per string
     int number_of_surfaces_station;    //surface antennas per station
 
+    int bore_hole_antenna_layout;   // bore hole antenna layout, 0 : VHVH, 1 : VHV, 2 : VHVV
+
     int number_of_strings;
     int number_of_antennas;
 
