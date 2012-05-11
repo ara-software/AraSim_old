@@ -389,3 +389,10 @@ Fixed some commented lines in AraSim.cc.
 Fixed compile error for some machines in Trigger class.
 
 ===============================================================================
+
+05/11/12 E. Hong;
+
+Added error calculation function.
+It will show (cout) the effective volume and +- error value.
+
+===============================================================================

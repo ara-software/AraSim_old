@@ -5,6 +5,9 @@
 #include "counting.hh"
 #include "Tools.h"
 #include "TMath.h"
+#include "Constants.h"
+#include "Event.h"
+
 
 Counting::Counting() {
   Tools::Zero(npass,2);
@@ -58,4 +61,64 @@ void Counting::IncrementWeights_r_in(Position r_in,double weight) {
   findCosthetaPhiBins(r_in,icostheta,iphi);
   weights_rin[icostheta][iphi]+=weight;
 
+}
+
+
+void Counting::findErrorOnSumWeights(double *eventsfound_binned,double &error_plus,double &error_minus) {
+      for (int i=0;i<NBINS;i++) { // we are going to sum the error on the weight squared over the weight bins
+	// in each bin, the error on the weight is the weight for that bin times the error on the number of events in that bin
+	double thislogweight=((double)i+0.5)/(double)NBINS*(MAX_LOGWEIGHT-MIN_LOGWEIGHT)+MIN_LOGWEIGHT; // find log weight for this bin
+	if (eventsfound_binned[i]<=20) {  // if the number of events in this bin <20, use poisson errors
+	  error_plus+=pow(poissonerror_plus[(int)eventsfound_binned[i]]*pow(10.,thislogweight),2);
+	  error_minus+=pow(poissonerror_minus[(int)eventsfound_binned[i]]*pow(10.,thislogweight),2);
+	}
+	else {// otherwise, use sqrt(n) errors
+	  error_plus+=eventsfound_binned[i]*pow(pow(10.,thislogweight),2);
+	  error_minus=error_plus;
+
+	}
+
+      }
+      error_plus=sqrt(error_plus); // take the sqrt of the sum of the squares
+      error_minus=sqrt(error_minus);
+    }
+//void Counting::incrementEventsFound(double weight,Interaction *interaction1) {
+void Counting::incrementEventsFound(double weight, Event *event) {
+
+  int index_weights=findWeightBin(log10(weight));
+
+
+  // count number of events that pass, binned in weight
+  if (index_weights<Counting::NBINS)
+    eventsfound_binned[index_weights]++;
+  
+  // incrementing by flavor
+  // also bin in weight for error calculation.
+  if (event->nuflavor=="nue") { 
+    sum[0]+=weight;
+    eventsfound_binned_e[index_weights]++;
+  }
+  if (event->nuflavor=="numu") {
+    sum[1]+=weight; // total sum of weights for this flavor
+    eventsfound_binned_mu[index_weights]++;
+  }
+  if (event->nuflavor=="nutau") {
+    sum[2]+=weight;
+    eventsfound_binned_tau[index_weights]++;
+  }
+			     
+			      
+			      
+}
+int Counting::findWeightBin(double logweight) {
+  // first, find which weight bin it is in
+  int index_weights;
+ if (logweight<MIN_LOGWEIGHT)  // underflows, set to 0th bin
+    index_weights=0;
+  else if (logweight>MAX_LOGWEIGHT) // overflows, set to last bin
+    index_weights=NBINS-1;
+  else
+    // which index weight corresponds to.
+    index_weights=(int)(((logweight-MIN_LOGWEIGHT)/(MAX_LOGWEIGHT-MIN_LOGWEIGHT))*(double)NBINS);  
+ return index_weights;
 }

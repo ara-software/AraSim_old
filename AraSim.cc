@@ -257,6 +257,7 @@ G_V_threshold_diode = new TGraph(2, threshold_x, threshold_y);
 
 
 
+cout<<"powerthreshold : "<<trigger->powerthreshold<<endl;
 
 
 cout<<"begain looping events!!"<<endl;
@@ -347,9 +348,13 @@ cout<<"begain looping events!!"<<endl;
                cout<<"Global_Pass : "<<report->stations[i].Global_Pass<<" evt : "<<inu<<" added weight : "<<event->Nu_Interaction[0].weight<<"\n"<<endl;
                Total_Global_Pass ++;
                Total_Weight += event->Nu_Interaction[0].weight;
+
+               // test increment weight
+               count1->incrementEventsFound( event->Nu_Interaction[0].weight, event );
+
                // make plots for all channels
-               for (int string=0; string<4; string++) {
-                   for (int antenna=0; antenna<4; antenna++) {
+               for (int string=0; string<detector->params.number_of_strings_station; string++) {
+                   for (int antenna=0; antenna<detector->params.number_of_antennas_string; antenna++) {
                        //cout<<"plot cd "<<4*string + antenna<<endl;
                        cFull_window->cd( 4*string + antenna + 1 );
                        //g_Full_window = new TGraph( settings1->DATA_BIN_SIZE , xbin, report->Full_window[4*string + antenna] );
@@ -369,7 +374,7 @@ cout<<"begain looping events!!"<<endl;
                        }
                        //cout<<"x_V[0] : "<<x_V[0]<<endl;
                        g_Full_window_V = new TGraph( settings1->NFOUR/2 , x_V, y_V );
-                       g_Full_window_V->GetXaxis()->SetLimits(x_V[0],x_V[settings1->NFOUR/2-1]);
+                       //g_Full_window_V->GetXaxis()->SetLimits(x_V[0],x_V[settings1->NFOUR/2-1]);
                        g_Full_window_V->Draw("al");
 
 
@@ -423,8 +428,20 @@ cout<<"begain looping events!!"<<endl;
    cout<<"IceVolume : "<<IceVolume<<endl;
 
    double Veff_test;
+
+   // error bar for weight
+   double error_plus = 0;
+   double error_minus = 0;
+   Counting::findErrorOnSumWeights( count1->eventsfound_binned, error_plus, error_minus );
+
    Veff_test = IceVolume * 4. * PI * signal->RHOICE / signal->RHOH20 * Total_Weight / (double)(settings1->NNU);
+
+   // account all factors to error
+   error_plus = IceVolume * 4. * PI * signal->RHOICE / signal->RHOH20 * error_plus / (double)(settings1->NNU);
+   error_minus = IceVolume * 4. * PI * signal->RHOICE / signal->RHOH20 * error_minus / (double)(settings1->NNU);
+
    cout<<"test Veff : "<<Veff_test<<" m3sr, "<<Veff_test*1.E-9<<" km3sr"<<endl;
+   cout<<"And Veff error plus : "<<error_plus*1.E-9<<" and error minus : "<<error_minus*1.E-9<<endl;
 //--------------------------------------------------
 //   cout<<"Total NNU : "<<settings1->NNU<<", PickUnbiased passed NNU : "<<nnu_pass<<endl;
 //-------------------------------------------------- 
@@ -478,32 +495,52 @@ cout<<"begain looping events!!"<<endl;
  // plot effective volume from current AraSim.
  
  double eff_Vx[4];
- double eff_Vy[4];
+ double eff_Vy_VHVH[4];
+ double eff_Vy_VHVV[4];
 
  eff_Vx[0] = 17.;
  eff_Vx[1] = 18.;
  eff_Vx[2] = 19.;
  eff_Vx[3] = 20.;
 
- eff_Vy[0] = 1.7;
- eff_Vy[1] = 11.4;
- eff_Vy[2] = 30.;
- eff_Vy[3] = 53.3;
+ eff_Vy_VHVH[0] = 1.7;
+ eff_Vy_VHVH[1] = 11.4;
+ eff_Vy_VHVH[2] = 30.;
+ eff_Vy_VHVH[3] = 53.3;
+
+
+ eff_Vy_VHVV[0] = 1.967;
+ eff_Vy_VHVV[1] = 11.547;
+ eff_Vy_VHVV[2] = 29.555;
+ eff_Vy_VHVV[3] = 50.977;
+
 
  TCanvas *cVeff = new TCanvas("cVeff","A Simple Graph Example",200,10,1000,700);
 
- TGraph *g_Veff;
- g_Veff = new TGraph( 4 , eff_Vx, eff_Vy );
+ TGraph *g_Veff_VHVH;
+ g_Veff_VHVH = new TGraph( 4 , eff_Vx, eff_Vy_VHVH );
+
+ TGraph *g_Veff_VHVV;
+ g_Veff_VHVV = new TGraph( 4 , eff_Vx, eff_Vy_VHVV );
 
  cVeff->cd();
 
  cVeff->SetLogy();
- g_Veff->SetTitle("Effective volume from ARA station 1");
- g_Veff->GetHistogram()->SetXTitle("log E");
- g_Veff->GetHistogram()->SetYTitle("km^3 sr");
- g_Veff->GetHistogram()->SetMaximum(100);
- g_Veff->GetHistogram()->SetMinimum(0.1);
- g_Veff->Draw("al*");
+ g_Veff_VHVH->SetTitle("Effective volume from ARA station 1 (10,000evt)");
+ g_Veff_VHVH->GetHistogram()->SetXTitle("log E");
+ g_Veff_VHVH->GetHistogram()->SetYTitle("km^3 sr");
+ g_Veff_VHVH->GetHistogram()->SetMaximum(100);
+ g_Veff_VHVH->GetHistogram()->SetMinimum(0.1);
+ g_Veff_VHVH->Draw("al*");
+
+ g_Veff_VHVV -> SetLineColor(kRed);
+ g_Veff_VHVV->Draw("l*");
+
+
+TLegend *Leg_Veff = new TLegend(1., 0.75, 0.85,0.6);
+Leg_Veff -> AddEntry(g_Veff_VHVH, "VHVH", "l");
+Leg_Veff -> AddEntry(g_Veff_VHVV, "VHVV", "l");
+Leg_Veff -> Draw();
 
  cVeff->Print("test_Veff_ara1.pdf");
 

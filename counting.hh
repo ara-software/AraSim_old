@@ -3,6 +3,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Vector;
+class Event;
+
 class Counting {
 public:
 
@@ -61,6 +63,27 @@ public:
 
   void findCosthetaPhiBins(Position r_in,int &icostheta,int &iphi);
   void IncrementWeights_r_in(Position r_in,double weight) ;
+
+
+  // added for increment weight from icemc
+  static const int NBINS=10; // keep track of the number of events found, binned
+  // by weights
+  static const double MIN_LOGWEIGHT=-3;
+  //static const double MAX_LOGWEIGHT=-1;
+  static const double MAX_LOGWEIGHT=0;
+
+  double eventsfound_binned[NBINS]; 
+  double eventsfound_binned_e[NBINS];
+  double eventsfound_binned_mu[NBINS];
+  double eventsfound_binned_tau[NBINS];
+  double sum[3]; // sum of weight for events found for 3 flavors  
+
+  static void findErrorOnSumWeights(double *eventsfound_binned,double &error_plus,double &error_minus);
+  //void incrementEventsFound(double weight,Interaction *interaction1);
+  void incrementEventsFound(double weight,Event *event);
+  static int findWeightBin(double logweight);
+  //
+
 
 protected:
 
