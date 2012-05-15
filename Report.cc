@@ -141,6 +141,37 @@ void Antenna_r::clear_useless(Settings *settings1) {   // to reduce the size of 
     Fresnel.clear();
     Pol_factor.clear();
     }
+    else if (settings1->DATA_SAVE_MODE == 2) {
+    Heff.clear();
+    VHz_antfactor.clear();
+    VHz_filter.clear();
+    Vfft.clear();
+    Vfft_noise.clear();
+
+    Ax.clear();
+    Ay.clear();
+    Az.clear();
+
+    V.clear();
+    V_noise.clear();
+    V_total.clear();
+    V_total_diode.clear();
+    V_total_timedelay.clear();
+
+    //Trig_Pass.clear();
+    TooMuch_Tdelay.clear();
+
+    // need or not?
+    //Pol_vector.clear();
+    vmmhz.clear();
+    //Mag.clear();
+    //Fresnel.clear();
+    //Pol_factor.clear();
+    
+    // clear global trigger waveform info also
+    time.clear();
+    V_mimic.clear();
+    }
 
 
 

@@ -42,10 +42,10 @@
 //EXPONENT=30
 EXPONENT=18
 
-NNU=1
+//NNU=1
 //NNU=5
 //NNU=70
-//NNU=200
+NNU=200
 //NNU=500
 //NNU=1000
 //NNU=5000
@@ -74,8 +74,8 @@ POWERTHRESHOLD=-6.06
 NOISE_EVENTS=1000
 //NOISE_EVENTS=7000
 
-// DATA_SAVE_MODE 0 to save all data, 1 to remove most of data except geometric info, final golbal trigger data V_mimic
-DATA_SAVE_MODE=1
+// DATA_SAVE_MODE 0 to save all data, 1 to remove most of data except geometric info, final golbal trigger data V_mimic, 2 to remove final global trigger waveform V_mimic also (so just Physics info left)
+DATA_SAVE_MODE=2
 
 //RANDOM_MODE=0
 

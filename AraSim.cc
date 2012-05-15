@@ -496,6 +496,13 @@ cout<<"begain looping events!!"<<endl;
 //   cout<<"Total NNU : "<<settings1->NNU<<", PickUnbiased passed NNU : "<<nnu_pass<<endl;
 //-------------------------------------------------- 
     
+
+
+   // remove noisewaveform info if DATA_SAVE_MODE == 2
+   if (settings1->DATA_SAVE_MODE == 2) {
+       trigger->v_noise_timedomain.clear();
+       trigger->v_noise_timedomain_diode.clear();
+   }
   
   AraTree->Fill();  // fill tree for one entry
   AraFile->Write();

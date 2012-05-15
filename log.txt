@@ -439,3 +439,10 @@ File will contain total weight on the first line,
 and 10 (NBINS) weight bin values (event number) on the second line.
 
 ===============================================================================
+
+05/15/12 E. Hong;
+
+Added one more option to DATA_SAVE_MODE in Settings class.
+DATA_SAVE_MODE=2 will now save only physics info (like energy, track info, global triggered or not) and remove all waveform info (including noise waveform in Trigger class which is HUGE).
+
+===============================================================================

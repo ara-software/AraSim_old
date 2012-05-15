@@ -79,7 +79,7 @@ class Settings
 
         int NOISE_EVENTS;       // number of noise events which will be stored in Trigger class for later use. This will also used to calculate mean, rms noise (with diode convlv). default : 1000
 
-        int DATA_SAVE_MODE;     // 0 : save all information which are generated during the processes. 1 : light mode, remove most of data before the final global trigger (most of data except geometric info, final data V_mimic will be removed)
+        int DATA_SAVE_MODE;     // 0 : save all information which are generated during the processes. 1 : light mode, remove most of data before the final global trigger (most of data except geometric info, final data V_mimic will be removed). 2 : light mode 2, except for physics information (energy, geometric info), all waveform information are removed (include noise waveforms in trigger class)
 
         int N_TRIG;         // number of coincidence channels triggered in TRIG_WINDOW default : 3
 
