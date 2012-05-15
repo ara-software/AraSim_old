@@ -102,6 +102,10 @@ outputdir="outputs"; // directory where outputs go
 
   N_TRIG=3;                 // default : 3 (3 out of all channels in a station)
 
+  RANDOM_MODE=1;            // default : 1 (seed is unique in time/space)
+
+  BORE_HOLE_ANTENNA_LAYOUT=0;   // default : 0 (VHVH)
+
 }
 
 void Settings::ReadFile(string setupfile) {
@@ -213,11 +217,17 @@ void Settings::ReadFile(string setupfile) {
               else if (label == "N_TRIG") {
                   N_TRIG = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
               }
+              else if (label == "RANDOM_MODE") {
+                  RANDOM_MODE = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "BORE_HOLE_ANTENNA_LAYOUT") {
+                  BORE_HOLE_ANTENNA_LAYOUT = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
           }
       }
       setFile.close();
   }
-  else cout<<"Unable to open setup.txt file!"<<endl;
+  else cout<<"Unable to open "<<setupfile<<" file!"<<endl;
   return;
 }
 

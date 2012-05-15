@@ -73,7 +73,9 @@ string outputdir="outputs";
 //-------------------------------------------------- 
 
 
-int main() {
+//int main() {
+int main(int argc, char **argv) {   // read setup.txt file
+
 
 
     // below is replace by Settings class Initialize() member.
@@ -105,9 +107,22 @@ int main() {
   cout<<"EXPONENT : "<<settings1->EXPONENT<<endl;
   cout<<"DETECTOR : "<<settings1->DETECTOR<<endl;
 
-  string setupfile = "setup.txt";
+  //string setupfile = "setup.txt";
+  string setupfile;
+  if (argc<2) { // no setup file input, use default
+      setupfile = "setup.txt";
+  }
+  else if (argc == 2) { // read file!!
+      setupfile = string( argv[1] );
+  }
+  else { // no mode for argc > 2!
+      cout<<"too many info! just use default setup.txt file!"<<endl;
+      setupfile = "setup.txt";
+  }
 
   settings1->ReadFile(setupfile);
+  cout<<"Read "<<setupfile<<" file!"<<endl;
+
 
   cout<<"\n\tNew values!"<<endl;
   cout<<"NNU : "<<settings1->NNU<<endl;
@@ -119,6 +134,23 @@ int main() {
   cout<<"EXPONENT : "<<settings1->EXPONENT<<endl;
   cout<<"DETECTOR : "<<settings1->DETECTOR<<endl;
   cout<<"POSNU_RADIUS : "<<settings1->POSNU_RADIUS<<endl;
+
+
+
+  // set gRandom as TRandom3 when settings1->RANDOM_MODE = 1
+  if (settings1->RANDOM_MODE == 1) {
+
+    // test TRandom3
+    TRandom3 *test_randm3 = new TRandom3 (0);
+    gRandom = test_randm3;
+  }
+    //cout<<"first random from TRandom3 : "<<test_randm3->Rndm()<<"\n";
+    cout<<"first random : "<<gRandom->Rndm()<<"\n";
+
+
+
+
+
 
 
 //  IceModel *icemodel=new IceModel(ICE_MODEL + NOFZ*10,CONSTANTICETHICKNESS * 1000 + CONSTANTCRUST * 100 + FIXEDELEVATION * 10 + 0,MOOREBAY);// creates Antarctica ice model
@@ -420,9 +452,27 @@ cout<<"begain looping events!!"<<endl;
   } // end loop over neutrinos
 
 
+
+
+   ofstream weight_file;
+   weight_file.open(("./weight_output/weight_"+setupfile).c_str());
+
+
    cout<<" end loop"<<endl;
    cout<<"Total_Global_Pass : "<<Total_Global_Pass<<endl;
    cout<<"Total_Weight : "<<Total_Weight<<endl;
+   weight_file << "Total_Weight="<<Total_Weight<<endl;
+
+   cout<<"weight bin values : ";
+   for (int i=0; i<count1->NBINS-1; i++) {
+       cout<<count1->eventsfound_binned[i]<<", ";
+       weight_file << count1->eventsfound_binned[i]<<" ";
+   }
+       cout<<count1->eventsfound_binned[count1->NBINS-1];
+       weight_file << count1->eventsfound_binned[count1->NBINS-1]<<"\n";
+       weight_file.close();
+   cout<<"\n\n";
+
    double IceVolume;
    IceVolume = PI * (settings1->POSNU_RADIUS) * (settings1->POSNU_RADIUS) * icemodel->IceThickness( detector->stations[0] );
    cout<<"IceVolume : "<<IceVolume<<endl;

@@ -243,7 +243,7 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         params.stations_per_side = 4;       // total 37 stations
         params.station_spacing = 2000.;     // 2km spacing
         params.antenna_orientation = 0;     // all antenna facing x
-        params.bore_hole_antenna_layout = 0;    // default : VHVH
+        params.bore_hole_antenna_layout = settings1->BORE_HOLE_ANTENNA_LAYOUT;
         // finish initialization
         //
 
@@ -294,10 +294,6 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
                     }
                     else if (label == "antenna_orientation") {
                         params.antenna_orientation = atoi( line.substr( line.find_first_of("=") + 1).c_str() );
-                        cout<<"read antenna_orientation"<<endl;
-                    }
-                    else if (label == "BORE_HOLE_ANTENNA_LAYOUT") {
-                        params.bore_hole_antenna_layout = atoi( line.substr( line.find_first_of("=") + 1).c_str() );
                         cout<<"read antenna_orientation"<<endl;
                     }
                 }
@@ -606,7 +602,7 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         params.stations_per_side = 4;       // total 37 stations
         params.station_spacing = 2000.;     // 2km spacing
         params.antenna_orientation = 0;     // all antenna facing x
-        params.bore_hole_antenna_layout = 0;    // default : VHVH
+        params.bore_hole_antenna_layout = settings1->BORE_HOLE_ANTENNA_LAYOUT;
         // finish initialization
         //
 
@@ -657,10 +653,6 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
                     }
                     else if (label == "antenna_orientation") {
                         params.antenna_orientation = atoi( line.substr( line.find_first_of("=") + 1).c_str() );
-                        cout<<"read antenna_orientation"<<endl;
-                    }
-                    else if (label == "BORE_HOLE_ANTENNA_LAYOUT") {
-                        params.bore_hole_antenna_layout = atoi( line.substr( line.find_first_of("=") + 1).c_str() );
                         cout<<"read antenna_orientation"<<endl;
                     }
                 }

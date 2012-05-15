@@ -39,16 +39,17 @@
 // order is not important.
 // Make sure the name of variable is correct.
 
-EXPONENT=30
-//EXPONENT=18
+//EXPONENT=30
+EXPONENT=18
 
-//NNU=1
+NNU=1
+//NNU=5
 //NNU=70
 //NNU=200
 //NNU=500
 //NNU=1000
 //NNU=5000
-NNU=10000
+//NNU=10000
 //NNU=480
 DETECTOR=1
 SECONDARIES=0
@@ -70,8 +71,13 @@ POWERTHRESHOLD=-6.06
 //DATA_BIN_SIZE=16384
 
 //NOISE_EVENTS=1
-//NOISE_EVENTS=1000
-NOISE_EVENTS=7000
+NOISE_EVENTS=1000
+//NOISE_EVENTS=7000
 
 // DATA_SAVE_MODE 0 to save all data, 1 to remove most of data except geometric info, final golbal trigger data V_mimic
 DATA_SAVE_MODE=1
+
+//RANDOM_MODE=0
+
+BORE_HOLE_ANTENNA_LAYOUT=0
+

@@ -415,3 +415,27 @@ N_TRIG
 for example, N_TRIG=3 (which is the default value) will set global trigger when 3 or more antennas are trigger in TRIG_WINDOW time.
 
 ===============================================================================
+
+05/14/12 E. Hong;
+
+Added RANDOM_MODE to Settings class.
+RANDOM_MODE=0 will generate same random number every time (event info will independant to run number)
+RANDOM_MODE=1 will generate totally random number (seed is guaranteed to be unique in space and time)
+
+Moved BORE_HOLE_ANTENNA_LAYOUT parameter from Detector setup files (ARA_N_info.txt and ARA-37_info.txt) to setup.txt file.
+
+Now you can run AraSim with different setup file name.
+For example,
+    ./araSim setup_test.txt
+
+above will run AraSim with setup_test.txt instead of setup.txt file.
+If no setup file input, AraSim will automatically read setup.txt file.
+
+
+Added one more output file which contains weight information.
+File will locate on /weight_output directory.
+File name will be "weight_setupfile.txt".
+File will contain total weight on the first line,
+and 10 (NBINS) weight bin values (event number) on the second line.
+
+===============================================================================
