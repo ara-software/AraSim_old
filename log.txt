@@ -446,3 +446,35 @@ Added one more option to DATA_SAVE_MODE in Settings class.
 DATA_SAVE_MODE=2 will now save only physics info (like energy, track info, global triggered or not) and remove all waveform info (including noise waveform in Trigger class which is HUGE).
 
 ===============================================================================
+
+05/15/12_2 E. Hong;
+
+Modified executing multi runs part.
+Now when you can run AraSim with multi run with the script example files batchScript_test.sh and runaraSim_test.sh
+
+In super computers (cluster computer where you can run qsub), you can run multipule runs with same setup file by
+    ./batchScript_test.sh
+
+it will then show your currnet directory and ask the AraSim location.
+You can just copy and paste the directory address if it is same.
+And then it will ask the setup file name.
+If you have your own version of setup.txt file, put the name without the directory address.
+Or you can just use setup.txt file.
+After that, it will ask the number of run.
+So if you input 1000, AraSim will run 1000 runs with same setup file.
+
+If you run multiple runs there will be multiple output files.
+In /outputs/, AraOut.root file will have extra setup file name and run number.
+For example, AraOut.setup.txt.run1.root
+
+If you just run with ./araSim as before, root file will be just
+AraOut.root
+as usual.
+
+Also weight output file in /weight_output/ directory will also have setup file name and run number,
+weight_setup.txt.run1
+
+If you are just using AraSim in your personal computer (no qsub), nothing much are different.
+However, if you are running AraSim in super computers (qsub), you can use those script files (or make your own) to run multi runs conveniently.
+
+===============================================================================

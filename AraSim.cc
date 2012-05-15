@@ -109,11 +109,16 @@ int main(int argc, char **argv) {   // read setup.txt file
 
   //string setupfile = "setup.txt";
   string setupfile;
+  string run_no;
   if (argc<2) { // no setup file input, use default
       setupfile = "setup.txt";
   }
   else if (argc == 2) { // read file!!
       setupfile = string( argv[1] );
+  }
+  else if (argc == 3) { // read file!!
+      setupfile = string( argv[1] );
+      run_no = string( argv[2] );
   }
   else { // no mode for argc > 2!
       cout<<"too many info! just use default setup.txt file!"<<endl;
@@ -199,8 +204,14 @@ int main(int argc, char **argv) {   // read setup.txt file
   cout<<"called Evt"<<endl;
 
 
+  TFile *AraFile;
+   if (argc == 3) {
+        AraFile=new TFile((outputdir+"/AraOut."+setupfile+".run"+run_no+".root").c_str(),"RECREATE","ara");
+   }
+   else {
+        AraFile=new TFile((outputdir+"/AraOut.root").c_str(),"RECREATE","ara");
+   }
 
-  TFile *AraFile=new TFile((outputdir+"/AraOut.root").c_str(),"RECREATE","ara");
   TTree *AraTree=new TTree("AraTree","AraTree");    // for single entry
   TTree *AraTree2=new TTree("AraTree2","AraTree2"); //for many entries
   cout<<"assing AraFile, AraTrees"<<endl;
@@ -455,7 +466,13 @@ cout<<"begain looping events!!"<<endl;
 
 
    ofstream weight_file;
-   weight_file.open(("./weight_output/weight_"+setupfile).c_str());
+   //weight_file.open(("./weight_output/weight_"+setupfile).c_str());
+   if (argc == 3) {
+        weight_file.open(("./weight_output/weight_"+setupfile+".run"+run_no).c_str());
+   }
+   else {
+        weight_file.open(("./weight_output/weight_"+setupfile).c_str());
+   }
 
 
    cout<<" end loop"<<endl;
@@ -506,6 +523,7 @@ cout<<"begain looping events!!"<<endl;
   
   AraTree->Fill();  // fill tree for one entry
   AraFile->Write();
+  AraFile->Close();
 
 
  efficiencies->summarize(); // summarize the results in an output file  
