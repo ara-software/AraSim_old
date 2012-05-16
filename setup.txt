@@ -45,6 +45,7 @@ EXPONENT=18
 //NNU=1
 //NNU=5
 //NNU=70
+//NNU=100
 NNU=200
 //NNU=500
 //NNU=1000
@@ -75,7 +76,12 @@ NOISE_EVENTS=1000
 //NOISE_EVENTS=7000
 
 // DATA_SAVE_MODE 0 to save all data, 1 to remove most of data except geometric info, final golbal trigger data V_mimic, 2 to remove final global trigger waveform V_mimic also (so just Physics info left)
-DATA_SAVE_MODE=2
+DATA_SAVE_MODE=0
+
+// WRITE_ALL_EVENTS 0 only write globally triggered events, 1 Write all event events including events that are not globally triggered
+// Note: NNU is the number of neutrinos that have been thrown in total, not just globally triggered events
+// When writing all events, the waveform stored in UsefulAraSimEvent->VoltsRF[] is just the untriggered, noiseless waveform of the initial signal, and it has not propagated to the antenna yet.
+WRITE_ALL_EVENTS=0
 
 //RANDOM_MODE=0
 

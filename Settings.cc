@@ -106,6 +106,8 @@ outputdir="outputs"; // directory where outputs go
 
   BORE_HOLE_ANTENNA_LAYOUT=0;   // default : 0 (VHVH)
 
+  WRITE_ALL_EVENTS=0; //default : 0 (writes only globally triggered events)
+    
 }
 
 void Settings::ReadFile(string setupfile) {

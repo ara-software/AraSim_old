@@ -59,6 +59,8 @@ using namespace std;
 #include "RaySolver.h"
 #include "Report.h"
 
+//Include output format to enable reading by analysis software AraRoot
+#include "AraRootFormat/UsefulIcrrStationEvent.h"
 
 class EarthModel; //class
 
@@ -237,6 +239,38 @@ int main(int argc, char **argv) {   // read setup.txt file
 RaySolver *raysolver = new RaySolver;
 cout<<"called RaySolver"<<endl;
 
+    Int_t runNumber = 0;
+    
+    cout << "Make output file that is readable by AraRoot" << endl;
+//    TFile *theFile;
+//    char outName[FILENAME_MAX] = "!/Users/pfendner/src/AraRootSVN/AraRoot/branches/3.1/analysis/AraRootRead.root";
+    
+    UsefulIcrrStationEvent *theEvent=0;
+    theEvent = new UsefulIcrrStationEvent();
+//    cout << "Creating File: " << outName << endl;
+//    theFile = new TFile(outName,"RECREATE");
+    
+    TTree *eventTree;
+    eventTree = new TTree("eventTree","Tree of ARA Events");
+    eventTree->Branch("run",&runNumber,"run/I");
+    eventTree->Branch("UsefulSimEvent","UsefulIcrrStationEvent",&theEvent);
+
+    double Energy = 0.;
+    double ViewAngle[16];
+    int EventNumber = 0;
+    int RaySolutions = 0;
+    int Interactions = 0;   
+    int StationNumber = 0;
+    bool GlobalTriggered = false;
+    
+    //eventTree->Branch("Energy", &Energy);
+    //eventTree->Branch("ViewAngle", &ViewAngle);
+    //eventTree->Branch("StationNumber", &StationNumber);
+    //eventTree->Branch("EventNumber", &EventNumber);
+    //eventTree->Branch("RaySolutions", &RaySolutions);
+    //eventTree->Branch("Interactions", &Interactions);
+    //eventTree->Branch("GlobalTriggered", &GlobalTriggered);
+
 
 
 cout<<"will call secondaries"<<endl;
@@ -297,17 +331,18 @@ threshold_y[1] = (trigger->rmsdiode) * (trigger->powerthreshold);
 
 TGraph *G_V_threshold_diode;
 G_V_threshold_diode = new TGraph(2, threshold_x, threshold_y);
-
-
+  
+//    int NGlobalPassed = 0;
+//    int inu = 0;
 
 cout<<"powerthreshold : "<<trigger->powerthreshold<<endl;
 
-
 cout<<"begain looping events!!"<<endl;
    for (int inu=0;inu<settings1->NNU;inu++) { // loop over neutrinos
-
+//    while (NGlobalPassed < 1000){
 
        event = new Event ( settings1, spectra, primary1, icemodel, detector, signal, sec1 );
+
 
 //--------------------------------------------------
 //        cout<<"inu : "<<inu<<endl;
@@ -326,6 +361,89 @@ cout<<"begain looping events!!"<<endl;
        // save signal, noise at each antennas to Report class
        report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1, trigger);
 
+       
+       //  cout << "Here: "  << theEvent.eventNumber << endl;
+       if(theEvent) delete theEvent;
+       theEvent = new UsefulIcrrStationEvent();
+//       if(theSimEvent) delete theSimEvent;
+//       theSimEvent = new SimEvent();
+       
+//       theSimEvent->NRaySols =0; 
+//       for (int i=0;i<1;i++) {  // there are only 1 station for the test!!!
+//           for (int j=0; j<4;j++) { // 4 strings per station
+//               for (int k=0;k<4;k++) {  // 4 antennas per string
+//                   theSimEvent->NRaySols = max(theSimEvent->NRaySols, report->stations[i].strings[j].antennas[k].ray_sol_cnt);
+//               }
+//           }
+//       }
+
+       EventNumber = inu;
+       Interactions = 1;
+       Energy = event->pnu;
+
+       //for (int RaySolNum = 0; RaySolNum < theSimEvent->NRaySols; RaySolNum++){
+       for (int i=0;i<1;i++) {  // there are only 1 station for the test!!!
+           if (report->stations[i].Global_Pass) {
+               GlobalTriggered = true;
+               for (int j=0; j<4;j++) { // 4 strings per station
+                   for (int k=0;k<4;k++) {  // 4 antennas per string
+                       int channel = k + 4 * j;
+                       // if (RaySolNum < report->stations[i].strings[j].antennas[k].ray_sol_cnt){
+                       for (int bin = 0; bin < EFFECTIVE_SAMPLES * 2; bin++){
+                           // cout << bin << " : " << report->stations[i].strings[j].antennas[k].V_mimic[bin] << endl;
+                           theEvent->fVoltsRF[channel][bin] = report->stations[i].strings[j].antennas[k].V_mimic[bin];
+                           theEvent->fTimesRF[channel][bin] = report->stations[i].strings[j].antennas[k].time[bin];
+                           
+                           if (bin%100 == 0){
+                               //       cout << inu << " : " << channel << " : " << i  << " : " << j << " : " << k << " : " << RaySolNum << " : " << bin << " : " << theEvent->fNumPointsRF[channel] << " : " << theEvent->fVoltsRF[channel][bin] << " : " << report->stations[i].strings[j].antennas[k].V_mimic[bin] << " : " << theEvent->fTimesRF[channel][bin] << " : " << report->stations[i].strings[j].antennas[k].time[bin] <<endl;   
+                           }
+                       }
+                                              
+                       theEvent->fNumPointsRF[channel] = EFFECTIVE_SAMPLES * 2;
+                       RaySolutions = report->stations[i].strings[j].antennas[k].ray_sol_cnt;
+                       //ViewAngle[channel] = report->stations[i].strings[j].antennas[k].view_ang[0]*180./(3.1415926);
+                       
+                   }
+               }
+               StationNumber = i;
+               eventTree->Fill();    
+           }
+           else{
+               GlobalTriggered = false;
+               StationNumber = i;
+               if (settings1->WRITE_ALL_EVENTS == 1){
+                   for (int j=0; j<4;j++) { // 4 strings per station
+                       for (int k=0;k<4;k++) {  // 4 antennas per string
+                           int channel = k + 4 * j;
+                           for (int bin = 0; bin < EFFECTIVE_SAMPLES * 2; bin++){
+                               // cout << bin << " : " << report->stations[i].strings[j].antennas[k].V_mimic[bin] << endl;
+                               if (report->stations[i].strings[j].antennas[k].ray_sol_cnt == 2){
+                                   theEvent->fVoltsRF[channel][bin] = report->stations[i].strings[j].antennas[k].V[0][bin];
+                                   theEvent->fTimesRF[channel][bin] = report->stations[i].strings[j].antennas[k].V[0][bin];
+                                   //theEvent->fVoltsElec[channel][bin] = report->stations[i].strings[j].antennas[k].V[1][bin];
+                                   //theEvent->fTimesElec[channel][bin] = report->stations[i].strings[j].antennas[k].V[1][bin];
+                               }
+                               if (report->stations[i].strings[j].antennas[k].ray_sol_cnt == 1){
+                                   theEvent->fVoltsRF[channel][bin] = report->stations[i].strings[j].antennas[k].V[0][bin];
+                                   theEvent->fTimesRF[channel][bin] = report->stations[i].strings[j].antennas[k].V[0][bin];
+                               }
+                               if (report->stations[i].strings[j].antennas[k].ray_sol_cnt == 0){
+                                   theEvent->fVoltsRF[channel][bin] = 0;
+                                   theEvent->fTimesRF[channel][bin] = 0;
+                               }                           
+                           }
+                           RaySolutions = report->stations[i].strings[j].antennas[k].ray_sol_cnt;
+                           //ViewAngle[channel] = report->stations[i].strings[j].antennas[k].view_ang[0]*180./(3.1415926);
+                       }
+                   }
+                   eventTree->Fill();
+               }
+           }
+       }
+
+
+       
+       //}
        
 
        /*
@@ -453,13 +571,13 @@ cout<<"begain looping events!!"<<endl;
 //      }
 //  }
 //-------------------------------------------------- 
-
- //cout<<"evt "<<inu<<endl;
-
+       if (inu % 10 == 0){
+           cout<<"evt "<<inu<<endl;
+       }
 
  delete event;
 
-
+     //   inu++;
   } // end loop over neutrinos
 
 
@@ -524,7 +642,6 @@ cout<<"begain looping events!!"<<endl;
   AraTree->Fill();  // fill tree for one entry
   AraFile->Write();
   AraFile->Close();
-
 
  efficiencies->summarize(); // summarize the results in an output file  
 

@@ -19,8 +19,8 @@ SRCSUF = ${SrcSuf}
 
 
 #Generic and Site Specific Flags
-CXXFLAGS     += $(SYSINCLUDES)
-LDFLAGS      += -g -I$(BOOST_ROOT) -L${ROOTSYS}/lib -L.
+CXXFLAGS     += $(SYSINCLUDES) -IAraRootFormat
+LDFLAGS      += -g -I$(BOOST_ROOT) -L${ROOTSYS}/lib -LAraRootFormat -lAraRootSimEvent -L.
 
 # copy from ray_solver_makefile (removed -lAra part)
 
@@ -36,11 +36,16 @@ OBJS = Vector.o EarthModel.o IceModel.o Trigger.o Ray.o Tools.o Efficiencies.o E
 CCFILE = Vector.cc EarthModel.cc IceModel.cc Trigger.cc Ray.cc Tools.cc Efficiencies.cc Event.cc Detector.cc Spectra.cc Position.cc RayTrace.cc signal.cc secondaries.cc RayTrace_IceModels.cc Settings.cc Primaries.cc counting.cc RaySolver.cc Report.cc AraSim.cc
 CLASS_HEADERS = Trigger.h Detector.h Settings.h Spectra.h IceModel.h Primaries.h Report.h Event.h #need to add headers which added to Tree Branch
 
-PROGRAMS = araSim
+PROGRAMS = AraSim
 
-all : $(PROGRAMS)
+ARAROOTLIB = libAraSimEvent.so
 
-araSim : $(OBJS)
+all : $(ARAROOTLIB) $(PROGRAMS)
+	
+libAraSimEvent.so : 
+	@cd AraRootFormat; make all
+
+AraSim : $(OBJS)
 	$(LD) $(LDFLAGS) $(OBJS) $(LIBS) -o $(PROGRAMS)
 	@echo "done."
 
@@ -95,4 +100,5 @@ clean:
 	@rm -f $(ROOT_LIBRARY)
 	@rm -f $(subst .$(DLLSUF),.so,$(ROOT_LIBRARY))	
 	@rm -f $(TEST)
+	@cd AraRootFormat; make clean
 #############################################################################
