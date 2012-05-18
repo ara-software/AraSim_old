@@ -5,13 +5,8 @@
 ##############################################################################
 include StandardDefinitions.mk
 
-
-LD_ARA_UTIL=-L$(ARA_UTIL_LIB_DIR) 
-INC_ARA_UTIL=-I$(ARA_UTIL_INC_DIR) 
-
-
 #Generic and Site Specific Flags
-CXXFLAGS     += $(ROOTCFLAGS) $(FFTFLAG) $(SYSINCLUDES) -I. 
+CXXFLAGS     += $(ROOTCFLAGS)  $(SYSINCLUDES) -I. #$(FFTFLAG)
 LDFLAGS      += -g $(ROOTLDFLAGS) 
 
 
@@ -25,9 +20,6 @@ CLASS_HEADERS = UsefulAraStationEvent.h UsefulIcrrStationEvent.h araIcrrDefines.
 
 
 all : $(ROOT_LIBRARY)
-
-tests: printStructSizes
-
 
 #The library
 $(ROOT_LIBRARY) : $(LIB_OBJS) 
@@ -60,24 +52,6 @@ araRootDict.C: $(CLASS_HEADERS)
 	@echo "Generating dictionary ..."
 	@ rm -f *Dict* 
 	rootcint $@ -c $(CLASS_HEADERS) LinkDef.h
-
-install: $(ROOT_LIBRARY)
-	install -d $(ARA_UTIL_LIB_DIR)
-	install -d $(ARA_UTIL_INC_DIR)
-ifeq ($(PLATFORM),macosx)
-	install -c -m 755 $(ROOT_LIBRARY) $(subst .$(DLLSUF),.so,$(ROOT_LIBRARY)) $(ARA_UTIL_LIB_DIR)
-else
-	install -c -m 755 $(ROOT_LIBRARY) $(ARA_UTIL_LIB_DIR)
-endif
-	install -c -m 644  $(CLASS_HEADERS) $(ARA_UTIL_INC_DIR)
-	install -d $(ARA_UTIL_CALIB_DIR)/ICRR/TestBed
-	for file in calib/ICRR/TestBed/*.dat calib/ICRR/TestBed/*.csv calib/ICRR/TestBed/*.txt; do install -c -m 644 "$${file}" $(ARA_UTIL_CALIB_DIR)/ICRR/TestBed; done
-	install -d $(ARA_UTIL_CALIB_DIR)/ICRR/Station1
-	for file in calib/ICRR/Station1/*.dat calib/ICRR/Station1/*.csv calib/ICRR/Station1/*.txt; do install -c -m 644 "$${file}" $(ARA_UTIL_CALIB_DIR)/ICRR/Station1; done
-	install -d $(ARA_UTIL_CALIB_DIR)/ATRI
-	for file in calib/ATRI/*.csv calib/ATRI/*.txt; do install -c -m 644 "$${file}" $(ARA_UTIL_CALIB_DIR)/ATRI; done
-	install -d $(ARA_UTIL_CALIB_DIR)
-	for file in calib/*.csv; do install -c -m 644 "$${file}" $(ARA_UTIL_CALIB_DIR); done
 
 
 

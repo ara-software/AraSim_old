@@ -18,6 +18,10 @@
 #include "TRandom3.h"
 #include "Constants.h"
 
+//Include output format to enable reading by analysis software AraRoot
+
+#include "AraRootFormat/UsefulIcrrStationEvent.h"
+
 ClassImp(Report);
 ClassImp(Antenna_r);
 ClassImp(Surface_antenna_r);
@@ -207,6 +211,9 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
     double max_arrival_time_tmp;   // max arrival time between all antennas, raysolves
     double max_PeakV_tmp;       // max PeakV of all antennas in the station
 
+    UsefulIcrrStationEvent *theUsefulEvent=0;
+    theUsefulEvent = new UsefulIcrrStationEvent();
+    
     int trig_window_bin = (int)(settings1->TRIG_WINDOW / settings1->TIMESTEP);   // coincidence window bin for trigger
 
     int N_pass; // number of trigger passed channels (antennas)
@@ -781,6 +788,15 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                    stations[i].strings[(int)((ch_loop)/detector->params.number_of_antennas_string)].antennas[(int)((ch_loop)%detector->params.number_of_antennas_string)].time.push_back( stations[i].Global_Pass + trig_window_bin/2 - settings1->NFOUR/4 + mimicbin );
                                }
                            }
+                           
+                           for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
+                               theUsefulEvent->fVoltsRF[ch_loop][mimicbin] = stations[i].strings[(int)((ch_loop)/detector->params.number_of_antennas_string)].antennas[(int)((ch_loop)%detector->params.number_of_antennas_string)].V_mimic[mimicbin];
+                               theUsefulEvent->fTimesRF[ch_loop][mimicbin] = stations[i].strings[(int)((ch_loop)/detector->params.number_of_antennas_string)].antennas[(int)((ch_loop)%detector->params.number_of_antennas_string)].time[mimicbin];
+                               cout << theUsefulEvent->fVoltsRF[ch_loop][mimicbin] << endl;
+                               cout << theUsefulEvent->fTimesRF[ch_loop][mimicbin] <<endl;
+                           }
+                           theUsefulEvent->fNumPointsRF[ch_loop] = EFFECTIVE_SAMPLES * 2;
+                           cout << " : " << theUsefulEvent->fNumPointsRF[ch_loop] << endl;
                        }
 
                        //cout<<"Global trigger passed!!, N_pass : "<<N_pass<<endl;

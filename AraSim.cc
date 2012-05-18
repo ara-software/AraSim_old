@@ -252,7 +252,7 @@ cout<<"called RaySolver"<<endl;
     
     TTree *eventTree;
     eventTree = new TTree("eventTree","Tree of ARA Events");
-    eventTree->Branch("run",&runNumber,"run/I");
+//    eventTree->Branch("run",&runNumber,"run/I");
     eventTree->Branch("UsefulSimEvent","UsefulIcrrStationEvent",&theEvent);
 
     double Energy = 0.;
@@ -364,26 +364,16 @@ cout<<"begain looping events!!"<<endl;
        // save signal, noise at each antennas to Report class
        report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1, trigger);
 
-       
-       //  cout << "Here: "  << theEvent.eventNumber << endl;
-       if(theEvent) delete theEvent;
+//         cout << "Here: "  << theEvent.eventNumber << endl;
+//       if(theEvent) delete theEvent;
        theEvent = new UsefulIcrrStationEvent();
-//       if(theSimEvent) delete theSimEvent;
-//       theSimEvent = new SimEvent();
+       theEvent = &report->theUsefulEvent;
        
-//       theSimEvent->NRaySols =0; 
-//       for (int i=0;i<1;i++) {  // there are only 1 station for the test!!!
-//           for (int j=0; j<4;j++) { // 4 strings per station
-//               for (int k=0;k<4;k++) {  // 4 antennas per string
-//                   theSimEvent->NRaySols = max(theSimEvent->NRaySols, report->stations[i].strings[j].antennas[k].ray_sol_cnt);
-//               }
-//           }
-//       }
-
+       
        EventNumber = inu;
        Interactions = 1;
        Energy = event->pnu;
-
+/*
        //for (int RaySolNum = 0; RaySolNum < theSimEvent->NRaySols; RaySolNum++){
        for (int i=0;i<1;i++) {  // there are only 1 station for the test!!!
            if (report->stations[i].Global_Pass) {
@@ -443,8 +433,13 @@ cout<<"begain looping events!!"<<endl;
                }
            }
        }
-
-
+*/
+       //theEvent
+       eventTree->Fill();
+       
+       
+       
+       
        
        //}
        
