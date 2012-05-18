@@ -9,7 +9,6 @@ include StandardDefinitions.mk
 CXXFLAGS     += $(ROOTCFLAGS)  $(SYSINCLUDES) -I. #$(FFTFLAG)
 LDFLAGS      += -g $(ROOTLDFLAGS) 
 
-
 LIBS          = $(ROOTLIBS) -lMathMore -lMinuit $(SYSLIBS) #$(FFTLIBS)
 GLIBS         = $(ROOTGLIBS) $(SYSLIBS)
 
@@ -39,14 +38,13 @@ else
 	$(LD) $(SOFLAGS) $(LDFLAGS) $(LIBS) $(LIB_OBJS) -o $@
 endif
 
-%.$(OBJSUF) : %.$(SRCSUF)
+%.o: %.cxx
 	@echo "<**Compiling**> "$<
 	$(CXX) $(CXXFLAGS) -c $< -o  $@
 
-%.$(OBJSUF) : %.C
-	@echo "<**Compiling**> "$<
-	$(CXX) $(CXXFLAGS) $ -c $< -o  $@
-
+#%.$(OBJSUF) : %.$(SRCSUF)
+#	@echo "<**Compiling**> "$<
+#	$(CXX) $(CXXFLAGS) -c $< -o  $@
 
 araRootDict.C: $(CLASS_HEADERS)
 	@echo "Generating dictionary ..."
