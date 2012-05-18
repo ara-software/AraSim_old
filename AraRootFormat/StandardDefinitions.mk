@@ -10,7 +10,7 @@ else
 include ../Makefile.arch
 endif
 #If you have things in non standard paths (eg. libRootFftwWrapper) append the appropriate -I or -L lines below
-SYSINCLUDES	= -I${USE_FFT_TOOLS}
+SYSINCLUDES	= 
 SYSLIBS         = 
 
 #USE_GOOGLE_PROFILER=1 #Must comment this out

@@ -8,7 +8,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include "UsefulIcrrStationEvent.h"
-#include "FFTtools.h"
+//#include "FFTtools.h"
 //#include "AraGeomTool.h"
 #include "TH1.h"
 #include <iostream>
@@ -46,7 +46,7 @@ TGraph *UsefulIcrrStationEvent::getGraphFromRFChan(int chan)
     return NULL;
   return new TGraph(fNumPointsRF[chan],fTimesRF[chan],fVoltsRF[chan]);
 }
-
+/*
 TGraph *UsefulIcrrStationEvent::getFFTForRFChan(int chan)
 {
 
@@ -119,6 +119,7 @@ int UsefulIcrrStationEvent::fillFFTHistoForRFChan(int chan, TH1D *histFFT)
    return 0;
 
 }
+ */
 /*
 int UsefulIcrrStationEvent::guessRCO(int chanIndex)
 {
