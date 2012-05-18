@@ -10,7 +10,7 @@ else
 include ../Makefile.arch
 endif
 #If you have things in non standard paths (eg. libRootFftwWrapper) append the appropriate -I or -L lines below
-SYSINCLUDES	= 
+SYSINCLUDES	= -I${USE_FFT_TOOLS}
 SYSLIBS         = 
 
 #USE_GOOGLE_PROFILER=1 #Must comment this out
@@ -35,7 +35,7 @@ SRCSUF = ${SrcSuf}
 
 
 #Toggles the FFT functions on and off
-USE_FFT_TOOLS=1
+USE_FFT_TOOLS_FLAG=1
 
 ifdef USE_FFT_TOOLS
 FFTLIBS = -lRootFftwWrapper -lfftw3 -lMathMore -lgsl 
