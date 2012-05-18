@@ -15,7 +15,7 @@ CXXFLAGS     += $(ROOTCFLAGS) $(FFTFLAG) $(SYSINCLUDES) -I.
 LDFLAGS      += -g $(ROOTLDFLAGS) 
 
 
-LIBS          = $(ROOTLIBS) -lMathMore -lMinuit $(SYSLIBS) $(FFTLIBS)
+LIBS          = $(ROOTLIBS) -lMathMore -lMinuit $(SYSLIBS) #$(FFTLIBS)
 GLIBS         = $(ROOTGLIBS) $(SYSLIBS)
 
 #Now the bits we're actually compiling
