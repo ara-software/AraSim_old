@@ -626,12 +626,33 @@ Position IceModel::WhereDoesItEnter(const Position &posnu,const Vector &nnu) con
 	
     } //else if: error: interaction takes place above the surface
     
+    // first approx
     Position r_in = posnu - a*nnu;
+
+    int iter = 0;
+    // now do correction 3 times
+    //for (iter=0; iter<3; iter++) {
+    //    delta = r_in.Mag() - Surface( r_in );
+    //    r_in = r_in + (delta * nnu);
+    //}
     
-    lon = r_in.Lon();
-    lat = r_in.Lat();
+    delta = r_in.Mag() - Surface( r_in );
+    while ( fabs(delta) >= 0.1 ) {
+        r_in = r_in + (delta * nnu);
+        delta = r_in.Mag() - Surface( r_in );
+        iter++;
+        if ( iter > 10 ) {
+            //cout<<"\n r_in iteration more than 10 times!!! delta : "<<delta<<". now set r_in as before."<<endl;
+            r_in = Surface( r_in ) * r_in.Unit();   // the way before
+            delta = r_in.Mag() - Surface( r_in );
+        }
+    }
+
     
-    r_in = Surface(lon,lat) * r_in.Unit();
+    //lon = r_in.Lon();
+    //lat = r_in.Lat();
+    
+    //r_in = Surface(lon,lat) * r_in.Unit();
     
     return r_in;
 } //method WhereDoesItEnter

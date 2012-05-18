@@ -478,3 +478,12 @@ If you are just using AraSim in your personal computer (no qsub), nothing much a
 However, if you are running AraSim in super computers (qsub), you can use those script files (or make your own) to run multi runs conveniently.
 
 ===============================================================================
+
+05/18/12 E. Hong;
+
+Bug fixed in IceModel class WhereDoesItEnter function.
+Some times (actually many times) WhereDoesItEnter do calculated weird location
+as earth entrance point.
+Now it will do some iteration to do some corrections.
+
+===============================================================================

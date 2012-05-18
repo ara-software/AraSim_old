@@ -531,10 +531,12 @@ Interaction::Interaction (double pnu, Vector &nnu_org, string nuflavor, int &n_i
     // also they will calculate r_in (position nu enter the earth), r_enterice (position nu enter the ice), nuexitice (position nu exit the ice)
     //
     if (settings1->INTERACTION_MODE == 0) {    // for pickunbiased. posnu will be all around antarctica
-        Interaction::PickUnbiased( antarctica );
+        //Interaction::PickUnbiased( antarctica );
+        PickUnbiased( antarctica );
     }
     else if (settings1->INTERACTION_MODE == 1) {   // for picknear. posnu will be only near by ARA core
-        Interaction::PickNear (antarctica, detector, settings1);
+        //Interaction::PickNear (antarctica, detector, settings1);
+        PickNear (antarctica, detector, settings1);
     }
 
     //cout<<" Finished Pick posnu, r_in, r_enterice, nuexitice!!"<<endl;
@@ -770,7 +772,7 @@ void Interaction::GetSignal (Settings *settings1, Primaries *primary1, Secondari
 int Interaction::PickUnbiased (IceModel *antarctica) {
     
 
-    Interaction::PickAnyDirection(); // first pick the neutrino direction
+    //Interaction::PickAnyDirection(); // first pick the neutrino direction
 
   double mincos=cos(antarctica->GetCOASTLINE()*RADDEG);
   double maxcos=cos(0.);
@@ -1019,7 +1021,7 @@ void Interaction::PickNear (IceModel *antarctica, Detector *detector, Settings *
 
     //thisphi=gRandom->Rndm()*(maxphi-minphi)+minphi;
 
-    Interaction::PickAnyDirection(); // first pick the neutrino direction
+    //Interaction::PickAnyDirection(); // first pick the neutrino direction
 
     //pick random posnu within boundary 2km radius
     double thisPhi = gRandom->Rndm() * (2*PI);
@@ -1043,7 +1045,8 @@ void Interaction::PickNear (IceModel *antarctica, Detector *detector, Settings *
     }
 
 
-    Interaction::FlattoEarth(antarctica, X, Y, D);  //change to Earth shape and set depth (always in the ice)
+    //Interaction::FlattoEarth(antarctica, X, Y, D);  //change to Earth shape and set depth (always in the ice)
+    FlattoEarth(antarctica, X, Y, D);  //change to Earth shape and set depth (always in the ice)
 
 
     pickposnu = 1;  // all PickNear sucess for pickposnu

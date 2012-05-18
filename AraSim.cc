@@ -341,6 +341,9 @@ cout<<"begain looping events!!"<<endl;
    for (int inu=0;inu<settings1->NNU;inu++) { // loop over neutrinos
 //    while (NGlobalPassed < 1000){
 
+       std::cerr<<"*";
+
+
        event = new Event ( settings1, spectra, primary1, icemodel, detector, signal, sec1 );
 
 

@@ -1,4 +1,5 @@
 #/bin/bash
+#PBS -l nodes=1:ppn=1
 if [ "$INPUTFILE" = "" ]
 then
    echo "INPUTFILE environmental variable must be set" 1>&2

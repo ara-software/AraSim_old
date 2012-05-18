@@ -40,7 +40,7 @@
 // Make sure the name of variable is correct.
 
 //EXPONENT=30
-EXPONENT=18
+EXPONENT=17
 
 //NNU=1
 //NNU=5
