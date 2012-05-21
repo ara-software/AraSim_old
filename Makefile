@@ -20,7 +20,7 @@ SRCSUF = ${SrcSuf}
 
 #Generic and Site Specific Flags
 CXXFLAGS     += $(SYSINCLUDES) -IAraRootFormat
-LDFLAGS      += -g -I$(BOOST_ROOT) -L${ROOTSYS}/lib -LAraRootFormat -lAraRootSimEvent -L.
+LDFLAGS      += -g -I$(BOOST_ROOT) -L${ROOTSYS}/lib -LAraRootFormat -lAraSimEvent -L.
 
 # copy from ray_solver_makefile (removed -lAra part)
 
@@ -40,7 +40,7 @@ PROGRAMS = AraSim
 
 ARAROOTLIB = libAraSimEvent.so
 
-all : $(ARAROOTLIB) $(PROGRAMS)
+all :  $(ARAROOTLIB) $(PROGRAMS)
 	
 libAraSimEvent.so : 
 	@cd AraRootFormat; make all
@@ -59,13 +59,15 @@ ifneq ($(subst $(MACOSX_MINOR),,1234),1234)
 ifeq ($(MACOSX_MINOR),4)
 		ln -sf $@ $(subst .$(DllSuf),.so,$@)
 else
-		$(LD) -bundle -undefined $(UNDEFOPT) $(LDFLAGS) $(G77LDFLAGS) $^ \
+		$(LD) -dynamiclib -undefined $(UNDEFOPT) $(LDFLAGS) $(G77LDFLAGS) $^ \
 		   $(OutPutOpt) $(subst .$(DllSuf),.so,$@)
 endif
 endif
 else
 	$(LD) $(SOFLAGS) $(LDFLAGS) $(G77LDFLAGS) $(LIBS) $(LIB_OBJS) -o $@
 endif
+
+##-bundle
 
 #%.$(OBJSUF) : %.$(SRCSUF)
 #	@echo "<**Compiling**> "$<

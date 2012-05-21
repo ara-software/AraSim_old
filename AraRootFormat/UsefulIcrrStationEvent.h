@@ -41,7 +41,7 @@ class UsefulIcrrStationEvent: /*public RawIcrrStationEvent, */public UsefulAraSt
    Double_t fTimesRF[RFCHANS_PER_ICRR][2*MAX_NUMBER_SAMPLES_LAB3]; ///< Array of the calibrated, interleaved times for the RF input channels
    Int_t fNumPointsRF[RFCHANS_PER_ICRR]; ///< Number of valid samples for thecalibrated, interleaved waveforms from the RF input channels
 
-
+/*
    Int_t getNumElecChannels() {return NUM_DIGITIZED_ICRR_CHANNELS;}
    Int_t getNumRFChannels() {return RFCHANS_PER_ICRR;}
    TGraph *getGraphFromElecChan(int chan); ///< Returns the voltages-time graph for the appropriate electronics channel
@@ -49,7 +49,7 @@ class UsefulIcrrStationEvent: /*public RawIcrrStationEvent, */public UsefulAraSt
    TGraph *getFFTForRFChan(int chan); ///<Utility function for webplotter, all channels are interpolated to 0.5 ns
    TH1D *getFFTHistForRFChan(int chan); ///< Utility function for webplotter
    int fillFFTHistoForRFChan(int chan, TH1D *histFFT); ///< Utility function for webplotter
-    
+  */  
 //    Int_t EventNumber; // The event number within the set of generated events
 //    Int_t RaySolutionNumber; // The solution type of the ray solver (0= direct, 1 = reflected)
 //    Int_t InteractionNumber; // Number of the interaction of the neutrino that produces this signal

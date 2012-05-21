@@ -32,7 +32,7 @@ UsefulIcrrStationEvent::~UsefulIcrrStationEvent() {
 //  fCalibrator=AraEventCalibrator::Instance();
 //  fCalibrator->calibrateEvent(this,calType);  
 //}
-
+/*
 TGraph *UsefulIcrrStationEvent::getGraphFromElecChan(int chan)
 {
   if(chan<0 || chan>=NUM_DIGITIZED_ICRR_CHANNELS)

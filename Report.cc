@@ -792,11 +792,11 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                            for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
                                theUsefulEvent->fVoltsRF[ch_loop][mimicbin] = stations[i].strings[(int)((ch_loop)/detector->params.number_of_antennas_string)].antennas[(int)((ch_loop)%detector->params.number_of_antennas_string)].V_mimic[mimicbin];
                                theUsefulEvent->fTimesRF[ch_loop][mimicbin] = stations[i].strings[(int)((ch_loop)/detector->params.number_of_antennas_string)].antennas[(int)((ch_loop)%detector->params.number_of_antennas_string)].time[mimicbin];
-                               cout << theUsefulEvent->fVoltsRF[ch_loop][mimicbin] << endl;
-                               cout << theUsefulEvent->fTimesRF[ch_loop][mimicbin] <<endl;
+                               //cout << theUsefulEvent->fVoltsRF[ch_loop][mimicbin] << endl;
+                               //cout << theUsefulEvent->fTimesRF[ch_loop][mimicbin] <<endl;
                            }
                            theUsefulEvent->fNumPointsRF[ch_loop] = EFFECTIVE_SAMPLES * 2;
-                           cout << " : " << theUsefulEvent->fNumPointsRF[ch_loop] << endl;
+                           //cout << " : " << theUsefulEvent->fNumPointsRF[ch_loop] << endl;
                        }
 
                        //cout<<"Global trigger passed!!, N_pass : "<<N_pass<<endl;

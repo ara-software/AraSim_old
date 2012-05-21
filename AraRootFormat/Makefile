@@ -4,16 +4,17 @@
 ## Ryan Nichol <rjn@hep.ucl.ac.uk>
 ##############################################################################
 include StandardDefinitions.mk
+include Makefile.arch
 
 #Generic and Site Specific Flags
 CXXFLAGS     += $(ROOTCFLAGS)  $(SYSINCLUDES) -I. #$(FFTFLAG)
 LDFLAGS      += -g $(ROOTLDFLAGS) 
 
-LIBS          = $(ROOTLIBS) -lMathMore -lMinuit $(SYSLIBS) #$(FFTLIBS)
+LIBS          = $(ROOTLIBS) -lMinuit $(SYSLIBS) #$(FFTLIBS) -lMathMore 
 GLIBS         = $(ROOTGLIBS) $(SYSLIBS)
 
 #Now the bits we're actually compiling
-ROOT_LIBRARY = libAraRootSimEvent.${DLLSUF}
+ROOT_LIBRARY = libAraSimEvent.${DLLSUF}
 LIB_OBJS =  UsefulAraStationEvent.o UsefulIcrrStationEvent.o araRootDict.o
 CLASS_HEADERS = UsefulAraStationEvent.h UsefulIcrrStationEvent.h araIcrrDefines.h
 
@@ -23,15 +24,16 @@ all : $(ROOT_LIBRARY)
 #The library
 $(ROOT_LIBRARY) : $(LIB_OBJS) 
 	@echo "Linking $@ ..."
+	@echo "Undefopt=" $(UNDEFOPT)$
+
 ifeq ($(PLATFORM),macosx)
 # We need to make both the .dylib and the .so
 		$(LD) $(SOFLAGS)$@ $(LDFLAGS) $(LIBS) $^ $(OutPutOpt) $@
 ifneq ($(subst $(MACOSX_MINOR),,123456),123456)
 ifeq ($(MACOSX_MINOR),4)
 		ln -sf $@ $(subst .$(DllSuf),.so,$@)
-else
-		$(LD) -bundle -undefined $(UNDEFOPT) $(LDFLAGS) $^ \
-		   $(OutPutOpt) $(subst .$(DllSuf),.so,$@)
+#else
+#		$(LD) $(LDFLAGS) $^ -bundle -undefined $(UNDEFOPT) $(OutPutOpt) $(subst .$(DllSuf),.so,$@)
 endif
 endif
 else
@@ -42,6 +44,10 @@ endif
 	@echo "<**Compiling**> "$<
 	$(CXX) $(CXXFLAGS) -c $< -o  $@
 
+%.o: %.C
+	@echo "<**Compiling**> "$<
+	$(CXX) $(CXXFLAGS) -c $< -o  $@
+ 
 #%.$(OBJSUF) : %.$(SRCSUF)
 #	@echo "<**Compiling**> "$<
 #	$(CXX) $(CXXFLAGS) -c $< -o  $@
