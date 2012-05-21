@@ -21,24 +21,24 @@ CLASS_HEADERS = UsefulAraStationEvent.h UsefulIcrrStationEvent.h araIcrrDefines.
 
 all : $(ROOT_LIBRARY)
 
+
 #The library
 $(ROOT_LIBRARY) : $(LIB_OBJS) 
 	@echo "Linking $@ ..."
-	@echo "Undefopt=" $(UNDEFOPT)$
-
 ifeq ($(PLATFORM),macosx)
 # We need to make both the .dylib and the .so
-		$(LD) $(SOFLAGS)$@ $(LDFLAGS) $(LIBS) $^ $(OutPutOpt) $@
-ifneq ($(subst $(MACOSX_MINOR),,123456),123456)
-ifeq ($(MACOSX_MINOR),4)
-		ln -sf $@ $(subst .$(DllSuf),.so,$@)
-#else
-#		$(LD) $(LDFLAGS) $^ -bundle -undefined $(UNDEFOPT) $(OutPutOpt) $(subst .$(DllSuf),.so,$@)
-endif
-endif
+	 	$(LD) $(SOFLAGS)$@ $(LDFLAGS) $(LIBS) $^ $(OutPutOpt) $@
+ ifneq ($(subst $(MACOSX_MINOR),,123456),123456)
+ ifeq ($(MACOSX_MINOR),4)
+ 		ln -sf $@ $(subst .$(DllSuf),.so,$@)
 else
+		$(LD) $(LDFLAGS) $^ -bundle -undefined $(UNDEFOPT) $(OutPutOpt) $(subst .$(DllSuf),.so,$@)
+ endif
+ endif
+ else
 	$(LD) $(SOFLAGS) $(LDFLAGS) $(LIBS) $(LIB_OBJS) -o $@
-endif
+ endif
+
 
 %.o: %.cxx
 	@echo "<**Compiling**> "$<
@@ -57,8 +57,8 @@ araRootDict.C: $(CLASS_HEADERS)
 	@ rm -f *Dict* 
 	rootcint $@ -c $(CLASS_HEADERS) LinkDef.h
 
-
-
+install:
+	@cp $(ROOT_LIBRARY) $(ARASIM_SYS)/lib/
 
 clean:
 	@rm -f *Dict*
@@ -67,6 +67,7 @@ clean:
 	@rm -f $(ROOT_LIBRARY)
 	@rm -f $(subst .$(DLLSUF),.so,$(ROOT_LIBRARY))	
 	@rm -f $(TEST)
+	@rm -f ../lib/$(ROOT_LIBRARY)
 #############################################################################
 
 

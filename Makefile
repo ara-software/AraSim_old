@@ -20,7 +20,7 @@ SRCSUF = ${SrcSuf}
 
 #Generic and Site Specific Flags
 CXXFLAGS     += $(SYSINCLUDES) -IAraRootFormat
-LDFLAGS      += -g -I$(BOOST_ROOT) -L${ROOTSYS}/lib -LAraRootFormat -lAraSimEvent -L.
+LDFLAGS      += -g -I$(BOOST_ROOT) -L${ROOTSYS}/lib -Llib -L. -lAraSimEvent
 
 # copy from ray_solver_makefile (removed -lAra part)
 
@@ -40,10 +40,10 @@ PROGRAMS = AraSim
 
 ARAROOTLIB = libAraSimEvent.so
 
-all :  $(ARAROOTLIB) $(PROGRAMS)
+all : $(ARAROOTLIB) $(PROGRAMS) 
 	
 libAraSimEvent.so : 
-	@cd AraRootFormat; make all
+	@cd AraRootFormat; make all; make install
 
 AraSim : $(OBJS)
 	$(LD) $(LDFLAGS) $(OBJS) $(LIBS) -o $(PROGRAMS)
