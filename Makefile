@@ -3,7 +3,7 @@
 ##              and mac os x
 ## Ryan Nichol <rjn@hep.ucl.ac.uk>
 ##############################################################################
-include Makefile.arch
+include StandardDefinitions.mk
 
 #Site Specific  Flags
 ifeq ($(strip $(BOOST_ROOT)),)
@@ -15,12 +15,9 @@ DLLSUF = ${DllSuf}
 OBJSUF = ${ObjSuf}
 SRCSUF = ${SrcSuf}
 
-#Now the bits we're actually compiling
-
-
 #Generic and Site Specific Flags
-CXXFLAGS     += $(SYSINCLUDES) -IAraRootFormat
-LDFLAGS      += -g -I$(BOOST_ROOT) -L${ROOTSYS}/lib -Llib -L. -lAraSimEvent
+CXXFLAGS     += $(SYSINCLUDES) -IAraRootFormat ##$(INC_ARASIM)
+LDFLAGS      += -g -I$(BOOST_ROOT) -L${ROOTSYS}/lib $(LD_ARASIM) -L. -lAraSimEvent
 
 # copy from ray_solver_makefile (removed -lAra part)
 
@@ -82,7 +79,7 @@ endif
 %.$(OBJSUF) : %.cc
 	@echo "<**Compiling**> "$<
 	$(CXX) $(CXXFLAGS) $ -c $< -o  $@
-
+	@echo "LD_ARASIM=" $(LD_ARASIM)$
 
 # added for fortran code compiling
 %.$(OBJSUF) : %.f

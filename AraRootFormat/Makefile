@@ -3,7 +3,7 @@
 ##              and mac os x
 ## Ryan Nichol <rjn@hep.ucl.ac.uk>
 ##############################################################################
-include StandardDefinitions.mk
+include ../StandardDefinitions.mk
 
 
 #Generic and Site Specific Flags
@@ -58,7 +58,11 @@ araRootDict.C: $(CLASS_HEADERS)
 	rootcint $@ -c $(CLASS_HEADERS) LinkDef.h
 
 install:
-	@cp $(ROOT_LIBRARY) $(ARASIM_SYS)/lib/
+	install -d $(ARASIM_INC_DIR)
+	install -d $(ARASIM_LIB_DIR)
+	install -c -m 755 $(ROOT_LIBRARY) $(ARASIM_LIB_DIR)
+	install -c -m 644 $(CLASS_HEADERS) $(ARASIM_INC_DIR) 
+####	@cp $(ROOT_LIBRARY) $(ARASIM_SYS)/lib/
 
 clean:
 	@rm -f *Dict*

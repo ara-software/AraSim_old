@@ -4,14 +4,26 @@
 ## Ryan Nichol <rjn@hep.ucl.ac.uk>
 ##############################################################################
 #Site Specific  Flags
-ifdef ARA_ROOT_DIR
-include ${ARA_ROOT_DIR}/Makefile.arch  #Silly thing to do but there we are
+ifdef ARASIM_SYS
+include $(ARASIM_SYS)/Makefile.arch
 else
-include ../Makefile.arch
+@echo "Must define ARASIM_SYS environment variable"<
 endif
+
 #If you have things in non standard paths (eg. libRootFftwWrapper) append the appropriate -I or -L lines below
 SYSINCLUDES	= 
 SYSLIBS         = 
+
+ifdef ARASIM_SYS
+ARASIM_LIB_DIR=${ARASIM_SYS}/lib
+ARASIM_INC_DIR=${ARASIM_SYS}/include
+else
+ARASIM_LIB_DIR=/usr/local/lib
+ARASIM_INC_DIR=/usr/local/include
+endif
+LD_ARASIM=-L$(ARASIM_LIB_DIR)
+INC_ARASIM=-I$(ARASIM_INC_DIR)
+
 
 DLLSUF = ${DllSuf}
 OBJSUF = ${ObjSuf}
