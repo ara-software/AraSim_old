@@ -4,7 +4,7 @@
 ## Ryan Nichol <rjn@hep.ucl.ac.uk>
 ##############################################################################
 include StandardDefinitions.mk
-include Makefile.arch
+
 
 #Generic and Site Specific Flags
 CXXFLAGS     += $(ROOTCFLAGS)  $(SYSINCLUDES) -I. #$(FFTFLAG)
