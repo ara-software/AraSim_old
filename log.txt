@@ -487,3 +487,23 @@ as earth entrance point.
 Now it will do some iteration to do some corrections.
 
 ===============================================================================
+
+05/23/12 E. Hong;
+
+Added one more BORE_HOLE_ANTENNA mode in settings class.
+BORE_HOLE_ANTENNA=4 is now for V-H-H antenna layout.
+
+Also, in new version (version after 300?) now has some new functions to have
+AraRoot like output data in AraOut.root file.
+For that, if your machine doesn't have AraRoot installed, AraSim may not
+compile or run correctly.
+In that case, try to add new environment variables and try again.
+For example, you can add 
+
+export ARASIM_SYS=( the location where your AraSim is located )
+export LD_LIBRARY_PATH=$ARASIM_SYS/lib:$LD_LIBRARY_PATH
+
+above lines in your .bashrc file.
+It might work in most cases.
+
+===============================================================================

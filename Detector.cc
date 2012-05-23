@@ -317,6 +317,9 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         else if (params.bore_hole_antenna_layout == 3) { // VHHH layout
             params.number_of_antennas_string = 4;
         }
+        else if (params.bore_hole_antenna_layout == 4) { // VHH layout
+            params.number_of_antennas_string = 3;
+        }
 
 
 
@@ -490,7 +493,7 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         } // end if bore hole antenna layout = 2 (where VHVV way but different numbers)
 
 
-        else if ( params.bore_hole_antenna_layout == 3) {   // it's V-H-H-H
+        else if ( params.bore_hole_antenna_layout == 3 || params.bore_hole_antenna_layout == 4 ) {   // it's V-H-H-H or V-H-H
             for (int j=0; j<params.number_of_strings_station; j++) {
                 for (int k=0; k<params.number_of_antennas_string; k++) {
                     stations[i].strings[j].antennas[k].SetZ( -z_max + z_btw*k );
@@ -676,6 +679,9 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         else if (params.bore_hole_antenna_layout == 3) { // VHHH layout
             params.number_of_antennas_string = 4;
         }
+        else if (params.bore_hole_antenna_layout == 4) { // VHH layout
+            params.number_of_antennas_string = 3;
+        }
 
 
 
@@ -859,7 +865,7 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
 
 
 
-        else if ( params.bore_hole_antenna_layout == 3) {   // it's V-H-H-H
+        else if ( params.bore_hole_antenna_layout == 3 || params.bore_hole_antenna_layout == 4 ) {   // it's V-H-H-H or V-H-H
             for (int j=0; j<params.number_of_strings_station; j++) {
                 for (int k=0; k<params.number_of_antennas_string; k++) {
                     stations[i].strings[j].antennas[k].SetZ( -z_max + z_btw*k );
