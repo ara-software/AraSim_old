@@ -17,7 +17,7 @@ SRCSUF = ${SrcSuf}
 
 #Generic and Site Specific Flags
 CXXFLAGS     += $(SYSINCLUDES) -IAraRootFormat ##$(INC_ARASIM)
-LDFLAGS      += -g -I$(BOOST_ROOT) -L${ROOTSYS}/lib $(LD_ARASIM) -L. -lAraSimEvent
+LDFLAGS      += -g -I$(BOOST_ROOT) $(ROOTLDFLAGS) -Llib -L. -lAraSimEvent
 
 # copy from ray_solver_makefile (removed -lAra part)
 
@@ -27,6 +27,13 @@ LDFLAGS      += -g -I$(BOOST_ROOT) -L${ROOTSYS}/lib $(LD_ARASIM) -L. -lAraSimEve
 LIBS	= $(ROOTLIBS) -lMinuit $(SYSLIBS)
 GLIBS	= $(ROOTGLIBS) $(SYSLIBS)
 
+ARAROOT_DIR = ./AraRootFormat
+LIB_DIR = ./lib
+INC_DIR = ./include
+ARA_ROOT_OBJS = $(ARAROOT_DIR)/UsefulAraStationEvent.o $(ARAROOT_DIR)/UsefulIcrrStationEvent.o
+ARA_ROOT_H = $(INC_DIR)/UsefulAraStationEvent.h $(INC_DIR)/UsefulIcrrStationEvent.h
+
+
 #ROOT_LIBRARY = libAra.${DLLSUF}
 
 OBJS = Vector.o EarthModel.o IceModel.o Trigger.o Ray.o Tools.o Efficiencies.o Event.o Detector.o Position.o Spectra.o RayTrace.o RayTrace_IceModels.o signal.o secondaries.o Settings.o Primaries.o counting.o RaySolver.o Report.o eventDict.o AraSim.o
@@ -35,19 +42,19 @@ CLASS_HEADERS = Trigger.h Detector.h Settings.h Spectra.h IceModel.h Primaries.h
 
 PROGRAMS = AraSim
 
-ARAROOTLIB = libAraSimEvent.so
+ARAROOTLIB = libAraSimEvent.a
 
 all : $(ARAROOTLIB) $(PROGRAMS) 
 	
-libAraSimEvent.so : 
+$(ARAROOTLIB):
 	@cd AraRootFormat; make all; make install
 
 AraSim : $(OBJS)
-	$(LD) $(LDFLAGS) $(OBJS) $(LIBS) -o $(PROGRAMS)
+	$(LD) $(LDFLAGS) $(OBJS) $(ARA_ROOT_OBJS) $(LIBS) -lAraSimEvent -o $(PROGRAMS) 
 	@echo "done."
 
 #The library
-$(ROOT_LIBRARY) : $(LIB_OBJS)
+$(ROOT_LIBRARY) : $(LIB_OBJS) $(ARA_ROOT_OBJS)
 	@echo "Linking $@ ..."
 ifeq ($(PLATFORM),macosx)
 # We need to make both the .dylib and the .so
@@ -70,8 +77,6 @@ endif
 #	@echo "<**Compiling**> "$<
 #	$(CXX) $(CXXFLAGS) -c $< -o  $@
 
-
-
 %.$(OBJSUF) : %.C
 	@echo "<**Compiling**> "$<
 	$(CXX) $(CXXFLAGS) $ -c $< -o  $@
@@ -79,7 +84,6 @@ endif
 %.$(OBJSUF) : %.cc
 	@echo "<**Compiling**> "$<
 	$(CXX) $(CXXFLAGS) $ -c $< -o  $@
-	@echo "LD_ARASIM=" $(LD_ARASIM)$
 
 # added for fortran code compiling
 %.$(OBJSUF) : %.f
@@ -90,7 +94,7 @@ endif
 eventDict.C: $(CLASS_HEADERS)
 	@echo "Generating dictionary ..."
 	@ rm -f *Dict* 
-	rootcint $@ -c $(CLASS_HEADERS) LinkDef.h
+	rootcint $@ -c $(CLASS_HEADERS) $(ARA_ROOT_H) LinkDef.h
 
 clean:
 	@rm -f *Dict*
@@ -99,5 +103,6 @@ clean:
 	@rm -f $(ROOT_LIBRARY)
 	@rm -f $(subst .$(DLLSUF),.so,$(ROOT_LIBRARY))	
 	@rm -f $(TEST)
+	@rm -f $(ARA_ROOT_H) include/araIcrrDefines.h
 	@cd AraRootFormat; make clean
 #############################################################################

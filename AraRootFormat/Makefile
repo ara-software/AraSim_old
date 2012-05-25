@@ -14,23 +14,25 @@ LIBS          = $(ROOTLIBS) -lMinuit $(SYSLIBS) #$(FFTLIBS) -lMathMore
 GLIBS         = $(ROOTGLIBS) $(SYSLIBS)
 
 #Now the bits we're actually compiling
-ROOT_LIBRARY = libAraSimEvent.${DLLSUF}
-LIB_OBJS =  UsefulAraStationEvent.o UsefulIcrrStationEvent.o araRootDict.o
+ROOT_LIBRARY = libAraSimEvent.a
+LIB_OBJS =  UsefulAraStationEvent.o UsefulIcrrStationEvent.o #araRootDict.o
 CLASS_HEADERS = UsefulAraStationEvent.h UsefulIcrrStationEvent.h araIcrrDefines.h
 
 
-all : $(ROOT_LIBRARY)
+all : $(ROOT_LIBRARY) Makefile.arch
 
+Makefile.arch:
+	@cp ../Makefile.arch ./
 
 #The library
 $(ROOT_LIBRARY) : $(LIB_OBJS) 
 	@echo "Linking $@ ..."
 ifeq ($(PLATFORM),macosx)
-# We need to make both the .dylib and the .so
+ We need to make both the .dylib and the .so
 	 	$(LD) $(SOFLAGS)$@ $(LDFLAGS) $(LIBS) $^ $(OutPutOpt) $@
  ifneq ($(subst $(MACOSX_MINOR),,123456),123456)
  ifeq ($(MACOSX_MINOR),4)
- 		ln -sf $@ $(subst .$(DllSuf),.so,$@)
+ 		$(LD) -sf $@ $(subst .$(DllSuf),.so,$@)
 else
 		$(LD) $(LDFLAGS) $^ -bundle -undefined $(UNDEFOPT) $(OutPutOpt) $(subst .$(DllSuf),.so,$@)
  endif
@@ -58,11 +60,10 @@ araRootDict.C: $(CLASS_HEADERS)
 	rootcint $@ -c $(CLASS_HEADERS) LinkDef.h
 
 install:
-	install -d $(ARASIM_INC_DIR)
-	install -d $(ARASIM_LIB_DIR)
-	install -c -m 755 $(ROOT_LIBRARY) $(ARASIM_LIB_DIR)
-	install -c -m 644 $(CLASS_HEADERS) $(ARASIM_INC_DIR) 
-####	@cp $(ROOT_LIBRARY) $(ARASIM_SYS)/lib/
+	install -d ../include
+	install -d ../lib
+	install -c -m 755 $(ROOT_LIBRARY) ../lib
+	install -c -m 644 $(CLASS_HEADERS) ../include 
 
 clean:
 	@rm -f *Dict*

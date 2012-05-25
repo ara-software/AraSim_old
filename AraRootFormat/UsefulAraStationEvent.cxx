@@ -19,10 +19,13 @@ ClassImp(UsefulAraStationEvent);
 
 //AraEventCalibrator *fCalibrator;
 
+
 UsefulAraStationEvent::UsefulAraStationEvent() 
 {
    //Default Constructor
 }
+
+
 
 /*UsefulAraStationEvent::UsefulAraStationEvent(RawAraStationEvent *rawEvent, AraCalType::AraCalType_t calType)
 //:RawAraStationEvent(*rawEvent)

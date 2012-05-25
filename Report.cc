@@ -211,8 +211,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
     double max_arrival_time_tmp;   // max arrival time between all antennas, raysolves
     double max_PeakV_tmp;       // max PeakV of all antennas in the station
 
-    UsefulIcrrStationEvent *theUsefulEvent=0;
-    theUsefulEvent = new UsefulIcrrStationEvent();
+    UsefulIcrrStationEvent *theUsefulEvent = new UsefulIcrrStationEvent();
     
     int trig_window_bin = (int)(settings1->TRIG_WINDOW / settings1->TIMESTEP);   // coincidence window bin for trigger
 

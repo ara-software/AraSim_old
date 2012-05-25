@@ -31,7 +31,8 @@
 #pragma link C++ class Primaries+;
 #pragma link C++ class Interaction+;
 
-
+#pragma link C++ class UsefulAraStationEvent+;
+#pragma link C++ class UsefulIcrrStationEvent+;
 
 #endif
 
