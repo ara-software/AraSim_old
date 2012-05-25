@@ -22,13 +22,13 @@ CLASS_HEADERS = UsefulAraStationEvent.h UsefulIcrrStationEvent.h araIcrrDefines.
 all : $(ROOT_LIBRARY) Makefile.arch
 
 Makefile.arch:
-	@cp ../Makefile.arch ./
+	@cp ../Makefile.arch ./ $
 
 #The library
 $(ROOT_LIBRARY) : $(LIB_OBJS) 
 	@echo "Linking $@ ..."
 ifeq ($(PLATFORM),macosx)
- We need to make both the .dylib and the .so
+# We need to make both the .dylib and the .so
 	 	$(LD) $(SOFLAGS)$@ $(LDFLAGS) $(LIBS) $^ $(OutPutOpt) $@
  ifneq ($(subst $(MACOSX_MINOR),,123456),123456)
  ifeq ($(MACOSX_MINOR),4)
