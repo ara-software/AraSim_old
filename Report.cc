@@ -18,10 +18,6 @@
 #include "TRandom3.h"
 #include "Constants.h"
 
-//Include output format to enable reading by analysis software AraRoot
-
-#include "AraRootFormat/UsefulIcrrStationEvent.h"
-
 ClassImp(Report);
 ClassImp(Antenna_r);
 ClassImp(Surface_antenna_r);
@@ -211,8 +207,6 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
     double max_arrival_time_tmp;   // max arrival time between all antennas, raysolves
     double max_PeakV_tmp;       // max PeakV of all antennas in the station
 
-    UsefulIcrrStationEvent *theUsefulEvent = new UsefulIcrrStationEvent();
-    
     int trig_window_bin = (int)(settings1->TRIG_WINDOW / settings1->TIMESTEP);   // coincidence window bin for trigger
 
     int N_pass; // number of trigger passed channels (antennas)
@@ -237,7 +231,13 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                        // if not, skip (set something like Sol_No = 0;
                        // if solution exist, calculate view angle and calculate TaperVmMHz
 
-                       if (event->Nu_Interaction[0].pickposnu) {    // if posnu is selected inside the antarctic ic:"<<viewangle<<" th_em:"<<d_theta_em[l]<<" th_had:"<<d_theta_had[l]<<" emfrac:"<<emfrac<<" hadfrac:"<<hadfrac<<" vmmhz1m:"<<vmmhz1m[l]<<endl;e
+                       // added one more condition to run raysolver ( direct distance is less than 3km )
+                       //if (event->Nu_Interaction[0].pickposnu) {    // if posnu is selected inside the antarctic ic:"<<viewangle<<" th_em:"<<d_theta_em[l]<<" th_had:"<<d_theta_had[l]<<" emfrac:"<<emfrac<<" hadfrac:"<<hadfrac<<" vmmhz1m:"<<vmmhz1m[l]<<endl;e
+                       //if (event->Nu_Interaction[0].pickposnu && event->Nu_Interaction[0].posnu.Distance( detector->stations[i].strings[j].antennas[k] ) <= 3000. ) {    // if posnu is selected inside the antarctic ic:"<<viewangle<<" th_em:"<<d_theta_em[l]<<" th_had:"<<d_theta_had[l]<<" emfrac:"<<emfrac<<" hadfrac:"<<hadfrac<<" vmmhz1m:"<<vmmhz1m[l]<<endl;e
+                       if (event->Nu_Interaction[0].pickposnu && event->Nu_Interaction[0].posnu.Distance( detector->stations[i].strings[j].antennas[k] ) <= settings1->RAYSOL_RANGE ) {    // if posnu is selected inside the antarctic ic:"<<viewangle<<" th_em:"<<d_theta_em[l]<<" th_had:"<<d_theta_had[l]<<" emfrac:"<<emfrac<<" hadfrac:"<<hadfrac<<" vmmhz1m:"<<vmmhz1m[l]<<endl;e
+
+                           // test the condition
+                           //cout<<"Distance between posnu and ant : "<<event->Nu_Interaction[0].posnu.Distance( detector->stations[i].strings[j].antennas[k] )<<"\n"<<endl;
                            
                            raysolver->Solve_Ray(event->Nu_Interaction[0].posnu, detector->stations[i].strings[j].antennas[k], icemodel, ray_output);   // solve ray between source and antenna
                            
@@ -458,7 +458,8 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                        }// end if posnu selected
 
                            else {
-                               cout<<" No posnu!!!!!! No signals calculated at all!!"<<endl;
+                               //cout<<" No posnu!!!!!! No signals calculated at all!!"<<endl;
+                               ray_sol_cnt = 0;
                            }
 
 
@@ -787,15 +788,6 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                    stations[i].strings[(int)((ch_loop)/detector->params.number_of_antennas_string)].antennas[(int)((ch_loop)%detector->params.number_of_antennas_string)].time.push_back( stations[i].Global_Pass + trig_window_bin/2 - settings1->NFOUR/4 + mimicbin );
                                }
                            }
-                           
-                           for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
-                               theUsefulEvent->fVoltsRF[ch_loop][mimicbin] = stations[i].strings[(int)((ch_loop)/detector->params.number_of_antennas_string)].antennas[(int)((ch_loop)%detector->params.number_of_antennas_string)].V_mimic[mimicbin];
-                               theUsefulEvent->fTimesRF[ch_loop][mimicbin] = stations[i].strings[(int)((ch_loop)/detector->params.number_of_antennas_string)].antennas[(int)((ch_loop)%detector->params.number_of_antennas_string)].time[mimicbin];
-                               //cout << theUsefulEvent->fVoltsRF[ch_loop][mimicbin] << endl;
-                               //cout << theUsefulEvent->fTimesRF[ch_loop][mimicbin] <<endl;
-                           }
-                           theUsefulEvent->fNumPointsRF[ch_loop] = EFFECTIVE_SAMPLES * 2;
-                           //cout << " : " << theUsefulEvent->fNumPointsRF[ch_loop] << endl;
                        }
 
                        //cout<<"Global trigger passed!!, N_pass : "<<N_pass<<endl;

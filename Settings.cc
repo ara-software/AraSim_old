@@ -107,6 +107,8 @@ outputdir="outputs"; // directory where outputs go
   BORE_HOLE_ANTENNA_LAYOUT=0;   // default : 0 (VHVH)
 
   WRITE_ALL_EVENTS=0; //default : 0 (writes only globally triggered events)
+
+  RAYSOL_RANGE=3000; // default : 3000 m
     
 }
 
@@ -224,6 +226,9 @@ void Settings::ReadFile(string setupfile) {
               }
               else if (label == "BORE_HOLE_ANTENNA_LAYOUT") {
                   BORE_HOLE_ANTENNA_LAYOUT = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "RAYSOL_RANGE") {
+                  RAYSOL_RANGE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
               }
           }
       }

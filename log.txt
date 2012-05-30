@@ -507,3 +507,22 @@ above lines in your .bashrc file.
 It might work in most cases.
 
 ===============================================================================
+
+05/30/12 E. Hong;
+
+Now from this version, we don't need to add environment variables any more.
+So, don't need any ARASIM_SYS and LD_LIBRARY_PATH for ARASIM_SYS/lib.
+Thanks to Carl.
+
+Another function I added is RAYSOL_RANGE value in Settings class.
+As currently Raysolver has some problem with calculating ray trace when
+they are far part, I added RAYSOL_RANGE to Settings class.
+Now if the geometric distance between the source and the antenna is bigger
+than RAYSOL_RANGE, AraSim will not run RaySolver.
+It means there will be no signal added  to pure noise waveform when we do
+global trigger process (assuming that more than RAYSOL_RANGE distnace,
+signal will attenuated too much to give any noticable peak)
+Default value for RAYSOL_RANGE is 3000 m.
+You can set this value in setup.txt like other values.
+
+===============================================================================
