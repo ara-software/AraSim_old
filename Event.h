@@ -9,6 +9,7 @@
 #include "Vector.h"
 #include <string>
 #include "Primaries.h"
+#include "Report.h"
 //#include "Neutrino.h"
 
 
@@ -18,6 +19,7 @@ class Settings;
 class Spectra;
 class Primaries;
 class Interaction;
+//class Report;
 
 class Event {
 
@@ -35,11 +37,14 @@ class Event {
 
       void Choose_Evt_Type(Settings *settings1);    // choose the event type depend on the settings->EVENT_TYPE value
 
-      vector <Interaction> Nu_Interaction;
+      std::vector <Interaction> Nu_Interaction;
+
+      //vector <Report> test_report;  
 
       Event (); // default constructor
       Event (Settings *settings1, Spectra *spectra1, Primaries *primary1, IceModel *icemodel, Detector *detector, Signal *signal, Secondaries *sec1 );
 
+      ~Event(); // destructor
 
 
 

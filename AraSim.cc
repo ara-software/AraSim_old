@@ -59,8 +59,6 @@ using namespace std;
 #include "RaySolver.h"
 #include "Report.h"
 
-//Include output format to enable reading by analysis software AraRoot
-#include "AraRootFormat/UsefulIcrrStationEvent.h"
 
 class EarthModel; //class
 
@@ -202,7 +200,8 @@ int main(int argc, char **argv) {   // read setup.txt file
   Event *event = new Event();
   cout<<"called Event"<<endl;
 
-  Report *report = new Report(detector, settings1);
+  //Report *report = new Report(detector, settings1);
+  Report *report = new Report();
   cout<<"called Evt"<<endl;
 
 
@@ -239,38 +238,6 @@ int main(int argc, char **argv) {   // read setup.txt file
 RaySolver *raysolver = new RaySolver;
 cout<<"called RaySolver"<<endl;
 
-    Int_t runNumber = 0;
-    
-    cout << "Make output file that is readable by AraRoot" << endl;
-//    TFile *theFile;
-//    char outName[FILENAME_MAX] = "!/Users/pfendner/src/AraRootSVN/AraRoot/branches/3.1/analysis/AraRootRead.root";
-    
-    UsefulIcrrStationEvent *theEvent=0;
-    theEvent = new UsefulIcrrStationEvent();
-//    cout << "Creating File: " << outName << endl;
-//    theFile = new TFile(outName,"RECREATE");
-    
-    TTree *eventTree;
-    eventTree = new TTree("eventTree","Tree of ARA Events");
-//    eventTree->Branch("run",&runNumber,"run/I");
-    eventTree->Branch("UsefulSimEvent","UsefulIcrrStationEvent",&theEvent);
-
-    double Energy = 0.;
-    double ViewAngle[16];
-    int EventNumber = 0;
-    int RaySolutions = 0;
-    int Interactions = 0;   
-    int StationNumber = 0;
-    bool GlobalTriggered = false;
-    
-    //eventTree->Branch("Energy", &Energy);
-    //eventTree->Branch("ViewAngle", &ViewAngle);
-    //eventTree->Branch("StationNumber", &StationNumber);
-    //eventTree->Branch("EventNumber", &EventNumber);
-    //eventTree->Branch("RaySolutions", &RaySolutions);
-    //eventTree->Branch("Interactions", &Interactions);
-    //eventTree->Branch("GlobalTriggered", &GlobalTriggered);
-
 
 
 cout<<"will call secondaries"<<endl;
@@ -299,6 +266,7 @@ int Total_Global_Pass = 0;  // total global trigger passed number
 double Total_Weight = 0.;
 
 
+/*
  TCanvas *cFull_window = new TCanvas("cFull_window","A Simple Graph Example",200,10,10000,11200);
  cFull_window->Divide(1,16);
 
@@ -309,6 +277,15 @@ double Total_Weight = 0.;
  cFull_window_V->Divide(4,4);
 
  TGraph *g_Full_window_V;
+
+TGraph *G_V_threshold_diode;
+G_V_threshold_diode = new TGraph(2, threshold_x, threshold_y);
+
+
+ */
+
+
+
 
  double x_V[settings1->NFOUR/2];
  double y_V[settings1->NFOUR/2];
@@ -329,23 +306,22 @@ threshold_y[0] = (trigger->rmsdiode) * (trigger->powerthreshold);
 threshold_y[1] = (trigger->rmsdiode) * (trigger->powerthreshold);
 
 
-TGraph *G_V_threshold_diode;
-G_V_threshold_diode = new TGraph(2, threshold_x, threshold_y);
-  
-//    int NGlobalPassed = 0;
-//    int inu = 0;
+
+
 
 cout<<"powerthreshold : "<<trigger->powerthreshold<<endl;
 
+
 cout<<"begain looping events!!"<<endl;
    for (int inu=0;inu<settings1->NNU;inu++) { // loop over neutrinos
-//    while (NGlobalPassed < 1000){
 
        std::cerr<<"*";
 
-
        event = new Event ( settings1, spectra, primary1, icemodel, detector, signal, sec1 );
 
+
+  
+       report = new Report(detector, settings1);
 
 //--------------------------------------------------
 //        cout<<"inu : "<<inu<<endl;
@@ -364,84 +340,6 @@ cout<<"begain looping events!!"<<endl;
        // save signal, noise at each antennas to Report class
        report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1, trigger);
 
-//         cout << "Here: "  << theEvent.eventNumber << endl;
-//       if(theEvent) delete theEvent;
-       theEvent = new UsefulIcrrStationEvent();
-       theEvent = &report->theUsefulEvent;
-       
-       
-       EventNumber = inu;
-       Interactions = 1;
-       Energy = event->pnu;
-/*
-       //for (int RaySolNum = 0; RaySolNum < theSimEvent->NRaySols; RaySolNum++){
-       for (int i=0;i<1;i++) {  // there are only 1 station for the test!!!
-           if (report->stations[i].Global_Pass) {
-               GlobalTriggered = true;
-               for (int j=0; j<4;j++) { // 4 strings per station
-                   for (int k=0;k<4;k++) {  // 4 antennas per string
-                       int channel = k + 4 * j;
-                       // if (RaySolNum < report->stations[i].strings[j].antennas[k].ray_sol_cnt){
-                       for (int bin = 0; bin < EFFECTIVE_SAMPLES * 2; bin++){
-                           // cout << bin << " : " << report->stations[i].strings[j].antennas[k].V_mimic[bin] << endl;
-                           theEvent->fVoltsRF[channel][bin] = report->stations[i].strings[j].antennas[k].V_mimic[bin];
-                           theEvent->fTimesRF[channel][bin] = report->stations[i].strings[j].antennas[k].time[bin];
-                           
-                           if (bin%100 == 0){
-                               //       cout << inu << " : " << channel << " : " << i  << " : " << j << " : " << k << " : " << RaySolNum << " : " << bin << " : " << theEvent->fNumPointsRF[channel] << " : " << theEvent->fVoltsRF[channel][bin] << " : " << report->stations[i].strings[j].antennas[k].V_mimic[bin] << " : " << theEvent->fTimesRF[channel][bin] << " : " << report->stations[i].strings[j].antennas[k].time[bin] <<endl;   
-                           }
-                       }
-                                              
-                       theEvent->fNumPointsRF[channel] = EFFECTIVE_SAMPLES * 2;
-                       RaySolutions = report->stations[i].strings[j].antennas[k].ray_sol_cnt;
-                       //ViewAngle[channel] = report->stations[i].strings[j].antennas[k].view_ang[0]*180./(3.1415926);
-                       
-                   }
-               }
-               StationNumber = i;
-               eventTree->Fill();    
-           }
-           else{
-               GlobalTriggered = false;
-               StationNumber = i;
-               if (settings1->WRITE_ALL_EVENTS == 1){
-                   for (int j=0; j<4;j++) { // 4 strings per station
-                       for (int k=0;k<4;k++) {  // 4 antennas per string
-                           int channel = k + 4 * j;
-                           for (int bin = 0; bin < EFFECTIVE_SAMPLES * 2; bin++){
-                               // cout << bin << " : " << report->stations[i].strings[j].antennas[k].V_mimic[bin] << endl;
-                               if (report->stations[i].strings[j].antennas[k].ray_sol_cnt == 2){
-                                   theEvent->fVoltsRF[channel][bin] = report->stations[i].strings[j].antennas[k].V[0][bin];
-                                   theEvent->fTimesRF[channel][bin] = report->stations[i].strings[j].antennas[k].V[0][bin];
-                                   //theEvent->fVoltsElec[channel][bin] = report->stations[i].strings[j].antennas[k].V[1][bin];
-                                   //theEvent->fTimesElec[channel][bin] = report->stations[i].strings[j].antennas[k].V[1][bin];
-                               }
-                               if (report->stations[i].strings[j].antennas[k].ray_sol_cnt == 1){
-                                   theEvent->fVoltsRF[channel][bin] = report->stations[i].strings[j].antennas[k].V[0][bin];
-                                   theEvent->fTimesRF[channel][bin] = report->stations[i].strings[j].antennas[k].V[0][bin];
-                               }
-                               if (report->stations[i].strings[j].antennas[k].ray_sol_cnt == 0){
-                                   theEvent->fVoltsRF[channel][bin] = 0;
-                                   theEvent->fTimesRF[channel][bin] = 0;
-                               }                           
-                           }
-                           RaySolutions = report->stations[i].strings[j].antennas[k].ray_sol_cnt;
-                           //ViewAngle[channel] = report->stations[i].strings[j].antennas[k].view_ang[0]*180./(3.1415926);
-                       }
-                   }
-                   eventTree->Fill();
-               }
-           }
-       }
-*/
-       //theEvent
-       eventTree->Fill();
-       
-       
-       
-       
-       
-       //}
        
 
        /*
@@ -504,13 +402,15 @@ cout<<"begain looping events!!"<<endl;
            if (max_dt < report->stations[i].max_arrival_time - report->stations[i].min_arrival_time) max_dt = report->stations[i].max_arrival_time - report->stations[i].min_arrival_time;
            // check the total global trigger passed
            if (report->stations[i].Global_Pass) {
-               cout<<"Global_Pass : "<<report->stations[i].Global_Pass<<" evt : "<<inu<<" added weight : "<<event->Nu_Interaction[0].weight<<"\n"<<endl;
+               cout<<"\nGlobal_Pass : "<<report->stations[i].Global_Pass<<" evt : "<<inu<<" added weight : "<<event->Nu_Interaction[0].weight<<"\n"<<endl;
                Total_Global_Pass ++;
                Total_Weight += event->Nu_Interaction[0].weight;
 
                // test increment weight
                count1->incrementEventsFound( event->Nu_Interaction[0].weight, event );
 
+               
+               /*
                // make plots for all channels
                for (int string=0; string<detector->params.number_of_strings_station; string++) {
                    for (int antenna=0; antenna<detector->params.number_of_antennas_string; antenna++) {
@@ -541,6 +441,8 @@ cout<<"begain looping events!!"<<endl;
 
                    }
                }
+               */
+
 
            }
 
@@ -550,7 +452,10 @@ cout<<"begain looping events!!"<<endl;
        // test memory
        //report->stations.clear();
 
-    AraTree2->Fill();   //fill interaction every events
+
+
+           
+       AraTree2->Fill();   //fill interaction every events
 
 
 
@@ -569,13 +474,14 @@ cout<<"begain looping events!!"<<endl;
 //      }
 //  }
 //-------------------------------------------------- 
-       if (inu % 10 == 0){
-           cout<<"evt "<<inu<<endl;
-       }
+
+ //cout<<"evt "<<inu<<endl;
+
 
  delete event;
+ delete report;
 
-     //   inu++;
+
   } // end loop over neutrinos
 
 
@@ -640,6 +546,7 @@ cout<<"begain looping events!!"<<endl;
   AraTree->Fill();  // fill tree for one entry
   AraFile->Write();
   AraFile->Close();
+
 
  efficiencies->summarize(); // summarize the results in an output file  
 
@@ -744,9 +651,13 @@ Leg_Veff -> Draw();
 //  g_Full_window->GetHistogram()->SetYTitle("diode convlv");
 //  g_Full_window->Draw("al");
 //-------------------------------------------------- 
+
+ /*
  cFull_window->Print("test_Full_window.pdf");
 
  cFull_window_V->Print("test_Full_window_V.pdf");
+ */
+
 
 
  cout<<"max_dt : "<<max_dt<<endl;

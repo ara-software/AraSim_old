@@ -7,8 +7,6 @@
 #define REPORT_H
 
 #include <vector>
-//Include output format to enable reading by analysis software AraRoot
-#include "AraRootFormat/UsefulIcrrStationEvent.h"
 
 class Detector;
 class Event;
@@ -140,8 +138,8 @@ class Report {
            vector <int> signal_bin;      // the center of bin where signal should locate
            vector <int> signal_dbin;     // the bin difference between signal bins
            vector <int> connect_signals;    // if ray_sol time delay is small enough to connect each other
-            
-            
+
+
 
     public:
            /*
@@ -154,11 +152,8 @@ class Report {
 
         Report ();
         Report (Detector *detector, Settings *settings1);
-        
-        //make the UsefulIcrrStationEvent for use with AraRoot
-        UsefulIcrrStationEvent theUsefulEvent;
+        ~Report ();
 
-    
         void Initialize (Detector *detector, Settings *settings1);
 
 

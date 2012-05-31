@@ -35,6 +35,23 @@ Report::Report(Detector *detector, Settings *settings1) {
 }
 
 
+
+Report::~Report() {
+    // default destructor
+
+    stations.clear();
+    strings.clear();
+
+    Passed_chs.clear();
+    Vfft_noise_after.clear();
+    Vfft_noise_before.clear();
+    V_noise_timedomain.clear();
+
+
+}
+
+
+
 void Report::Initialize(Detector *detector, Settings *settings1) {
     
     // clear information stored in (but there shouldn't be. just to make sure)
@@ -69,6 +86,8 @@ void Report::Initialize(Detector *detector, Settings *settings1) {
 
 
 }
+
+
 
 void Antenna_r::clear() {   // if any vector variable added in Antenna_r, need to be added here!
     view_ang.clear();
