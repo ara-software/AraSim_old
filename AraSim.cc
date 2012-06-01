@@ -572,103 +572,6 @@ cout<<"begain looping events!!"<<endl;
  }
 
 
- TGraph *g_filter;
- g_filter = new TGraph( detector->GetFreqBin() , freq, Filter );
-
- TGraph *g_filter_E;
- g_filter_E = new TGraph( detector->GetFreqBin() , freq, Filter_E );
-
- TCanvas *c1 = new TCanvas("c1","A Simple Graph Example",200,10,2000,700);
- c1->Divide(2,1);
-
- c1->cd(1);
-
- g_filter->SetTitle("test Filter interpolation");
- g_filter->GetHistogram()->SetXTitle("MHz");
- g_filter->GetHistogram()->SetYTitle("gain (dB)");
- g_filter->Draw("al");
-
-
- c1->cd(2);
-
- g_filter_E->SetTitle("test Filter interpolation");
- g_filter_E->GetHistogram()->SetXTitle("MHz");
- g_filter_E->GetHistogram()->SetYTitle("gain (unitless for Voltage)");
- g_filter_E->Draw("al");
-
- c1->Print("test_SimpleLinearInterpolation.pdf");
-
-
-
- // plot effective volume from current AraSim.
- 
- double eff_Vx[4];
- double eff_Vy_VHVH[4];
- double eff_Vy_VHVV[4];
-
- eff_Vx[0] = 17.;
- eff_Vx[1] = 18.;
- eff_Vx[2] = 19.;
- eff_Vx[3] = 20.;
-
- eff_Vy_VHVH[0] = 1.7;
- eff_Vy_VHVH[1] = 11.4;
- eff_Vy_VHVH[2] = 30.;
- eff_Vy_VHVH[3] = 53.3;
-
-
- eff_Vy_VHVV[0] = 1.967;
- eff_Vy_VHVV[1] = 11.547;
- eff_Vy_VHVV[2] = 29.555;
- eff_Vy_VHVV[3] = 50.977;
-
-
- TCanvas *cVeff = new TCanvas("cVeff","A Simple Graph Example",200,10,1000,700);
-
- TGraph *g_Veff_VHVH;
- g_Veff_VHVH = new TGraph( 4 , eff_Vx, eff_Vy_VHVH );
-
- TGraph *g_Veff_VHVV;
- g_Veff_VHVV = new TGraph( 4 , eff_Vx, eff_Vy_VHVV );
-
- cVeff->cd();
-
- cVeff->SetLogy();
- g_Veff_VHVH->SetTitle("Effective volume from ARA station 1 (10,000evt)");
- g_Veff_VHVH->GetHistogram()->SetXTitle("log E");
- g_Veff_VHVH->GetHistogram()->SetYTitle("km^3 sr");
- g_Veff_VHVH->GetHistogram()->SetMaximum(100);
- g_Veff_VHVH->GetHistogram()->SetMinimum(0.1);
- g_Veff_VHVH->Draw("al*");
-
- g_Veff_VHVV -> SetLineColor(kRed);
- g_Veff_VHVV->Draw("l*");
-
-
-TLegend *Leg_Veff = new TLegend(1., 0.75, 0.85,0.6);
-Leg_Veff -> AddEntry(g_Veff_VHVH, "VHVH", "l");
-Leg_Veff -> AddEntry(g_Veff_VHVV, "VHVV", "l");
-Leg_Veff -> Draw();
-
- cVeff->Print("test_Veff_ara1.pdf");
-
-//--------------------------------------------------
-//  TCanvas *cFull_window = new TCanvas("cFull_window","A Simple Graph Example",200,10,10000,700*16);
-//  cFull_window->Divide(1,16);
-//-------------------------------------------------- 
-//--------------------------------------------------
-//  g_Full_window->SetTitle("test Full window");
-//  g_Full_window->GetHistogram()->SetXTitle("bin");
-//  g_Full_window->GetHistogram()->SetYTitle("diode convlv");
-//  g_Full_window->Draw("al");
-//-------------------------------------------------- 
-
- /*
- cFull_window->Print("test_Full_window.pdf");
-
- cFull_window_V->Print("test_Full_window_V.pdf");
- */
-
 
 
  cout<<"max_dt : "<<max_dt<<endl;
@@ -680,30 +583,18 @@ Leg_Veff -> Draw();
 //-------------------------------------------------- 
 
 
-//--------------------------------------------------
-//  delete raysolver;
-//-------------------------------------------------- 
-
-
-//--------------------------------------------------
-//  delete icemodel;
-//  delete efficiencies;
-//  delete ray;
-//  
-//  delete detector;
-//  delete settings1;
-//  delete count1;
+ delete raysolver;
+ delete icemodel;
+ delete efficiencies;
+ delete ray;
+ delete detector;
+ delete settings1;
+ delete count1;
   delete primary1;
-//  delete event;
-//  delete report;
-//  delete trigger;
-//-------------------------------------------------- 
-
-//--------------------------------------------------
-//  delete interaction1;
-//-------------------------------------------------- 
-
+ delete trigger;
  delete spectra;
+ delete sec1;
+ delete signal;
 
 
  test();

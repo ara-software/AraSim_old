@@ -2,9 +2,7 @@
 
 stations_per_side=4
 
-//core_x=100000
-//core_y=100000
+core_x=100000
+core_y=100000
 
-// BORE_HOLE_ANTENNA_LAYOUT = 0 (V-H-V-H), = 1 (V-H-V), = 2 (V-H-V-V), = 3 (V-H-H-H)    default : 0
-BORE_HOLE_ANTENNA_LAYOUT=0
 

@@ -1685,6 +1685,10 @@ void Detector::getDiodeModel(Settings *settings1) {
     }
 
 
+    delete fdown1;
+    delete fdown2;
+    delete f_up;
+
 
 }
 
@@ -1694,6 +1698,7 @@ void Detector::getDiodeModel(Settings *settings1) {
 
 
 Detector::~Detector() {
+
     cout<<"Destruct class Detector"<<endl;
 }
 

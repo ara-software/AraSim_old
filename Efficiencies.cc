@@ -6,6 +6,15 @@ Efficiencies::Efficiencies(int nRx,string outputdir) {
   fout.open(stemp.c_str());
   l1Counter.push_back(nRx);
 }
+
+
+Efficiencies::~Efficiencies() {
+
+    l1Counter.clear();
+
+}
+
+
 void Efficiencies::summarize() {
 
   fout << "Summarize results.\n";

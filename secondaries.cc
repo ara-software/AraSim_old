@@ -28,6 +28,11 @@ static Vector x_axis = Vector(1,0,0);
 static Vector y_axis = Vector(0,1,0);
 static Vector z_axis = Vector(0,0,1);
 
+Secondaries::~Secondaries() {
+
+}
+
+
 
  Secondaries::Secondaries(Settings *settings1) {
 	//For Total Tau Survival probability equation

@@ -49,6 +49,7 @@ class Trigger {
      
      Trigger();
      Trigger(Detector *detector, Settings *settings1);
+     ~Trigger();
 
      void SetMeanRmsDiode(Settings *settings1, Detector *detector, Report *report);
 

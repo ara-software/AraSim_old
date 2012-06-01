@@ -470,6 +470,16 @@ Interaction::Interaction() {
     //default constructor
 }
 
+Interaction::~Interaction() {
+
+    vmmhz1m.clear();
+    vmmhz1m_em.clear();
+    d_theta_em.clear();
+    d_theta_had.clear();
+
+}
+
+
 void Interaction::Initialize() {
     // settings for GetSignal
     taudecay = "test_taudecay";
@@ -1810,6 +1820,23 @@ Y::Y() { // Constructor
    fy0_high->SetParameter(1,1.); // y_max
 
 }//Y Constructor
+
+
+Y::~Y() {
+
+    delete ffrac;
+    delete fC1_low;
+    delete fC2;
+    delete fy0_low;
+    delete fy0_high;
+  for(int i=0; i<2;i++){ // nu, nubar
+    for(int j=0; j<2; j++){ // nc, cc
+      delete fC1_high[i][j];
+    }
+  }
+
+}
+
 
 double Y::pickY(int NU,int CURRENT,double e) {
 	//e is in GeV.

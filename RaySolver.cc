@@ -13,6 +13,11 @@ RaySolver::RaySolver() {
 }
 
 
+RaySolver::~RaySolver() {
+
+}
+
+
 void RaySolver::Earth_to_Flat_same_depth (Position &source, Position &target, IceModel *antarctica) {   // set both target, source has same depth from the surface : angle should be somewhat difficult to change
     double D = target.Distance( source );
     double target_depth = antarctica->Surface(target.Lon(), target.Lat()) - target.R();

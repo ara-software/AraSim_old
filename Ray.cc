@@ -16,6 +16,12 @@
 Ray::Ray() {
 
 }
+
+Ray::~Ray() {
+
+}
+
+
 //--------------------------------------------------
 // vector<double> Ray::getEField(Event *event,Position pos) {
 // 

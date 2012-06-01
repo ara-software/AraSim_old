@@ -70,6 +70,12 @@ IceModel::IceModel(int model,int earth_model,int moorebay) : EarthModel(earth_mo
 
  }
 
+
+IceModel::~IceModel () {
+
+}
+
+
 void IceModel::setUpIceModel(int model) {
   
   DEPTH_DEPENDENT_N = (int) (model / 10);

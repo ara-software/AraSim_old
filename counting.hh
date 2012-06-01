@@ -9,6 +9,8 @@ class Counting {
 public:
 
   Counting();
+  ~Counting();
+
   void initializeEachRun();
   
   int npass[2]; // count events that pass

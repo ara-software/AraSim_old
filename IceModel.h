@@ -114,6 +114,8 @@ public:
   //double volume_inhorizon[NBNPOSITIONS_MAX]; // volume of ice within horizon for each balloon phi position 
 //  IceModel();   //default constructor
   IceModel(int model=0,int earth_model=0,int mooreBay=0);
+  ~IceModel();
+
   void setUpIceModel(int model=0);
   double IceThickness(double lon,double lat) const;
   double IceThickness(const Position& pos) const;

@@ -70,6 +70,10 @@ Signal::Signal(Settings *settings1) : N_DEPTH(1.79) {
 
 }
 
+Signal::~Signal() {
+
+}
+
 
 
  void Signal::InitializeMedium() {

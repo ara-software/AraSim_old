@@ -14,6 +14,7 @@ class Settings
     public:
 
         Settings();
+        ~Settings();
         void Initialize();
         void ReadFile(string setupfile);
 

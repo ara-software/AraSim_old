@@ -60,6 +60,8 @@ class Y {
 
 	public:
 		Y();
+                ~Y();
+
 		double pickY(int NU,int CURRENT,double e); // pick an inelasticity
 		// NU=0: nubar, NU=1: nu
 		// CURRENT=0: CC, CURRENT-1: NC
@@ -214,6 +216,8 @@ class Interaction  {
  //Interaction(string inttype,Primaries *primary1,Settings *settings1,int whichray,Counting *count1);
 
  Interaction (double pnu, Vector &nnu_org, string nuflavor, int &n_interactions, IceModel *antarctica, Detector *detector, Settings *settings1, Primaries *primary1, Signal *signal, Secondaries *sec1 ); // constructor for setting posnu, y, emfrac, hadfrac, vmmhz1m at cherenkov angle, etc
+
+ ~Interaction();
 
  //
  //

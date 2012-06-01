@@ -14,6 +14,15 @@ Trigger::Trigger() {
 
 }
 
+
+Trigger::~Trigger() {
+
+    v_noise_timedomain.clear();
+    v_noise_timedomain_diode.clear();
+
+}
+
+
 Trigger::Trigger(Detector *detector, Settings *settings1) {
 
     TIMESTEP = detector->TIMESTEP;

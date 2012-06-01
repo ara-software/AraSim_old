@@ -14,7 +14,10 @@ class Efficiencies {
 
 
 public:
+  
   Efficiencies(int nRx,string outputdir);
+  ~Efficiencies();
+
   void incrementL1Counter(vector<int> l1Hits);
   ofstream fout;
   void summarize();

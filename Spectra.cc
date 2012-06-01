@@ -16,6 +16,11 @@ Spectra::Spectra() {
     // default constructor
 }
 
+
+Spectra::~Spectra() {
+
+}
+
 Spectra::Spectra(int EXPONENT) {
 
 

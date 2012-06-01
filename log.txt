@@ -526,3 +526,10 @@ Default value for RAYSOL_RANGE is 3000 m.
 You can set this value in setup.txt like other values.
 
 ===============================================================================
+
+06/01/12 E. Hong;
+
+Serious memory leakage fixed. Most of memory leakage in AraSim is fixed.
+There are still small amoung of leakage but should not cause problems.
+
+===============================================================================

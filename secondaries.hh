@@ -144,6 +144,7 @@ private:
 
 public:
   Secondaries(Settings *settings1);
+  ~Secondaries();
 
 
   int SECONDARIES;

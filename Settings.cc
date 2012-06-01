@@ -14,6 +14,11 @@ Settings::Settings() {
 
 }
 
+Settings::~Settings() {
+    //default destructor
+}
+
+
 void Settings::Initialize() {
 
 

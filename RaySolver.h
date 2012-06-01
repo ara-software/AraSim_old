@@ -48,6 +48,8 @@ class RaySolver {
 
     public:
         RaySolver();
+        ~RaySolver();
+
 //        RaySolver(int argc, char* argv[]);
 
         void test1();

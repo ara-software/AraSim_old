@@ -49,6 +49,11 @@ Tools::Zero(toolow,2); // same, after next iteration.
 
 
 }
+
+Counting::~Counting() {
+
+}
+
 void Counting::findCosthetaPhiBins(Position r_in,int &icostheta,int &iphi) {
 
   icostheta=(int)((cos(r_in.Theta())-COSTHETAMIN)/(COSTHETAMAX-COSTHETAMIN)*(double)NCOSTHETA);

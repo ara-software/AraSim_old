@@ -41,6 +41,7 @@ public:
   
   Spectra();    // default constructor
   Spectra(int EXPONENT); // constructor  
+  ~Spectra();   // destructor
   
   double GetNuEnergy(); // get the neutrino energy which follows neutrino flux. 
 

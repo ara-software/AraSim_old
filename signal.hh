@@ -105,6 +105,8 @@ static const double AEX_ICE;  //efficiency for producing charge asymmetry relati
 public:
   Signal();
   Signal(Settings *settings1);
+  ~Signal();
+
   void TaperVmMHz(double viewangle,double deltheta_em,double deltheta_had,double emfrac,double hadfrac,
 		double& vmmhz1m,
 	       double& vmmhz_em); // returns 1 if viewangle-changle<20*width for both em and had showers
