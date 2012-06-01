@@ -59,6 +59,8 @@ using namespace std;
 #include "RaySolver.h"
 #include "Report.h"
 
+//Include output format to enable reading by analysis software AraRoot
+#include "AraRootFormat/UsefulIcrrStationEvent.h"
 
 class EarthModel; //class
 
@@ -238,6 +240,11 @@ int main(int argc, char **argv) {   // read setup.txt file
 RaySolver *raysolver = new RaySolver;
 cout<<"called RaySolver"<<endl;
 
+    cout << "Make output file that is readable by AraRoot" << endl;
+    UsefulIcrrStationEvent *theEvent = 0;
+    TTree *eventTree;
+    eventTree = new TTree("eventTree","Tree of ARA Events");
+    eventTree->Branch("UsefulIcrrStationEvent","UsefulIcrrStationEvent",&theEvent);
 
 
 cout<<"will call secondaries"<<endl;
@@ -340,7 +347,10 @@ cout<<"begain looping events!!"<<endl;
        // save signal, noise at each antennas to Report class
        report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1, trigger);
 
-       
+//       theEvent = new UsefulIcrrStationEvent();
+       theEvent = &report->theUsefulEvent;
+       eventTree->Fill();
+       theEvent = NULL;
 
        /*
 
@@ -480,6 +490,7 @@ cout<<"begain looping events!!"<<endl;
 
  delete event;
  delete report;
+       delete theEvent;
 
 
   } // end loop over neutrinos

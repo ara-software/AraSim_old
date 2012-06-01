@@ -7,6 +7,8 @@
 #define REPORT_H
 
 #include <vector>
+//Include output format to enable reading by analysis software AraRoot
+#include "AraRootFormat/UsefulIcrrStationEvent.h"
 
 class Detector;
 class Event;
@@ -154,6 +156,11 @@ class Report {
         Report (Detector *detector, Settings *settings1);
         ~Report ();
 
+    //make the UsefulIcrrStationEvent for use with AraRoot
+    UsefulIcrrStationEvent theUsefulEvent;
+    int GetChannelNumfromStringAntenna (int stringnum, int antennanum);
+
+    
         void Initialize (Detector *detector, Settings *settings1);
 
 

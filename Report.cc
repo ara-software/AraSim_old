@@ -18,6 +18,9 @@
 #include "TRandom3.h"
 #include "Constants.h"
 
+//Include output format to enable reading by analysis software AraRoot
+#include "AraRootFormat/UsefulIcrrStationEvent.h"
+
 ClassImp(Report);
 ClassImp(Antenna_r);
 ClassImp(Surface_antenna_r);
@@ -194,6 +197,70 @@ void Antenna_r::clear_useless(Settings *settings1) {   // to reduce the size of 
 
 
 
+}
+
+
+int Report::GetChannelNumfromStringAntenna ( int stringnum, int antennanum){
+    switch (stringnum)
+    {
+        case 0:
+            switch (antennanum)
+        {
+            case 0: return 5;
+                break;
+            case 1: return 9;
+                break;
+            case 2: return 1;
+                break;
+            case 3: return 13;
+                break;
+            default: cerr << "Error: Invalid Antenna Number" << endl;
+                break;
+        }
+        case 1:
+            switch (antennanum)
+        {
+            case 0: return 6;
+                break;
+            case 1: return 10;
+                break;
+            case 2: return 2;
+                break;
+            case 3: return 14;
+                break;
+            default: cerr << "Error: Invalid Antenna Number" << endl;
+                break;
+        }
+        case 2:
+            switch (antennanum)
+        {
+            case 0: return 7;
+                break;
+            case 1: return 11;
+                break;
+            case 2: return 3;
+                break;
+            case 3: return 15;
+                break;
+            default: cerr << "Error: Invalid Antenna Number" << endl;
+                break;
+        }
+        case 3:
+            switch (antennanum)
+        {
+            case 0: return 8;
+                break;
+            case 1: return 12;
+                break;
+            case 2: return 4;
+                break;
+            case 3: return 16;
+                break;
+            default: cerr << "Error: Invalid Antenna Number" << endl;
+                break;
+        }
+    }
+    
 }
 
 
@@ -807,15 +874,39 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                    stations[i].strings[(int)((ch_loop)/detector->params.number_of_antennas_string)].antennas[(int)((ch_loop)%detector->params.number_of_antennas_string)].time.push_back( stations[i].Global_Pass + trig_window_bin/2 - settings1->NFOUR/4 + mimicbin );
                                }
                            }
+                           for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
+                               int stringnum = (int)((ch_loop)/detector->params.number_of_antennas_string);
+                               int antennanum = (int)((ch_loop)%detector->params.number_of_antennas_string);
+                               int AraRootChannel = GetChannelNumfromStringAntenna (stringnum, antennanum);
+                               theUsefulEvent.fVoltsRF[AraRootChannel-1][mimicbin] = stations[i].strings[(int)((ch_loop)/detector->params.number_of_antennas_string)].antennas[(int)((ch_loop)%detector->params.number_of_antennas_string)].V_mimic[mimicbin];
+                               theUsefulEvent.fTimesRF[AraRootChannel-1][mimicbin] = stations[i].strings[(int)((ch_loop)/detector->params.number_of_antennas_string)].antennas[(int)((ch_loop)%detector->params.number_of_antennas_string)].time[mimicbin];
+                               //cout << theUsefulEvent->fVoltsRF[ch_loop][mimicbin] << endl;
+                               //cout << theUsefulEvent->fTimesRF[ch_loop][mimicbin] <<endl;
+                           }
+                           theUsefulEvent.fNumPointsRF[ch_loop] = EFFECTIVE_SAMPLES * 2;
+                           //cout << " : " << theUsefulEvent->fNumPointsRF[ch_loop] << endl;
+
                        }
 
                        //cout<<"Global trigger passed!!, N_pass : "<<N_pass<<endl;
                        Passed_chs.clear();
 
                    } // if N_Pass > 2
-                   else trig_i++;   // also if station not passed the trigger, just go to next bin
-
-
+                   else {
+                       trig_i++;   // also if station not passed the trigger, just go to next bin
+                       for (int ch_loop=0; ch_loop<ch_ID; ch_loop++) {
+                           for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
+                               int stringnum = (int)((ch_loop)/detector->params.number_of_antennas_string);
+                               int antennanum = (int)((ch_loop)%detector->params.number_of_antennas_string);
+                               int AraRootChannel = GetChannelNumfromStringAntenna (stringnum, antennanum);
+                               theUsefulEvent.fVoltsRF[AraRootChannel-1][mimicbin] = 0;
+                               theUsefulEvent.fTimesRF[AraRootChannel-1][mimicbin] = 0;
+                               //cout << theUsefulEvent->fVoltsRF[ch_loop][mimicbin] << endl;
+                               //cout << theUsefulEvent->fTimesRF[ch_loop][mimicbin] <<endl;
+                           }
+                           theUsefulEvent.fNumPointsRF[ch_loop] = EFFECTIVE_SAMPLES * 2;
+                       }
+                   }
                }    // while trig_i
 
 
