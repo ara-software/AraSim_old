@@ -73,7 +73,7 @@ class Settings
 
         double NOISE_TEMP;          // noise temperature (default : 325 K = 230K (ice) + 95K (receiver), from Peter's spreadsheet)
 
-        int PURE_NOISE_ANALYSIS; // if you want pure noise analysis (which is not-efficient as signal will generated anyway), default : 0
+        int TRIG_ANALYSIS_MODE; // trigger mode 0 : signal + noise, 1 : only pure signal, 2 : only pure noise, default : 0
 
         double TRIG_TIMEOUT;    // time out after the trigger (we have to wait this amount of time to trig next event), default : 1us = 1.E-6
         double TRIG_WINDOW;     // coincidence time window for trigger default : 250 ns

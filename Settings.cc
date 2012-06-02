@@ -95,7 +95,7 @@ outputdir="outputs"; // directory where outputs go
 
   NOISE_TEMP=325.;      // default : 325 K
 
-  PURE_NOISE_ANALYSIS=0;    // default : 0, no pure noise analysis
+  TRIG_ANALYSIS_MODE=0;    // default : 0, signal + noise
 
   TRIG_TIMEOUT=1.E-6;       // default : 1us
 
@@ -208,8 +208,8 @@ void Settings::ReadFile(string setupfile) {
               else if (label == "NOISE_TEMP") {
                   NOISE_TEMP = atof( line.substr(line.find_first_of("=") + 1).c_str() );
               }
-              else if (label == "PURE_NOISE_ANALYSIS") {
-                  PURE_NOISE_ANALYSIS = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              else if (label == "TRIG_ANALYSIS_MODE") {
+                  TRIG_ANALYSIS_MODE = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
               }
               else if (label == "TRIG_TIMEOUT") {
                   TRIG_TIMEOUT = atof( line.substr(line.find_first_of("=") + 1).c_str() );

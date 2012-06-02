@@ -15,6 +15,8 @@ DLLSUF = ${DllSuf}
 OBJSUF = ${ObjSuf}
 SRCSUF = ${SrcSuf}
 
+CXX = g++
+
 #Generic and Site Specific Flags
 CXXFLAGS     += $(SYSINCLUDES) -IAraRootFormat ##$(INC_ARASIM)
 LDFLAGS      += -g -I$(BOOST_ROOT) $(ROOTLDFLAGS) -Llib -L. -lAraSimEvent

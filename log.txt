@@ -533,3 +533,17 @@ Serious memory leakage fixed. Most of memory leakage in AraSim is fixed.
 There are still small amoung of leakage but should not cause problems.
 
 ===============================================================================
+
+06/01/12 E. Hong;
+
+Added new function for pure signal trigger, pure noise trigger.
+In setup.txt file, TRIG_ANALYSIS_MODE will decide which trigger mode you will use.
+0 : default, signal + noise trigger.
+1 : pure signal
+2 : pure noise
+
+If you use pure signal mode, trigger class will generate NOISE_EVENT number of noise waveforms and calculate mean, rms diode response values. And after that, it will remove all data and just set all noise waveform values to 0.
+
+At pure noise mode, AraSim will not generate any ray trace so it can reduce the running time, but instead, it can take a lot of time in trigger checking depending on threshold value you set. It's because Report class will search all channel's waveforms for trigger.
+
+===============================================================================

@@ -272,24 +272,24 @@ double max_dt = 0.; // max arrival time difference
 int Total_Global_Pass = 0;  // total global trigger passed number 
 double Total_Weight = 0.;
 
-
 /*
+
  TCanvas *cFull_window = new TCanvas("cFull_window","A Simple Graph Example",200,10,10000,11200);
  cFull_window->Divide(1,16);
 
  TGraph *g_Full_window;
 
+TGraph *G_V_threshold_diode;
+G_V_threshold_diode = new TGraph(2, threshold_x, threshold_y);
 
  TCanvas *cFull_window_V = new TCanvas("cFull_window_V","A Simple Graph Example",200,10,3200,2400);
  cFull_window_V->Divide(4,4);
 
  TGraph *g_Full_window_V;
-
-TGraph *G_V_threshold_diode;
-G_V_threshold_diode = new TGraph(2, threshold_x, threshold_y);
-
-
  */
+
+
+
 
 
 
@@ -319,8 +319,12 @@ threshold_y[1] = (trigger->rmsdiode) * (trigger->powerthreshold);
 cout<<"powerthreshold : "<<trigger->powerthreshold<<endl;
 
 
+int check_station_DC;
+
 cout<<"begain looping events!!"<<endl;
    for (int inu=0;inu<settings1->NNU;inu++) { // loop over neutrinos
+
+       check_station_DC = 0;
 
        std::cerr<<"*";
 
@@ -413,17 +417,26 @@ cout<<"begain looping events!!"<<endl;
            // check the total global trigger passed
            if (report->stations[i].Global_Pass) {
                cout<<"\nGlobal_Pass : "<<report->stations[i].Global_Pass<<" evt : "<<inu<<" added weight : "<<event->Nu_Interaction[0].weight<<"\n"<<endl;
+
+               if ( check_station_DC == 0) { // count trigger pass only once per event
+
                Total_Global_Pass ++;
                Total_Weight += event->Nu_Interaction[0].weight;
 
                // test increment weight
                count1->incrementEventsFound( event->Nu_Interaction[0].weight, event );
 
+
+               }
+
+               check_station_DC++;
+
                
                /*
                // make plots for all channels
                for (int string=0; string<detector->params.number_of_strings_station; string++) {
                    for (int antenna=0; antenna<detector->params.number_of_antennas_string; antenna++) {
+
                        //cout<<"plot cd "<<4*string + antenna<<endl;
                        cFull_window->cd( 4*string + antenna + 1 );
                        //g_Full_window = new TGraph( settings1->DATA_BIN_SIZE , xbin, report->Full_window[4*string + antenna] );
@@ -494,6 +507,12 @@ cout<<"begain looping events!!"<<endl;
 
 
   } // end loop over neutrinos
+
+
+
+                       
+   //cFull_window_V->Print("test_V_mimic.pdf");
+
 
 
 

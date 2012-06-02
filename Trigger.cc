@@ -115,6 +115,22 @@ void Trigger::SetMeanRmsDiode(Settings *settings1, Detector *detector, Report *r
 
 
 
+    // if we are doing pure signal trigger analysis, set all noise waveform values to 0
+    if (settings1->TRIG_ANALYSIS_MODE == 1 ) {
+
+        for (int i=0; i<ngeneratedevents; i++) {
+
+            for (int m=0; m<settings1->DATA_BIN_SIZE; m++) {
+
+                v_noise_timedomain[i][m] = 0.;
+                v_noise_timedomain_diode[i][m] = 0.;
+            }
+        }
+    }
+
+
+
+
 }
     
 
