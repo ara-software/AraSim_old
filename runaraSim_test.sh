@@ -20,5 +20,5 @@ fi
 
 cd $RUN_DIR
 
-./araSim $INPUTFILE $RUN_NO
+./AraSim $INPUTFILE $RUN_NO
 
