@@ -552,6 +552,11 @@ Interaction::Interaction (double pnu, Vector &nnu_org, string nuflavor, int &n_i
     //cout<<" Finished Pick posnu, r_in, r_enterice, nuexitice!!"<<endl;
 
 
+    // now set N at posnu
+    signal->SetNDepth( antarctica->GetN( posnu ) );
+
+
+
     sigma_err = primary1->GetSigma( pnu, sigma, len_int_kgm2, settings1, nu_nubar, currentint);
 //--------------------------------------------------
 //     cout<<"len_int_kgm2 from GetSigma : "<<len_int_kgm2<<endl;

@@ -547,3 +547,11 @@ If you use pure signal mode, trigger class will generate NOISE_EVENT number of n
 At pure noise mode, AraSim will not generate any ray trace so it can reduce the running time, but instead, it can take a lot of time in trigger checking depending on threshold value you set. It's because Report class will search all channel's waveforms for trigger.
 
 ===============================================================================
+
+06/04/12 E. Hong;
+
+Fixed a bug related to index of refraction N independant of depth bug.
+Now if you set NOFZ=1 or don't set NOFZ in setup.txt file, index of refraction N at posnu will depend on the depth of posnu location.
+It will now change the cherenkov angle.
+
+===============================================================================
