@@ -555,3 +555,14 @@ Now if you set NOFZ=1 or don't set NOFZ in setup.txt file, index of refraction N
 It will now change the cherenkov angle.
 
 ===============================================================================
+
+06/04/12_2 E. Hong;
+
+Changed TRIG_ANALYSIS_MODE=2 (pure noise case).
+To compare TRIG_ANALYSIS_MODE=0 (signal + noise case), I set "EVERY THING" same between two modes but just set pure signal V = 0.
+It means ray trace solver will calculate if there's any raysols and if there's no raysols, AraSim will not do trigger check at all.
+If there's any raysol, global trigger check will be performed.
+And total trigger time check will be the maximum time between the earliest raysol and the latest raysol (even if we have signal V = 0).
+I think it's the fair way to compare between two modes.
+
+===============================================================================

@@ -281,12 +281,12 @@ double Total_Weight = 0.;
 
 TGraph *G_V_threshold_diode;
 G_V_threshold_diode = new TGraph(2, threshold_x, threshold_y);
+ */
 
  TCanvas *cFull_window_V = new TCanvas("cFull_window_V","A Simple Graph Example",200,10,3200,2400);
  cFull_window_V->Divide(4,4);
 
  TGraph *g_Full_window_V;
- */
 
 
 
@@ -432,11 +432,12 @@ cout<<"begain looping events!!"<<endl;
                check_station_DC++;
 
                
-               /*
                // make plots for all channels
                for (int string=0; string<detector->params.number_of_strings_station; string++) {
                    for (int antenna=0; antenna<detector->params.number_of_antennas_string; antenna++) {
 
+
+                       /*
                        //cout<<"plot cd "<<4*string + antenna<<endl;
                        cFull_window->cd( 4*string + antenna + 1 );
                        //g_Full_window = new TGraph( settings1->DATA_BIN_SIZE , xbin, report->Full_window[4*string + antenna] );
@@ -445,6 +446,7 @@ cout<<"begain looping events!!"<<endl;
 
                        G_V_threshold_diode -> SetLineColor(kRed);
                        G_V_threshold_diode -> Draw("l");
+                       */
 
 
 
@@ -464,7 +466,6 @@ cout<<"begain looping events!!"<<endl;
 
                    }
                }
-               */
 
 
            }
@@ -511,7 +512,7 @@ cout<<"begain looping events!!"<<endl;
 
 
                        
-   //cFull_window_V->Print("test_V_mimic.pdf");
+   cFull_window_V->Print("test_V_mimic.pdf");
 
 
 
