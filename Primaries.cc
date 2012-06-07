@@ -554,6 +554,8 @@ Interaction::Interaction (double pnu, Vector &nnu_org, string nuflavor, int &n_i
 
     // now set N at posnu
     signal->SetNDepth( antarctica->GetN( posnu ) );
+    indexN = signal->N_DEPTH;
+    changle = signal->changle;
 
 
 

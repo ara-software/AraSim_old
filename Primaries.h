@@ -196,6 +196,11 @@ class Interaction  {
  //
 
 
+ // values related to index of refraction
+ //
+ double indexN;     // index of refraction at posnu depth
+ double changle;    // cherenkov angle at posnu depth
+
 
 
  /*

@@ -566,3 +566,13 @@ And total trigger time check will be the maximum time between the earliest rayso
 I think it's the fair way to compare between two modes.
 
 ===============================================================================
+
+06/07/12 E. Hong;
+
+Added index of refraction at posnu and cherenkov angle at posnu in Interaction class.
+They are indexN and changle respectively.
+So if you want to read those values, try
+cout<<event->Nu_Interaction[0].indexN;
+cout<<event->Nu_Interaction[0].changle;
+
+===============================================================================
