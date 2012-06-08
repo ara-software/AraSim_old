@@ -235,6 +235,9 @@ void Settings::ReadFile(string setupfile) {
               else if (label == "RAYSOL_RANGE") {
                   RAYSOL_RANGE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
               }
+              else if (label == "WRITE_ALL_EVENTS") {
+                  WRITE_ALL_EVENTS = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
           }
       }
       setFile.close();
