@@ -39,7 +39,7 @@ const double Z_AIR=377;            // resistance of air = sqrt(epsilon/mu)
 const double NFIRN=1.3250;                   // index of refraction at the very surface - Peter
 const double NICE=1.79;                      // index of refraction of ice
 
-enum {kCC, kNC};    // neutrino interaction constant cc : 0, nc :1
+enum {kNC, kCC};    // neutrino interaction constant nc : 0, cc :1
 
 
 const double poissonerror_minus[21] = {0.-0.00,1.-0.37,2.-0.74,3.-1.10,4.-2.34,5.-2.75,6.-3.82,7.-4.25,8.-5.30,9.-6.33,10.-6.78,11.-7.81,12.-8.83,13.-9.28,14.-10.30,15.-11.32,16.-12.33,17.-12.79,18.-13.81,19.-14.82,20.-15.83};

@@ -128,10 +128,12 @@ public:
         // GetAnyDirection for selecting nnu
         //
         Vector GetAnyDirection();   // get random direction for nnu. Added this function instead of removing PickAnyDirection in Interaction to prevent confliction
+        Vector GetThatDirection( double theta, double d_theta );   // get direction for nnu near theta angle with d_theta variation. Added this function instead of removing PickAnyDirection in Interaction to prevent confliction
         double costheta_nutraject; //theta of nnu with earth center to balloon as z axis 
         double phi_nutraject; //phi of nnu with earth center to balloon as z axis
 
 	int GetSigma(double pnu,double& sigma,double &len_int_kgm2,Settings *settings1,int nu_nubar,int currentint);//not static
+	int GetSigma(double pnu,double& sigma,double &len_int_kgm2,Settings *settings1,int nu_nubar,int currentint, double &len_int_kgm2_total);// len_int_kgm2_total is interaction length with (CC + NC cross section)
 	double Gety(Settings *settings1,double pnu,int nu_nubar,int currentint);
 	double Getyweight(double pnu,double y,int nu_nubar,int currentint);
 	string GetCurrent();
@@ -259,6 +261,7 @@ class Interaction  {
   int WhereDoesItExitIce ( const Position &posnu, const Vector &nnu, double stepsize, Position &r_enterice_output, IceModel *antarctica);
   int WhereDoesItExitIceForward ( const Position &posnu, const Vector &nnu, double stepsize, Position &r_enterice_output, IceModel *antarctica);
   void FlattoEarth ( IceModel *antarctica, double X, double Y, double D);
+  void FlattoEarth_Near_Surface ( IceModel *antarctica, double X, double Y, double D, double max_depth);
   void PickNear(IceModel *antarctica, Detector *detector, Settings *settings1);
   // end move from IceModel
   //
@@ -284,6 +287,7 @@ Position nuexitice; // place where neutrino would have left the ice
 
   // input information for Getchord
   double len_int_kgm2;
+  double len_int_kgm2_total;
   double weight;
   double nearthlayers;
   double myair;

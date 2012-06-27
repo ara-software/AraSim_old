@@ -59,8 +59,6 @@ using namespace std;
 #include "RaySolver.h"
 #include "Report.h"
 
-//Include output format to enable reading by analysis software AraRoot
-#include "AraRootFormat/UsefulIcrrStationEvent.h"
 
 class EarthModel; //class
 
@@ -319,7 +317,9 @@ threshold_y[1] = (trigger->rmsdiode) * (trigger->powerthreshold);
 cout<<"powerthreshold : "<<trigger->powerthreshold<<endl;
 
 
+
 int check_station_DC;
+
 
 cout<<"begain looping events!!"<<endl;
    for (int inu=0;inu<settings1->NNU;inu++) { // loop over neutrinos
@@ -329,7 +329,6 @@ cout<<"begain looping events!!"<<endl;
        std::cerr<<"*";
 
        event = new Event ( settings1, spectra, primary1, icemodel, detector, signal, sec1 );
-
 
   
        report = new Report(detector, settings1);
@@ -351,6 +350,7 @@ cout<<"begain looping events!!"<<endl;
        // save signal, noise at each antennas to Report class
        report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1, trigger);
 
+       
 //       theEvent = new UsefulIcrrStationEvent();
        theEvent = &report->theUsefulEvent;
        if (settings1->WRITE_ALL_EVENTS!=2) {
@@ -418,6 +418,7 @@ cout<<"begain looping events!!"<<endl;
            if (max_dt < report->stations[i].max_arrival_time - report->stations[i].min_arrival_time) max_dt = report->stations[i].max_arrival_time - report->stations[i].min_arrival_time;
            // check the total global trigger passed
            if (report->stations[i].Global_Pass) {
+
                cout<<"\nGlobal_Pass : "<<report->stations[i].Global_Pass<<" evt : "<<inu<<" added weight : "<<event->Nu_Interaction[0].weight<<"\n"<<endl;
 
                if ( check_station_DC == 0) { // count trigger pass only once per event

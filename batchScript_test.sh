@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 var_path=`pwd`
 echo 'current dir : ' 
 echo $var_path
@@ -16,9 +15,9 @@ cd $AraSimDir
     do
 #qsub -l walltime=48:00:00 runaraSim_test.sh -v INPUTFILE=$SetUpFile,RUN_NO=$i,RUN_DIR=$AraSimDir
       if [ $i -eq $RunNo ]; then
-        qsub -l walltime=48:00:00 -m e runaraSim_test.sh -v INPUTFILE=$SetUpFile,RUN_NO=$i,RUN_DIR=$AraSimDir
+        qsub -m e runaraSim_test.sh -v INPUTFILE=$SetUpFile,RUN_NO=$i,RUN_DIR=$AraSimDir
       else 
-        qsub -l walltime=48:00:00 runaraSim_test.sh -v INPUTFILE=$SetUpFile,RUN_NO=$i,RUN_DIR=$AraSimDir
+        qsub runaraSim_test.sh -v INPUTFILE=$SetUpFile,RUN_NO=$i,RUN_DIR=$AraSimDir
       fi
     done
 

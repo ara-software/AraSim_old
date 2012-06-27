@@ -95,6 +95,20 @@ class Settings
 
         double RAYSOL_RANGE;    // direct distance limit to do raysolver. If distance between posnu and antenna is bigger than RAYSOL_RANGE, AraSim will not try RaySol for that event. Default : 3000 m
 
+        int PICK_POSNU_DEPTH;  // whether use MAX_POSNU_DEPTH or not. 0 : pick posnu depth full ice depth, 1 : pick posnu depth only MAX_POSNU_DEPTH
+
+        double MAX_POSNU_DEPTH;  // maximum posnu depth when above PICK_POSNU_DEPTH=1
+
+        int NNU_THIS_THETA;     // if nnu theta angle will be selected randomly from [0, PI] (default=0) or set nnu theta to near some angle (=1)
+
+        double NNU_THETA;       // nnu theta when NNU_THIS_THETA=1
+
+        double NNU_D_THETA;     // nnu theta variation from NNU_THETA, when NNU_THIS_THETA=1 case
+
+
+
+
+
  // below : values from icemc
 
 

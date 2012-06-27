@@ -552,6 +552,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                            else {
                                //cout<<" No posnu!!!!!! No signals calculated at all!!"<<endl;
                                ray_sol_cnt = 0;
+                               ray_sol_cnt = 0;
                            }
 
 

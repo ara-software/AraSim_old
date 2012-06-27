@@ -576,3 +576,14 @@ cout<<event->Nu_Interaction[0].indexN;
 cout<<event->Nu_Interaction[0].changle;
 
 ===============================================================================
+
+06/27/12 E. Hong;
+
+Fixed few bugs.
+
+1) fixed switched NC, CC mode. Previously in Primary class it recognized NC : 1 and CC : 0 index while the array (m_fsigma) to calculate the cross setion used opposite way. 
+
+2) When we calcuate the weight (probability to survive to posnu), so far AraSim used either NC or CC cross section (depending on which interaction it
+is at posnu). Now when we calcuate the weight, AraSim uses the total cross section (NC + CC).
+
+===============================================================================

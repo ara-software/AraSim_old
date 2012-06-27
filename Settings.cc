@@ -73,7 +73,7 @@ outputdir="outputs"; // directory where outputs go
 
   TAUDECAY=1;           //default : let taudecay as secondary interactions
 
-  TIMESTEP=(1./2.6)*1.E-9;  // default, same with icemc
+  TIMESTEP=(1./2.6)*1.E-9;  // default, same with icemc (in sec)
 
   PHASE=90.;            // default : 90 deg phase (it means all imaginary values)
 
@@ -114,6 +114,17 @@ outputdir="outputs"; // directory where outputs go
   WRITE_ALL_EVENTS=0; //default : 0 (writes only globally triggered events)
 
   RAYSOL_RANGE=3000; // default : 3000 m
+
+  PICK_POSNU_DEPTH=0;     //default : 0 pick posnu depth from 0 to ice depth
+
+  MAX_POSNU_DEPTH=200.;     // default : 200m depth max
+
+  NNU_THIS_THETA=0;         // default : nnu angle pure random
+
+  NNU_THETA=0.785;          // default : nnu theta : 45 deg
+
+  NNU_D_THETA=0.0873;       // default : nnu d_theta : 5 deg
+
     
 }
 
@@ -234,6 +245,21 @@ void Settings::ReadFile(string setupfile) {
               }
               else if (label == "RAYSOL_RANGE") {
                   RAYSOL_RANGE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "PICK_POSNU_DEPTH") {
+                  PICK_POSNU_DEPTH = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "MAX_POSNU_DEPTH") {
+                  MAX_POSNU_DEPTH = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "NNU_THIS_THETA") {
+                  NNU_THIS_THETA = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "NNU_THETA") {
+                  NNU_THETA = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "NNU_D_THETA") {
+                  NNU_D_THETA = atof( line.substr(line.find_first_of("=") + 1).c_str() );
               }
               else if (label == "WRITE_ALL_EVENTS") {
                   WRITE_ALL_EVENTS = atoi( line.substr(line.find_first_of("=") + 1).c_str() );

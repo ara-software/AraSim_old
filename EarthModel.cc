@@ -251,6 +251,9 @@ EarthModel::~EarthModel() {} //EarthModel destructor - no dynamic variables, not
 
   total_kgm2 = 0; //Initialize column density
   nearthlayers=0; // this counts the number of earth layers the neutrino traverses.
+  crust_entered=0;
+  mantle_entered=0;
+  core_entered=0;
   // Want to find probability that the neutrino survives its trip
   // through the earth.
   
@@ -371,6 +374,7 @@ EarthModel::~EarthModel() {} //EarthModel destructor - no dynamic variables, not
     double altitude=0;
     weight1=1;
     double step=Tools::dMin(len_int_kgm2/densities[1]/10,500.); //how big is the step size
+    //double step=Tools::dMin(len_int_kgm2/densities[1]/10,5.); //how big is the step size
 //--------------------------------------------------
 //     cout<<"len_int_kgm2 = "<<len_int_kgm2<<endl;
 //     cout<<"densities[1] = "<<densities[1]<<endl;
@@ -415,16 +419,26 @@ EarthModel::~EarthModel() {} //EarthModel destructor - no dynamic variables, not
 	ddensity=softseddensityarray[ilon][ilat]*1000;
 	crust_entered=1; //Switch that lets us know we've penetrated into the crust
       } //end if
-      else if (altitude<=softsedr[ilon][ilat] && altitude>hardsedr[ilon][ilat])
+      else if (altitude<=softsedr[ilon][ilat] && altitude>hardsedr[ilon][ilat]) {
 	ddensity=hardseddensityarray[ilon][ilat]*1000;
-      else if (altitude<=hardsedr[ilon][ilat] && altitude>uppercrustr[ilon][ilat])
+	crust_entered=1; //Switch that lets us know we've penetrated into the crust
+      } //end if
+      else if (altitude<=hardsedr[ilon][ilat] && altitude>uppercrustr[ilon][ilat]) {
 	ddensity=uppercrustdensityarray[ilon][ilat]*1000;
-      else if (altitude<=uppercrustr[ilon][ilat] && altitude>middlecrustr[ilon][ilat])
+	crust_entered=1; //Switch that lets us know we've penetrated into the crust
+      } //end if
+      else if (altitude<=uppercrustr[ilon][ilat] && altitude>middlecrustr[ilon][ilat]) {
 	ddensity=middlecrustdensityarray[ilon][ilat]*1000;
-      else if (altitude<=middlecrustr[ilon][ilat] && altitude>lowercrustr[ilon][ilat])
+	crust_entered=1; //Switch that lets us know we've penetrated into the crust
+      } //end if
+      else if (altitude<=middlecrustr[ilon][ilat] && altitude>lowercrustr[ilon][ilat]) {
 	ddensity=lowercrustdensityarray[ilon][ilat]*1000;
-      else if (altitude<=lowercrustr[ilon][ilat])
+	crust_entered=1; //Switch that lets us know we've penetrated into the crust
+      } //end if
+      else if (altitude<=lowercrustr[ilon][ilat]) {
 	ddensity=densities[1];
+	crust_entered=1; //Switch that lets us know we've penetrated into the crust
+      } //end if
 
       // sometimes altitude will not satisfy any of these because it is above the surface.
       // the neutrino is skimming the surface and will fly through the air for a while.

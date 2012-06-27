@@ -33,8 +33,14 @@ Event::Event (Settings *settings1, Spectra *spectra1, Primaries *primary1, IceMo
     if (Event_type == 0) { // if only neutrino events exist
 
         pnu = spectra1->GetNuEnergy();
-        nnu = primary1->GetAnyDirection();
         nuflavor = primary1->GetNuFlavor();
+
+        if (settings1->NNU_THIS_THETA==1) {    // set specific theta angle for nnu
+            nnu = primary1->GetThatDirection(settings1->NNU_THETA, settings1->NNU_D_THETA);
+        }
+        else { // nnu angle random
+            nnu = primary1->GetAnyDirection();
+        }
         
         if (nuflavor=="nue")
             nuflavorint=1;
