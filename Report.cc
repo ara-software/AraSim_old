@@ -119,10 +119,10 @@ void Antenna_r::clear() {   // if any vector variable added in Antenna_r, need t
     Az.clear();
 
     V.clear();
-    V_noise.clear();
-    V_total.clear();
-    V_total_diode.clear();
-    V_total_timedelay.clear();
+    //V_noise.clear();
+    //V_total.clear();
+    //V_total_diode.clear();
+    //V_total_timedelay.clear();
 
     PeakV.clear();
     Rank.clear();
@@ -148,10 +148,10 @@ void Antenna_r::clear_useless(Settings *settings1) {   // to reduce the size of 
     Az.clear();
 
     V.clear();
-    V_noise.clear();
-    V_total.clear();
-    V_total_diode.clear();
-    V_total_timedelay.clear();
+    //V_noise.clear();
+    //V_total.clear();
+    //V_total_diode.clear();
+    //V_total_timedelay.clear();
 
     //Trig_Pass.clear();
     TooMuch_Tdelay.clear();
@@ -175,10 +175,10 @@ void Antenna_r::clear_useless(Settings *settings1) {   // to reduce the size of 
     Az.clear();
 
     V.clear();
-    V_noise.clear();
-    V_total.clear();
-    V_total_diode.clear();
-    V_total_timedelay.clear();
+    //V_noise.clear();
+    //V_total.clear();
+    //V_total_diode.clear();
+    //V_total_timedelay.clear();
 
     //Trig_Pass.clear();
     TooMuch_Tdelay.clear();
@@ -371,10 +371,10 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                    stations[i].strings[j].antennas[k].Vfft_noise.resize(ray_sol_cnt+1);
 
                                    stations[i].strings[j].antennas[k].V.resize(ray_sol_cnt+1);
-                                   stations[i].strings[j].antennas[k].V_noise.resize(ray_sol_cnt+1);
-                                   stations[i].strings[j].antennas[k].V_total.resize(ray_sol_cnt+1);
-                                   stations[i].strings[j].antennas[k].V_total_diode.resize(ray_sol_cnt+1);
-                                   stations[i].strings[j].antennas[k].V_total_timedelay.resize(ray_sol_cnt+1);
+                                   //stations[i].strings[j].antennas[k].V_noise.resize(ray_sol_cnt+1);
+                                   //stations[i].strings[j].antennas[k].V_total.resize(ray_sol_cnt+1);
+                                   //stations[i].strings[j].antennas[k].V_total_diode.resize(ray_sol_cnt+1);
+                                   //stations[i].strings[j].antennas[k].V_total_timedelay.resize(ray_sol_cnt+1);
                                    //stations[i].strings[j].antennas[k].time.resize(ray_sol_cnt+1);
 
                                    // calculate the polarization vector at the source

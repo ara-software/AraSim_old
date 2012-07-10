@@ -42,6 +42,10 @@ class Trigger {
      vector < vector <double> > v_noise_timedomain;   // time domain noise waveform examples
      vector < vector <double> > v_noise_timedomain_diode; // time domain diode convlved noise waveforms examples
 
+     vector <double> Vfft_noise_after; // noise Vfft after get_random_rician
+     vector <double> Vfft_noise_before; // noise Vfft before get_random_rician
+     vector <double> V_noise_timedomain; // noise V timedomain after get_random_rician and inverse fft
+
      double powerthreshold; // threshold for the trigger
 
      int iminbin;   // same with icemc trigger

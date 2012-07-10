@@ -48,8 +48,6 @@ EXPONENT=18
 NNU=100
 //NNU=200
 //NNU=500
-//NNU=1000
-//NNU=5000
 //NNU=10000
 //NNU=480
 DETECTOR=1
@@ -76,13 +74,15 @@ TRIG_ANALYSIS_MODE=0
 //NOISE_EVENTS=1
 NOISE_EVENTS=100
 //NOISE_EVENTS=7000
+//NOISE_EVENTS=1000
 
-// DATA_SAVE_MODE 0 to save all data, 1 to remove most of data except geometric info, final golbal trigger data V_mimic, 2 to remove final global trigger waveform V_mimic also (so just Physics info left)
-DATA_SAVE_MODE=2
+// DATA_SAVE_MODE 0 to save all data, 1 to remove most of data except geometric info, final golbal trigger data V_mimic (pure noise waveforms in trigger class will remain), 2 to remove final global trigger waveform V_mimic also (so just Physics info left)
+DATA_SAVE_MODE=0
 
 // WRITE_ALL_EVENTS 0 only write globally triggered events, 1 Write all event events including events that are not globally triggered
 // Note: NNU is the number of neutrinos that have been thrown in total, not just globally triggered events
 // When writing all events, the waveform stored in UsefulAraSimEvent->VoltsRF[] is just the untriggered, noiseless waveform of the initial signal, and it has not propagated to the antenna yet.
+// new mode, WRITE_ALL_EVENTS 2 will not save waveforms at all.
 WRITE_ALL_EVENTS=2
 
 //RANDOM_MODE=0
@@ -93,6 +93,6 @@ BORE_HOLE_ANTENNA_LAYOUT=0
 //N_TRIG=1
 
 // lets work on nnu theta 80 deg +- 1deg
-NNU_THIS_THETA=1
-NNU_THETA=1.39626
-NNU_D_THETA=0.017453
+//NNU_THIS_THETA=1
+//NNU_THETA=1.39626
+//NNU_D_THETA=0.017453

@@ -128,6 +128,15 @@ void Trigger::SetMeanRmsDiode(Settings *settings1, Detector *detector, Report *r
         }
     }
 
+    // copy the before and after the random rician dist information from report to trigger
+    if ( settings1->DATA_SAVE_MODE==0 ) {
+        Vfft_noise_after = report->Vfft_noise_after;
+        Vfft_noise_before = report->Vfft_noise_before;
+        V_noise_timedomain = report->V_noise_timedomain;
+    }
+    report->Vfft_noise_after.clear();
+    report->Vfft_noise_before.clear();
+    report->V_noise_timedomain.clear();
 
 
 

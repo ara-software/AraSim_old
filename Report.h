@@ -72,13 +72,13 @@ class Antenna_r {
         vector < vector <double> > Az;
         vector < vector <double> > V;   // volt signal with all factors applied (as far as we can) (from fft)
 
-        vector < vector <double> > V_noise; // volt noise signal (with all factors applied as far as we can) (from thermal noise + fft)
+        //vector < vector <double> > V_noise; // volt noise signal (with all factors applied as far as we can) (from thermal noise + fft)
 
-        vector < vector <double> > V_total; // volt signal + noise with all factors applied as far as we can
+        //vector < vector <double> > V_total; // volt signal + noise with all factors applied as far as we can
 
-        vector < vector <double> > V_total_diode;   // volt signal + noise with all factors (as far as we can) and convlution with diode (time domain)
+        //vector < vector <double> > V_total_diode;   // volt signal + noise with all factors (as far as we can) and convlution with diode (time domain)
 
-        vector < vector <double> > V_total_timedelay;   // volt signal + noise with all factors applied and time delay between antennas
+        //vector < vector <double> > V_total_timedelay;   // volt signal + noise with all factors applied and time delay between antennas
         //
         //
         vector <double> PeakV;  // peak voltage in time domain

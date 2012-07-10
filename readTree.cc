@@ -73,6 +73,7 @@ int main() {
   IceModel *icemodel = 0;
   Event *event = 0;
   Report *report = 0;
+  Trigger *trigger = 0;
   cout<<"construct detector"<<endl;
 
   
@@ -85,6 +86,7 @@ int main() {
   AraTree->SetBranchAddress("settings",&settings);
   AraTree->SetBranchAddress("spectra",&spectra);
   AraTree->SetBranchAddress("icemodel",&icemodel);
+  AraTree->SetBranchAddress("trigger",&trigger);
   AraTree2->SetBranchAddress("event",&event);
   AraTree2->SetBranchAddress("report",&report);
   cout<<"branch detector"<<endl;
@@ -752,95 +754,14 @@ cGeo -> Print("GEOID1.pdf");
 
 int evt_n, station_n, string_n, antenna_n, ray_sol_n;
 
-evt_n = 0;
+evt_n = 34;
 station_n = 0;
-string_n = 1;
-//string_n = 0;
+string_n = 0;
 antenna_n = 1;
-//antenna_n = 0;
 ray_sol_n = 0;
 
 AraTree2->GetEvent(evt_n);
 
-double time[settings->NFOUR/2];
-double V[settings->NFOUR/2];
-double V_org[settings->NFOUR/2];
-double V_noise[settings->NFOUR/2];
-
-cout<<"view angle : "<<report->stations[station_n].strings[string_n].antennas[antenna_n].view_ang[ray_sol_n]*DEGRAD<<endl;
-
-double sum_V2_t = 0.;
-double sum_V2_f = 0.;
-
-for (int i=0;i<settings->NFOUR/2;i++) {
-    time[i] = report->stations[station_n].strings[string_n].antennas[antenna_n].time[ray_sol_n][i];
-    V_org[i] = report->stations[station_n].strings[string_n].antennas[antenna_n].V[ray_sol_n][i];
-    V_noise[i] = report->stations[station_n].strings[string_n].antennas[antenna_n].V_noise[ray_sol_n][i];
-
-    sum_V2_t += V_org[i]*V_org[i];
-    sum_V2_f += report->stations[station_n].strings[string_n].antennas[antenna_n].Vfft[ray_sol_n][i] * report->stations[station_n].strings[string_n].antennas[antenna_n].Vfft[ray_sol_n][i];
-
-
-    if (i<settings->NFOUR/4) {
-        V[i+settings->NFOUR/4] = report->stations[station_n].strings[string_n].antennas[antenna_n].V[ray_sol_n][i];
-    }
-    else {
-        V[i-settings->NFOUR/4] = report->stations[station_n].strings[string_n].antennas[antenna_n].V[ray_sol_n][i];
-    }
-}
-
-
-
-TGraph *G_V_time;
-G_V_time = new TGraph(settings->NFOUR/2, time, V);
-
-TGraph *G_V_time_org;
-G_V_time_org = new TGraph(settings->NFOUR/2, time, V_org);
-
-
-TGraph *G_V_time_noise;
-G_V_time_noise = new TGraph(settings->NFOUR/2, time, V_noise);
-
-TCanvas *cV_time = new TCanvas("cV_time","V(t)", 200,10,1400,700);
-cV_time->Divide(2,1);
-cV_time -> cd(1);
-G_V_time_org->SetTitle("V(t) for evt %d, station[%d].string[%d].antenna[%d] (org)");
-G_V_time_org->GetHistogram()->SetXTitle("time (s)");
-G_V_time_org->GetHistogram()->SetYTitle("Voltage (V)");
-G_V_time_org->Draw("al");
-
-//--------------------------------------------------
-// G_V_time_noise->SetLineColor(kRed);
-// G_V_time_noise->Draw("l");
-//-------------------------------------------------- 
-
-cV_time -> cd(2);
-G_V_time_noise->SetTitle("V_noise(t) for evt %d, station[%d].string[%d].antenna[%d] (org)");
-G_V_time_noise->GetHistogram()->SetXTitle("time (s)");
-G_V_time_noise->GetHistogram()->SetYTitle("Voltage (V)");
-G_V_time_noise->Draw("al");
-
-//G_V_time_noise->SetLineColor(kRed);
-
-cV_time -> Print("V_time_evt0.pdf");
-
-
-TGraph *G_V_time_zoom;
-G_V_time_zoom = new TGraph(settings->NFOUR/2, time, V_org);
-
-TCanvas *cV_time_zoom = new TCanvas("cV_time_zoom","V(t) for evt 0, station0.string0.antenna0",200,10,1400,700);
-cV_time_zoom->Divide(2,1);
-cV_time_zoom -> cd(1);
-G_V_time_org->Draw("al");
-
-cV_time_zoom -> cd(2);
-G_V_time_zoom->SetTitle("V(t) for evt 0, station[0].string[0].antenna[0] (Zoomed)");
-G_V_time_zoom->GetHistogram()->SetXTitle("time (s)");
-G_V_time_zoom->GetHistogram()->SetYTitle("Voltage (V)");
-G_V_time_zoom->GetXaxis()->SetLimits(time[settings->NFOUR/4-100], time[settings->NFOUR/4+100]);
-G_V_time_zoom->Draw("al");
-
-cV_time_zoom -> Print("V_time_evt0_zoom.pdf");
 
 
 
@@ -851,8 +772,10 @@ NFOUR = (double)settings->NFOUR;
 
 double dfreq_detector;  // dfreq at detector related freq bin
 double dfreq_fft;       // dfreq at fft bin
+double dfreq_databin;       // dfreq at data bin
 dfreq_detector = (detector->GetFreq(1) - detector->GetFreq(0));
 dfreq_fft = 1./ ((double)settings->NFOUR/2 * settings->TIMESTEP);
+dfreq_databin = 1./ ((double)settings->DATA_BIN_SIZE * settings->TIMESTEP);
 
 double freq[N_freq];
 double vmmhz_freq[N_freq];
@@ -860,16 +783,25 @@ double vmmhz_antfactors[N_freq];
 double vmmhz_filter[N_freq];
 
 double freq_fft[settings->NFOUR/4];
+double freq_databin[settings->DATA_BIN_SIZE/2];
 double vmmhz_fft[settings->NFOUR/4];
 
-double Vfft_noise_before[settings->NFOUR/4];
-double Vfft_noise_after[settings->NFOUR/4];
+//double Vfft_noise_before[settings->NFOUR/4];
+//double Vfft_noise_after[settings->NFOUR/4];
+double Vfft_noise_before[settings->DATA_BIN_SIZE/2];
+double Vfft_noise_after[settings->DATA_BIN_SIZE/2];
 
 double total_mean_power_noise_before = 0.;
 double total_mean_power_noise_after = 0.;
 double total_mean_power_signal = 0.;
 
-double Filter[settings->NFOUR/4];
+//double Filter[settings->NFOUR/4];
+double Filter[settings->DATA_BIN_SIZE/2];
+
+
+cout<<"define"<<endl;
+
+if ( report->stations[station_n].strings[string_n].antennas[antenna_n].ray_sol_cnt >= ray_sol_n && settings->DATA_SAVE_MODE==0) { // if there is ray sol && output file have all information
 
 
 
@@ -886,6 +818,8 @@ for (int i=0;i<N_freq;i++) {
 
 }
 
+cout<<"first loop"<<endl;
+
 for (int i=0;i<settings->NFOUR/4;i++) {
     freq_fft[i] = (double)i * dfreq_fft;
 
@@ -899,19 +833,32 @@ for (int i=0;i<settings->NFOUR/4;i++) {
     //vmmhz_fft[i] *= 3.;
     //
 
-    Vfft_noise_after[i] = pow(report->Vfft_noise_after[i*2],2.) + pow(report->Vfft_noise_after[i*2 + 1],2.);    // after have R, I part
-    Vfft_noise_before[i] = pow(report->Vfft_noise_before[i],2.);
-    //Vfft_noise[i] = pow(report->stations[station_n].strings[string_n].antennas[antenna_n].Vfft_noise[ray_sol_n][i*2],2.) + pow(report->stations[station_n].strings[string_n].antennas[antenna_n].Vfft_noise[ray_sol_n][i*2 + 1],2.);
-
-    Vfft_noise_after[i] = Vfft_noise_after[i] * 2. / ( ( NFOUR * NFOUR / 4.) * 50. * dfreq_fft );
-    Vfft_noise_before[i] = Vfft_noise_before[i] * 2. / ( ( NFOUR * NFOUR / 4.) * 50. * dfreq_fft );
 
 
-    Filter[i] = pow(10., ( detector->GetFilterGain_fft(i) )/20.);   // from dB to unitless gain for voltage
+    total_mean_power_signal += vmmhz_fft[i];
+
+}
+
+cout<<"second loop"<<endl;
+
+for (int i=0; i<settings->DATA_BIN_SIZE/2; i++) {
+
+    freq_databin[i] = (double)i * dfreq_databin;
+
+
+    Vfft_noise_after[i] = pow(trigger->Vfft_noise_after[i*2],2.) + pow(trigger->Vfft_noise_after[i*2 + 1],2.);    // after have R, I part
+    Vfft_noise_before[i] = pow(trigger->Vfft_noise_before[i],2.);
+
+    Vfft_noise_after[i] = Vfft_noise_after[i] * 2. / ( ( settings->DATA_BIN_SIZE * settings->DATA_BIN_SIZE) * 50. * dfreq_databin );
+    Vfft_noise_before[i] = Vfft_noise_before[i] * 2. / ( ( settings->DATA_BIN_SIZE * settings->DATA_BIN_SIZE) * 50. * dfreq_databin );
+
+
+    //Filter[i] = pow(10., ( detector->GetFilterGain_fft(i) )/20.);   // from dB to unitless gain for voltage
+    //cout<<"filter gain in db : "<<detector->GetFilterGain_databin(i)<<endl;
+    Filter[i] = pow(10., ( detector->GetFilterGain_databin(i) )/20.);   // from dB to unitless gain for voltage
 
     total_mean_power_noise_before += Vfft_noise_before[i];
     total_mean_power_noise_after += Vfft_noise_after[i];
-    total_mean_power_signal += vmmhz_fft[i];
 
 }
 
@@ -930,14 +877,17 @@ TGraph *G_vmmhz_fft;
 G_vmmhz_fft = new TGraph(settings->NFOUR/4, freq_fft, vmmhz_fft);
 
 TGraph *G_Vfft_noise_before;
-G_Vfft_noise_before = new TGraph(settings->NFOUR/4, freq_fft, Vfft_noise_before);
+//G_Vfft_noise_before = new TGraph(settings->NFOUR/4, freq_fft, Vfft_noise_before);
+G_Vfft_noise_before = new TGraph(settings->DATA_BIN_SIZE/2, freq_databin, Vfft_noise_before);
 
 TGraph *G_Vfft_noise_after;
-G_Vfft_noise_after = new TGraph(settings->NFOUR/4, freq_fft, Vfft_noise_after);
+//G_Vfft_noise_after = new TGraph(settings->NFOUR/4, freq_fft, Vfft_noise_after);
+G_Vfft_noise_after = new TGraph(settings->DATA_BIN_SIZE/2, freq_databin, Vfft_noise_after);
 
 
 TGraph *G_Filter;
-G_Filter = new TGraph(settings->NFOUR/4, freq_fft, Filter);
+//G_Filter = new TGraph(settings->NFOUR/4, freq_fft, Filter);
+G_Filter = new TGraph(settings->DATA_BIN_SIZE/2, freq_databin, Filter);
 
 
 TCanvas *cVmMHz = new TCanvas("cVmMHz","V/m/MHz", 200,10,4000,1400);
@@ -1011,6 +961,13 @@ G_Vfft_noise_after->Draw("al");
 cVmMHz -> Print("VmMHz_evt0.pdf");
 
 
+
+
+} // end if there is ray sol
+
+
+
+
 AraTree2->GetEvent(0);
 for (int i=0; i<detector->params.number_of_stations; i++) {
     for (int j=0; j<detector->params.number_of_strings_station; j++) {
@@ -1023,15 +980,12 @@ for (int i=0; i<detector->params.number_of_stations; i++) {
 }
 
 
-cout<<"sum_V2_t : "<<sum_V2_t<<endl;
-cout<<"sum_V2_f : "<<sum_V2_f<<endl;
-
 cout<<"noise Vfft_org : "<<report->Vfft_noise_org<<endl;
 
 cout<<"total_mean_power_noise_before : "<<total_mean_power_noise_before<<endl;
 cout<<"total_mean_power_noise_after : "<<total_mean_power_noise_after<<endl;
 cout<<"total_mean_power_signal : "<<total_mean_power_signal<<endl;
-cout<<"Peak at evt0, 0110 : "<<report->stations[station_n].strings[string_n].antennas[antenna_n].PeakV[0]<<endl;
+//cout<<"Peak at evt0, 0110 : "<<report->stations[station_n].strings[string_n].antennas[antenna_n].PeakV[0]<<endl;
 
 
 }
