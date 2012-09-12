@@ -124,6 +124,8 @@ void Antenna_r::clear() {   // if any vector variable added in Antenna_r, need t
     //V_total_diode.clear();
     //V_total_timedelay.clear();
 
+    noise_ID.clear();
+
     PeakV.clear();
     Rank.clear();
     //Trig_Pass.clear();
@@ -625,6 +627,10 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                        // select noise waveform from trigger class
                        for (int l=0; l<N_noise; l++) {
                            noise_ID[l] = (int)(settings1->NOISE_EVENTS * gRandom->Rndm() );
+
+                           // save noise ID
+                           stations[i].strings[j].antennas[k].noise_ID.push_back( noise_ID[l] );
+
                            //cout<<"noise_ID for "<<l<<"th noisewaveform is : "<<noise_ID[l]<<"  N_noise : "<<N_noise<<" ray_sol_cnt : "<<stations[i].strings[j].antennas[k].ray_sol_cnt<<endl;
 
                            if (l == N_noise-1) {    // when it's final noise waveform

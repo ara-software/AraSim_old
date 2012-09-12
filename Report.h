@@ -72,6 +72,8 @@ class Antenna_r {
         vector < vector <double> > Az;
         vector < vector <double> > V;   // volt signal with all factors applied (as far as we can) (from fft)
 
+        vector <int> noise_ID;      // information about which pure noise waveform is used for trigger analysis
+
         //vector < vector <double> > V_noise; // volt noise signal (with all factors applied as far as we can) (from thermal noise + fft)
 
         //vector < vector <double> > V_total; // volt signal + noise with all factors applied as far as we can

@@ -587,3 +587,35 @@ Fixed few bugs.
 is at posnu). Now when we calcuate the weight, AraSim uses the total cross section (NC + CC).
 
 ===============================================================================
+
+09/12/12 E. Hong;
+
+Added a functionality to track back which pure noise waveform is used for each triggered events, each channels.
+In Report class antenna, "noise_ID" will show you which pure noise waveform in Trigger class is used for trigger analysis.
+For example,
+
+    report->stations[i].strings[j].antennas[k].noise_ID[0]
+
+    noise_ID is a vector array as there could be more than 1 pure noise waveform used for trigger analysis (almost all cases it will be just one value, actually if there's more than one value, current AraSim can't handle that case correctly).
+
+    If above noise_ID value is 10, that means for that event, antenna, 
+    
+    trigger->v_noise_timedomain[ 10 ][ noise waveform data, size : settings->DATA_BIN_SIZE, default 16384 ]
+
+    above pure noise waveform is used fot trigger analysis.
+    For the channels which passed the trigger (report->stations[i].strings[j].antennas[k].Trig_Pass is not 0), V_mimic waveform should used the pure noise waveform 
+
+    trigger->v_noise_timedomain[ noise_ID ][ 512 bins where Trig_Pass bin value is located at the center ]
+
+    For the channels which didn't passed the trigger (Trig_Pass is 0), V_mimiv waveform should used the pure noise waveform
+
+    trigger->v_noise_timedomain[ noise_ID ][ 512 bins where Global_Pass + (settings->TRIG_WINDOW / (2 * settings->TIMESTEP) ) is located at the center ]
+
+    The reason why I use such a wired bin values is that
+
+    1) I wanted to make the trigger passed bin located at the center of waveform
+
+    2) For channels which didn't passed the trigger, save the waveform where the center of trigger window
+
+
+===============================================================================

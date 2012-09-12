@@ -158,6 +158,15 @@ cout<<"nnu x : "<<event->nnu.GetX()<<endl;
 */
       }
 
+      if ( report->stations[0].Global_Pass ) {
+          for ( int j=0; j<detector->params.number_of_strings_station; j++) {
+              for (int k=0; k<detector->params.number_of_antennas_string; k++) {
+                  cout<<"noise_ID : "<<report->stations[0].strings[j].antennas[k].noise_ID[0]<<endl;
+              }
+          }
+      }
+
+
 
   } // end loop over neutrinos
 
