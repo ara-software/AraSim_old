@@ -619,3 +619,22 @@ For example,
 
 
 ===============================================================================
+
+10/10/12 E. Hong;
+
+Fixed some minor bugs.
+
+1) Make sure when AraSim select one of the pure noise waveform, there's no
+same noise waveform selected among same station.
+So in Report.cc, when noise_ID is selected, check if there's same noise_ID in
+different chs (don't check different stations) and if there's any, get a new
+noise_ID (until there's no same)
+
+2) Fixed bug related to Trig_Pass value in Report class.
+In previous version, when a station is not global triggered, chs' Trig_Pass
+values used to have strange high value.
+Now whether station is global triggered or not, Trig_Pass is either 0 (not
+triggered) or trigger passed bin number.
+
+
+===============================================================================

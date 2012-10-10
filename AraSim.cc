@@ -352,8 +352,8 @@ cout<<"begain looping events!!"<<endl;
 
        
 //       theEvent = new UsefulIcrrStationEvent();
-       theEvent = &report->theUsefulEvent;
        if (settings1->WRITE_ALL_EVENTS!=2) {
+           theEvent = &report->theUsefulEvent;
            eventTree->Fill();
        }
        theEvent = NULL;

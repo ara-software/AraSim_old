@@ -128,9 +128,9 @@ void Antenna_r::clear() {   // if any vector variable added in Antenna_r, need t
 
     PeakV.clear();
     Rank.clear();
-    //Trig_Pass.clear();
     TooMuch_Tdelay.clear();
 
+    Trig_Pass = 0;
 }
 
 
@@ -626,7 +626,22 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                        // select noise waveform from trigger class
                        for (int l=0; l<N_noise; l++) {
-                           noise_ID[l] = (int)(settings1->NOISE_EVENTS * gRandom->Rndm() );
+
+                           // get random noise_ID and check if there are same noise_ID in different ch.
+                           // if there's same noise_ID, get noise_ID again until no noise_ID are same between chs
+                           noise_pass_nogo = 1;
+                           while ( noise_pass_nogo ) {
+                               noise_ID[l] = (int)(settings1->NOISE_EVENTS * gRandom->Rndm() );
+                               noise_pass_nogo = 0;
+                               for (int j_sub=0; j_sub<j; j_sub++) {
+                                   for (int k_sub=0; k_sub<k; k_sub++) {
+                                       if (noise_ID[l] == stations[i].strings[j_sub].antennas[k_sub].noise_ID[0]) { // check only first one;;;
+                                           //cout<<"\nget noise_ID again as there's same noise_ID in different ch : str["<<j_sub<<"].ant["<<k_sub<<"] ID:"<<noise_ID[l]<<" current str:"<<j<<" ant:"<<k<<endl;
+                                           noise_pass_nogo = 1;
+                                       }
+                                   }
+                               }
+                           }
 
                            // save noise ID
                            stations[i].strings[j].antennas[k].noise_ID.push_back( noise_ID[l] );

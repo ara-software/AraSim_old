@@ -132,6 +132,7 @@ class Report {
         // variables we need for trigger
            // test selecting noise waveform
 
+           int noise_pass_nogo; // index for checking if any same noise_ID is used in different chs.
            int N_noise;     // needed number of noise waveforms (most cases, we will need only 1)
            int noise_ID[5];    // selected noise waveform ID (we should not need 5 noise waveforms, but just in case)
            int ch_ID;   // channel ID

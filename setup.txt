@@ -77,7 +77,7 @@ NOISE_EVENTS=100
 //NOISE_EVENTS=1000
 
 // DATA_SAVE_MODE 0 to save all data, 1 to remove most of data except geometric info, final golbal trigger data V_mimic (pure noise waveforms in trigger class will remain), 2 to remove final global trigger waveform V_mimic also (so just Physics info left)
-DATA_SAVE_MODE=0
+DATA_SAVE_MODE=2
 
 // WRITE_ALL_EVENTS 0 only write globally triggered events, 1 Write all event events including events that are not globally triggered
 // Note: NNU is the number of neutrinos that have been thrown in total, not just globally triggered events
