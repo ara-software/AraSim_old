@@ -7,9 +7,8 @@ From the conversation between Amy Connolly and Christopher Weaver,
 
      to run,
 
-     ./ray_solver 0 0 100 100 0 100
+     ./ray_solver --src_x=0 --src_y=0 --src_z=-100 --trg_x=100 --trg_y=0 --trg_z=-100
 
-     which means rays between the points (0,0,100) and (100,0,100).
-     I believe first point is for source and second is for target.
+     which means rays between the source point (0,0,-100) and target point (100,0,-100).
 
 
