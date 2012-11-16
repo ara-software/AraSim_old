@@ -131,6 +131,10 @@ cout<<"nnu x : "<<event->nnu.GetX()<<endl;
   double posnuY[settings->NNU];
   double posnuR[settings->NNU];
 
+
+  // global pass evt count
+  int pass_evts = 0;
+
   for (int inu=0;inu<settings->NNU;inu++) { // loop over neutrinos
 
 
@@ -159,10 +163,38 @@ cout<<"nnu x : "<<event->nnu.GetX()<<endl;
       }
 
       if ( report->stations[0].Global_Pass ) {
-          for ( int j=0; j<detector->params.number_of_strings_station; j++) {
-              for (int k=0; k<detector->params.number_of_antennas_string; k++) {
-                  cout<<"noise_ID : "<<report->stations[0].strings[j].antennas[k].noise_ID[0]<<endl;
+
+          pass_evts++;
+
+          if (pass_evts == 1) {
+
+              TCanvas *cTest = new TCanvas ("cTest","", 6400,3200);
+              cTest->Divide(4,4);
+
+              int canvasID = 1;
+
+              for ( int j=0; j<detector->params.number_of_strings_station; j++) {
+                  for (int k=0; k<detector->params.number_of_antennas_string; k++) {
+                      cout<<"noise_ID : "<<report->stations[0].strings[j].antennas[k].noise_ID[0]<<endl;
+
+                      // plot waveform
+                      double getx[512];
+                      double gety[512];
+                      for (int l=0; l<512; l++) {
+                          getx[l] = report->stations[0].strings[j].antennas[k].time[l];
+                          gety[l] = report->stations[0].strings[j].antennas[k].V_mimic[l];
+                      }
+                      TGraph *gTest = new TGraph (512, getx, gety);
+                      //cTest->cd();
+                      cTest->cd(canvasID);
+                      gTest->Draw("al");
+                      canvasID++;
+
+                  }
               }
+
+              cTest->Print("Test_one_waveform.pdf");
+
           }
       }
 
