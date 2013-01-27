@@ -113,4 +113,14 @@ public:
 	virtual double attenuationLength(double z, double frequency) const;
 };
 
+class constantRefractiveIndex : public RayTrace::indexOfRefractionModel{
+protected:
+    const double n_fixed;
+public:
+    constantRefractiveIndex(double n);
+    virtual double indexOfRefraction(double z) const;
+    virtual double indexOfRefractionDerivative(double z) const;
+	virtual void indexOfRefractionWithDerivative(double z, double& n, double& dndz) const;
+};
+
 #endif

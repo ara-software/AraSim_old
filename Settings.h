@@ -95,6 +95,19 @@ class Settings
 
         double RAYSOL_RANGE;    // direct distance limit to do raysolver. If distance between posnu and antenna is bigger than RAYSOL_RANGE, AraSim will not try RaySol for that event. Default : 3000 m
 
+        int CALPULSER_ON; // 0: no calpulsers in event list, 1: only throws calpulser 1 events, 2: only throws calpulser 2 events, 3: throws both calpulser 1 and 2 events alternating between them, 4: throws calpulser 1 and 2 events integrated with the simulated data (not yet implemented)
+    
+        int TESTBED_ON;
+    
+        int READGEOM;
+    
+        int V_MIMIC_MODE; // default : 2 : write out window for non-triggered events that is centered on the last bin in the trigger window, other options: 1 - write out window for non-triggered events that begins with the last bin in the trigger window, 0 - write out window for non-triggered events thatis the trigger window
+    
+        int USE_INSTALLED_TRIGGER_SETTINGS; // default : 0 - use idealized settings for the trigger
+        //other options:  1 - use trigger settings for installed stations, i.e. trigger window, etc.
+    
+        int NUM_INSTALLED_STATIONS; // the number of stations including the testbed that are in reality installed in the ice and have position and electronics information
+    
         int PICK_POSNU_DEPTH;  // whether use MAX_POSNU_DEPTH or not. 0 : pick posnu depth full ice depth, 1 : pick posnu depth only MAX_POSNU_DEPTH
 
         double MAX_POSNU_DEPTH;  // maximum posnu depth when above PICK_POSNU_DEPTH=1
@@ -106,27 +119,24 @@ class Settings
         double NNU_D_THETA;     // nnu theta variation from NNU_THETA, when NNU_THIS_THETA=1 case
 
 
-
-
-
- // below : values from icemc
-
-
-  int UNBIASED_SELECTION;
- int WHICH; // which payload to use 0=Anita-lite,1=Ross,2=Smex,3=make your own
-  int CYLINDRICALSYMMETRY; // is it cylindrically symmetric =1 if which=1,2, =0 if which=0
-  // if which=3 then 0 or 1  
-  double SIGMA_FACTOR; // factor to multiply cross section by for error analysis
-  int SIGMAPARAM; // 0=Reno, 1=Connolly et al. 2011 for cross section parametrization
-int YPARAM; // 0=Reno, 1=Connolly et al. 2011 for cross section parametrization
- int SIGNAL_FLUCT;  // 1=add noise fluctuation to signal or 0=do not
-  int TRIGGERSCHEME;  // frequency domain voltage, frequency domain energy, time domain diode integration
-  int ZEROSIGNAL;  // zero the signal to see how many of our hits are noise hits
+    // below : values from icemc
+    
+    
+    int UNBIASED_SELECTION;
+    int WHICH; // which payload to use 0=Anita-lite,1=Ross,2=Smex,3=make your own
+    int CYLINDRICALSYMMETRY; // is it cylindrically symmetric =1 if which=1,2, =0 if which=0
+    // if which=3 then 0 or 1
+    double SIGMA_FACTOR; // factor to multiply cross section by for error analysis
+    int SIGMAPARAM; // 0=Reno, 1=Connolly et al. 2011 for cross section parametrization
+    int YPARAM; // 0=Reno, 1=Connolly et al. 2011 for cross section parametrization
+    int SIGNAL_FLUCT;  // 1=add noise fluctuation to signal or 0=do not
+    int TRIGGERSCHEME;  // frequency domain voltage, frequency domain energy, time domain diode integration
+    int ZEROSIGNAL;  // zero the signal to see how many of our hits are noise hits
     int REMOVEPOLARIZATION; //Disable polarizations
-  
-  int EVENTSMAP;//whether draw the events distribution map
-  
-  int WHICHRAYS;  // how many rays to look at (1) direct only (2) direct and down-going.
+    
+    int EVENTSMAP;//whether draw the events distribution map
+    
+    int WHICHRAYS;  // how many rays to look at (1) direct only (2) direct and down-going.
 
 // trigger
 int LCPRCP; // 1 for circular polarization trigger, 0 for V and H

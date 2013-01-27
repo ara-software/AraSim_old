@@ -41,7 +41,15 @@ class Parameters {
     int number_of_strings_station;  // strings per station
     int number_of_antennas_string;  //antennas per string
     int number_of_surfaces_station;    //surface antennas per station
-
+    int number_of_channels; // number of channels for each regular (non-TestBed) station
+    
+    int number_of_strings_station_TB; //number of strings in the TestBed
+    int number_of_antennas_string_TB; //number of antennas in each string in the Testbed
+    int number_of_surfaces_station_TB; //number of surface stations for the TestBed
+    int number_of_channels_TB; // number of channels for the TestBed
+    
+    int num_of_channels[2];
+    
     int bore_hole_antenna_layout;   // bore hole antenna layout, 0 : VHVH, 1 : VHV, 2 : VHVV
 
     int number_of_strings;
@@ -49,6 +57,9 @@ class Parameters {
 
     double core_x;
     double core_y;
+    
+    int DeployedStations;
+    
         
 //    static const int freq_step = 60;
 //    static const int ang_step = 2664;
@@ -104,7 +115,7 @@ class Antenna : public Position {
 //    double z;
     int type;  // type 0 : v-pol (bicone), type 1 : h-pol (bowtie for testbed, QSC for ARA)
     int orient; // 0 : facing x, 1 : y, 2 : -x, 3 : -y.
-
+    
     double GetG(Detector *D, double freq, double theta, double phi);    // read gain value from Detector class
 
     //ClassDef(Antenna,1);
@@ -132,10 +143,15 @@ class ARA_station : public Position {
     public:
     vector <Antenna_string> strings;
     vector <Surface_antenna> surfaces;
-
-    ClassDef(ARA_station,1);
+    int StationID;
+    double TRIG_WINDOW; // in ns, the size of the trigger window used for the antennas
+    int NFOUR; // 2 X nbins for readout waveform - for fourier tranform
+    double TIMESTEP; // trigger and readout timestep
+    double DATA_BIN_SIZE;
     
+    ClassDef(ARA_station,1);
 };
+
 
 
 
@@ -203,14 +219,64 @@ class Detector {
         int ibinshift;
 
         void getDiodeModel(Settings *settings1);   // similar with icemc -> anita -> getDiodeModel().  set diode_real and fdiode_real values.
+    
+//    vector < vector < vector < int > > > ChannelfromStringAntenna;
+//    void SetChannelStringAntennaMap();
+    int GetChannelfromStringAntenna (int stationNum, int stringnum, int antennanum );
+    void GetSSAfromChannel ( int stationNum, int channelNum, int * antennaNum, int * stringNum );
+    
+    void UseAntennaInfo (int stationNum);
+   
+    
+    struct InstalledStation {
+        int nSurfaces;
+        int nStrings;
+        vector < int > surfaceChannels;
+        vector < vector < int > > VHChannel;
+        int nChannels;
+        int nChannelsVH;
+        vector < vector < int > > VHID;
+        vector < int > surfaceID;
 
+    };
+    
+    vector < InstalledStation > InstalledStations;
+    
+    struct IdealStation{
+        int nSurfaces;
+        int nStrings;
+        vector < int > surfaceChannels;
+        vector < vector < int > > VHChannel;
+        int nChannels;
+        int nChannelsVH;
+        vector < vector < int > > VHID;
+        vector < int > surfaceID;
+        vector < int > IDSurface;
+        vector < int > IDAntenna;
+        vector < int > IDString;
+        
+    };
+    
+    vector < IdealStation > IdealStations;
+    
 
+    void SetupInstalledStations();
+    void PrepareVectorsInstalled();
+
+    void SetupIdealStations();
+
+    int getAntennafromArbAntID( int stationID, int ant_ID);
+    int getStringfromArbAntID( int stationID, int ant_ID);
+    
+    
+    
         ~Detector();    //destructor
-
 
         ClassDef(Detector,1);
         
-
+    
+    
+    
 };
 
 

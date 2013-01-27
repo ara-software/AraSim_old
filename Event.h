@@ -32,8 +32,9 @@ class Event {
       string nuflavor;  // flavor of neutrino
       int nuflavorint;  // 1 : nue,  2 : numu,  3 : nutau
       int n_interactions;    // number of interaction inside the ice
-
-      void Initialize ();
+      int IsCalpulser;
+      
+    void Initialize ();
 
       void Choose_Evt_Type(Settings *settings1);    // choose the event type depend on the settings->EVENT_TYPE value
 

@@ -188,6 +188,7 @@ Primaries::Primaries(){//constructor
 
 
 
+
 }
 
 Primaries::~Primaries(){//default deconstructor
@@ -618,21 +619,42 @@ Interaction::Interaction (double pnu, Vector &nnu_org, string nuflavor, int &n_i
     setCurrent(primary1);   // set current of interaction (cc or nc) ! (this should be change if this is secondary interaction. if first interaction was cc, then there is no secondary cc)
     //cout<<"currentint : "<<currentint<<endl;
 
-
-
-
-    // pick posnu (position where nutrino interact with ice
+    // pick posnu (position where neutrino interact with ice
     // also they will calculate r_in (position nu enter the earth), r_enterice (position nu enter the ice), nuexitice (position nu exit the ice)
     //
+    if (settings1->CALPULSER_ON == 1)
+//    {
+//        PickExact(antarctica, detector, settings1, 50.27, 36.35*PI/180., 64.76*PI/180.); 
+//        primary1->IsCalpulser = 1;
+//    }
+    {
+        PickExact(antarctica, detector, settings1, 29.5, 2.81*PI/180., -93.6*PI/180.);
+        primary1->IsCalpulser = 1;
+    }
+    else if(settings1->CALPULSER_ON == 2)
+    {
+        PickExact(antarctica, detector, settings1, 47.18, 30.15*PI/180., -36.56*PI/180.); 
+        primary1->IsCalpulser = 2;
+    } 
+    else if (settings1->CALPULSER_ON == 3)
+    {
+        // insert code to switch between the two calpulsers here
+    }
+    else if (settings1->CALPULSER_ON == 0){
+        primary1->IsCalpulser = 0;
     if (settings1->INTERACTION_MODE == 0) {    // for pickunbiased. posnu will be all around antarctica
         //Interaction::PickUnbiased( antarctica );
         PickUnbiased( antarctica );
     }
     else if (settings1->INTERACTION_MODE == 1) {   // for picknear. posnu will be only near by ARA core
+        
         //Interaction::PickNear (antarctica, detector, settings1);
         PickNear (antarctica, detector, settings1);
+    } else if (settings1->INTERACTION_MODE == 2){       
+//        PickExact(antarctica, detector, settings1, 400, 0, 0); 
+          PickExact(antarctica, detector, settings1, 1000, -PI/4., -PI/3.);
     }
-
+    }
     //cout<<" Finished Pick posnu, r_in, r_enterice, nuexitice!!"<<endl;
 
 
@@ -692,10 +714,19 @@ Interaction::Interaction (double pnu, Vector &nnu_org, string nuflavor, int &n_i
                signal->GetSpread(pnu, emfrac, hadfrac, detector->GetFreq(i), d_theta_em[i], d_theta_had[i]);   // get max spread angle and save at d_theta_em[i] and d_theta_had[i]
                //cout<<"Freq : "<<detector->GetFreq(i)<<endl;
                //cout<<"GetSpread, theta_em : "<<d_theta_em[i]<<" theta_had : "<<d_theta_had[i]<<endl;
-
+               if (primary1->IsCalpulser == 0){
                vmmhz1m[i] = signal->GetVmMHz1m( pnu, detector->GetFreq(i) );   // get VmMHz at 1m at cherenkov angle at GetFreq(i)
                //cout<<"GetVmMHZ1m : "<<vmmhz1m[i]<<endl;
-
+               } else {
+                   if (i <56){
+                   vmmhz1m[i] = signal->GetVmMHz1mCalPulser( i );
+                   } else {
+                   vmmhz1m[i] =   signal->GetVmMHz1mCalPulser( 55 );
+                   }
+                   
+               }
+               
+//            std::cout << "Frequency bin:vmmhz1m:: " << i << " : " << vmmhz1m[i] << " : " << detector->GetFreqBin() << " : " << detector->GetFreq(i) << std::endl;
            }    // end detector freq bin numbers loop
 
        }// if SIMULATION_MODE = 0 (freq domain old method)
@@ -1134,7 +1165,7 @@ void Interaction::PickNear (IceModel *antarctica, Detector *detector, Settings *
     double X, Y, D;    // X,Y wrt detector core, and it's distance D
     
     //calculate posnu's X, Y wrt detector core
-    if (detector->Get_mode() == 1 || detector->Get_mode() == 2) {   // detector mode is for ARA stations;
+    if (detector->Get_mode() == 1 || detector->Get_mode() == 2 || detector->Get_mode() == 3) {   // detector mode is for ARA stations;
         X = detector->params.core_x + thisR*cos(thisPhi);
         Y = detector->params.core_y + thisR*sin(thisPhi);
         D = pow(X*X + Y*Y, 0.5);
@@ -1240,9 +1271,302 @@ void Interaction::PickNear (IceModel *antarctica, Detector *detector, Settings *
 }
 
 
+void Interaction::PickExact (IceModel *antarctica, Detector *detector, Settings *settings1, double thisR, double thisTheta, double thisPhi) {
+    
+    double range = settings1->POSNU_RADIUS;   // test value, 2km radius. can be changed to read from Settings
+    
+    //thisphi=gRandom->Rndm()*(maxphi-minphi)+minphi;
+    
+    //Interaction::PickAnyDirection(); // first pick the neutrino direction
+    
+    //pick random posnu within boundary 2km radius
+    //double thisR = gRandom->Rndm() * (range);
+   // for uniform distribution
+    
+    double X, Y, Z, D;    // X,Y wrt detector core, and it's distance D
+    double sumX = 0.;
+    double sumY = 0.; 
+    double sumZ = 0.;
+    int count = 0;
 
+    for (int i = 0; i < detector->stations[0].strings.size(); i++){
+        for (int j = 0; j < detector->stations[0].strings[i].antennas.size(); j++){
+//            std::cout << "AntennaPos:X:Y:Z:: " << detector->stations[0].strings[i].antennas[j].GetX() <<  " : " << detector->stations[0].strings[i].antennas[j].GetY() << " : " << detector->stations[0].strings[i].antennas[j].GetZ() <<std::endl;
+            sumX = sumX + detector->stations[0].strings[i].antennas[j].GetX();
+            sumY = sumY + detector->stations[0].strings[i].antennas[j].GetY();
+            sumZ = sumZ + detector->stations[0].strings[i].antennas[j].GetZ();
+            count++;
+    }
+    }
+    double avgX = sumX/double(count);
+    double avgY = sumY/double(count);
+    double avgZ = sumZ/double(count);
+    
+    
+//    std::cout << "DetectorStation:X:Y:: "  << detector->stations[0].GetX() << " : " << detector->stations[0].GetY() << std::endl;
+    
 
+    //calculate posnu's X, Y wrt detector core
+    if (detector->Get_mode() == 1 || detector->Get_mode() == 2 ||detector->Get_mode() == 3) {   // detector mode is for ARA stations;
+//        X = detector->params.core_x + thisR*cos(thisPhi)*cos(thisTheta);
+//        Y = detector->params.core_y + thisR*sin(thisPhi)*cos(thisTheta);
+        X = avgX + thisR*cos(thisPhi)*cos(thisTheta);
+        Y = avgY + thisR*sin(thisPhi)*cos(thisTheta);
+        D = pow(X*X + Y*Y, 0.5);
+        //interaction1->posnu.SetThetaPhi( D/antarctica->Surface(0., 0.), atan2(Y,X) ); 
+    }
+    //calculate posnu's X, Y wrt to (0,0)
+    else {  // for mode = 0 (testbed)
+        X = thisR*cos(thisPhi)*cos(thisTheta);
+        Y = thisR*sin(thisPhi)*cos(thisTheta);
+        D = pow(X*X + Y*Y, 0.5);
+    }
 
+//    double centerZ = (detector->stations[0].strings[0].antennas[1].GetZ()+ detector->stations[0].strings[0].antennas[2].GetZ())/2.;
+    Z = avgZ + thisR*sin(thisTheta);
+//    std::cout << "CenterPosition:X:Y:Z:: "  << avgX << " : " << avgY << " : " << avgZ <<  std::endl;
+
+    //std::cout << "Central position: " << centerZ << " : " << Z << " : " << X << " : " << Y << std::endl;
+
+    
+    posnu.SetXYZ(X,Y,Z);
+//    std::cout << "Posnu:X:Y:Z:: "  << posnu.GetX() << " : " << posnu.GetY() << " : " << posnu.GetZ() <<  std::endl;
+
+    //Interaction::FlattoEarth(antarctica, X, Y, D);  //change to Earth shape and set depth (always in the ice)
+    //FlattoEarth(antarctica, X, Y, D);  //change to Earth shape and set depth (always in the ice)
+    
+    
+    
+    
+    
+    pickposnu = 1;  // all PickNear sucess for pickposnu
+    
+    // set the position where nu enter the earth
+    r_in = antarctica->WhereDoesItEnter(posnu, nnu);
+    
+    // set the position where nu exit the earth
+    nuexit = antarctica->WhereDoesItLeave(posnu, nnu);
+    
+    // now set the position where nu enter the ice
+    if (antarctica->IceThickness(r_in) && r_in.Lat()<antarctica->GetCOASTLINE()) { // if r_in (position where nu enter the earth) is antarctic ice
+        r_enterice = r_in;  // nu enter the earth is same with nu enter the ice
+    }
+    else {  // nu enter the rock of earth. so we have to calculate the r_enterice
+        Position thisnuenterice_tmp1;
+        Position thisnuenterice_tmp2;
+        // now first rough calculation with step size 5.E4.
+        if (WhereDoesItEnterIce(posnu,nnu,5.E4,
+                                thisnuenterice_tmp1, antarctica)) {
+            thisnuenterice_tmp2=thisnuenterice_tmp1+5.E4*nnu;   // get one more step from 5.E4. calculation
+            
+            if (WhereDoesItEnterIce(thisnuenterice_tmp2,nnu,5.E3, // second pass with finer binning
+                                    thisnuenterice_tmp1, antarctica)) {
+                thisnuenterice_tmp2=thisnuenterice_tmp1+5.E3*nnu;   // get one more step from 5.E3. calculation
+                
+                if (WhereDoesItEnterIce(thisnuenterice_tmp2,nnu,5.E2, // third pass with finer binning
+                                        thisnuenterice_tmp1, antarctica)) {
+                    thisnuenterice_tmp2=thisnuenterice_tmp1+5.E2*nnu;   // get one more step from 5.E2. calculation
+                    
+                    if (WhereDoesItEnterIce(thisnuenterice_tmp2,nnu,5.E1, // fourth pass with finer binning (final)
+                                            thisnuenterice_tmp1, antarctica)) {
+                        thisnuenterice_tmp2=thisnuenterice_tmp1;   // max 50m step result
+                    }
+                }
+            }
+        }
+        else {  // no result from the first step calculation
+            cout<<"no nuenterice result from calculation!!!"<<endl;
+            thisnuenterice_tmp2 = posnu;
+        }
+        r_enterice = thisnuenterice_tmp2;
+    }// else; nu enter the rock of earth, so calculated the ice enter point
+    
+    
+    // now we have to calcuate the nu ice exit position
+    if (antarctica->IceThickness(nuexit) && nuexit.Lat()<antarctica->GetCOASTLINE()) { // if nuexit (position where nu exit the earth) is antarctic ice
+        nuexitice = nuexit;  // nu exit the earth is same with nu exit the ice
+    }
+    else {  // nu exit the rock of earth. so we have to calculate the nuexitice
+        Position thisnuexitice_tmp1;
+        Position thisnuexitice_tmp2;
+        // now first rough calculation with step size 5.E4.
+        if (WhereDoesItExitIceForward(posnu,nnu,5.E4,
+                                      thisnuexitice_tmp1, antarctica)) {
+            thisnuexitice_tmp2=thisnuexitice_tmp1-5.E4*nnu;   // get one more step from 5.E4. calculation
+            
+            if (WhereDoesItExitIceForward(thisnuexitice_tmp2,nnu,5.E3, // second pass with finer binning
+                                          thisnuexitice_tmp1, antarctica)) {
+                thisnuexitice_tmp2=thisnuexitice_tmp1-5.E3*nnu;   // get one more step from 5.E3. calculation
+                
+                if (WhereDoesItExitIceForward(thisnuexitice_tmp2,nnu,5.E2, // third pass with finer binning
+                                              thisnuexitice_tmp1, antarctica)) {
+                    thisnuexitice_tmp2=thisnuexitice_tmp1-5.E2*nnu;   // get one more step from 5.E2. calculation
+                    
+                    if (WhereDoesItExitIceForward(thisnuexitice_tmp2,nnu,5.E1, // fourth pass with finer binning (final)
+                                                  thisnuexitice_tmp1, antarctica)) {
+                        thisnuexitice_tmp2=thisnuexitice_tmp1;   // max 50m step result
+                    }
+                }
+            }
+        }
+        else {  // no result from the first step calculation
+            cout<<"no nuexitice result from calculation!!!"<<endl;
+            thisnuexitice_tmp2 = posnu;
+        }
+        nuexitice = thisnuexitice_tmp2;
+    }// else; nu enter the rock of earth, so calculated the ice enter point
+    
+    
+    
+}
+/*
+void Interaction::PickExactXYZ (IceModel *antarctica, Detector *detector, Settings *settings1, double X, double Y, double Z) {
+    
+    double range = settings1->POSNU_RADIUS;   // test value, 2km radius. can be changed to read from Settings
+    
+    //thisphi=gRandom->Rndm()*(maxphi-minphi)+minphi;
+    
+    //Interaction::PickAnyDirection(); // first pick the neutrino direction
+    
+    //pick random posnu within boundary 2km radius
+    //double thisR = gRandom->Rndm() * (range);
+    // for uniform distribution
+    
+    double X, Y, Z, D;    // X,Y wrt detector core, and it's distance D
+    double sumX = 0.;
+    double sumY = 0.; 
+    double sumZ = 0.;
+    int count = 0;
+    
+    for (int i = 0; i < 4; i++){
+        for (int j = 0; j < 4; j++){
+            sumX = sumX + detector->stations[0].strings[i].antennas[j].GetX();
+            sumY = sumY + detector->stations[0].strings[i].antennas[j].GetY();
+            sumZ = sumZ + detector->stations[0].strings[i].antennas[j].GetZ();
+            count++;
+        }
+    }
+    double avgX = sumX/double(count);
+    double avgY = sumY/double(count);
+    double avgZ = sumZ/double(count);
+    
+    
+    //    std::cout << "DetectorStation:X:Y:: "  << detector->stations[0].GetX() << " : " << detector->stations[0].GetY() << std::endl;
+    
+    
+    //calculate posnu's X, Y wrt detector core
+    if (detector->Get_mode() == 1 || detector->Get_mode() == 2) {   // detector mode is for ARA stations;
+        //        X = detector->params.core_x + thisR*cos(thisPhi)*cos(thisTheta);
+        //        Y = detector->params.core_y + thisR*sin(thisPhi)*cos(thisTheta);
+        X = avgX + thisR*cos(thisPhi)*cos(thisTheta);
+        Y = avgY + thisR*sin(thisPhi)*cos(thisTheta);
+        D = pow(X*X + Y*Y, 0.5);
+        //interaction1->posnu.SetThetaPhi( D/antarctica->Surface(0., 0.), atan2(Y,X) ); 
+    }
+    //calculate posnu's X, Y wrt to (0,0)
+    else {  // for mode = 0 (testbed)
+        X = thisR*cos(thisPhi)*cos(thisTheta);
+        Y = thisR*sin(thisPhi)*cos(thisTheta);
+        D = pow(X*X + Y*Y, 0.5);
+    }
+    
+    //    double centerZ = (detector->stations[0].strings[0].antennas[1].GetZ()+ detector->stations[0].strings[0].antennas[2].GetZ())/2.;
+    Z = avgZ + thisR*sin(thisTheta);
+    
+    //std::cout << "Central position: " << centerZ << " : " << Z << " : " << X << " : " << Y << std::endl;
+    
+    
+    posnu.SetXYZ(X,Y,Z);
+    //    std::cout << "Posnu:X:Y:Z:: "  << posnu.GetX() << " : " << posnu.GetY() << " : " << posnu.GetZ() <<  std::endl;
+    
+    //Interaction::FlattoEarth(antarctica, X, Y, D);  //change to Earth shape and set depth (always in the ice)
+    //FlattoEarth(antarctica, X, Y, D);  //change to Earth shape and set depth (always in the ice)
+    
+    
+    
+    
+    
+    pickposnu = 1;  // all PickNear sucess for pickposnu
+    
+    // set the position where nu enter the earth
+    r_in = antarctica->WhereDoesItEnter(posnu, nnu);
+    
+    // set the position where nu exit the earth
+    nuexit = antarctica->WhereDoesItLeave(posnu, nnu);
+    
+    // now set the position where nu enter the ice
+    if (antarctica->IceThickness(r_in) && r_in.Lat()<antarctica->GetCOASTLINE()) { // if r_in (position where nu enter the earth) is antarctic ice
+        r_enterice = r_in;  // nu enter the earth is same with nu enter the ice
+    }
+    else {  // nu enter the rock of earth. so we have to calculate the r_enterice
+        Position thisnuenterice_tmp1;
+        Position thisnuenterice_tmp2;
+        // now first rough calculation with step size 5.E4.
+        if (WhereDoesItEnterIce(posnu,nnu,5.E4,
+                                thisnuenterice_tmp1, antarctica)) {
+            thisnuenterice_tmp2=thisnuenterice_tmp1+5.E4*nnu;   // get one more step from 5.E4. calculation
+            
+            if (WhereDoesItEnterIce(thisnuenterice_tmp2,nnu,5.E3, // second pass with finer binning
+                                    thisnuenterice_tmp1, antarctica)) {
+                thisnuenterice_tmp2=thisnuenterice_tmp1+5.E3*nnu;   // get one more step from 5.E3. calculation
+                
+                if (WhereDoesItEnterIce(thisnuenterice_tmp2,nnu,5.E2, // third pass with finer binning
+                                        thisnuenterice_tmp1, antarctica)) {
+                    thisnuenterice_tmp2=thisnuenterice_tmp1+5.E2*nnu;   // get one more step from 5.E2. calculation
+                    
+                    if (WhereDoesItEnterIce(thisnuenterice_tmp2,nnu,5.E1, // fourth pass with finer binning (final)
+                                            thisnuenterice_tmp1, antarctica)) {
+                        thisnuenterice_tmp2=thisnuenterice_tmp1;   // max 50m step result
+                    }
+                }
+            }
+        }
+        else {  // no result from the first step calculation
+            cout<<"no nuenterice result from calculation!!!"<<endl;
+            thisnuenterice_tmp2 = posnu;
+        }
+        r_enterice = thisnuenterice_tmp2;
+    }// else; nu enter the rock of earth, so calculated the ice enter point
+    
+    
+    // now we have to calcuate the nu ice exit position
+    if (antarctica->IceThickness(nuexit) && nuexit.Lat()<antarctica->GetCOASTLINE()) { // if nuexit (position where nu exit the earth) is antarctic ice
+        nuexitice = nuexit;  // nu exit the earth is same with nu exit the ice
+    }
+    else {  // nu exit the rock of earth. so we have to calculate the nuexitice
+        Position thisnuexitice_tmp1;
+        Position thisnuexitice_tmp2;
+        // now first rough calculation with step size 5.E4.
+        if (WhereDoesItExitIceForward(posnu,nnu,5.E4,
+                                      thisnuexitice_tmp1, antarctica)) {
+            thisnuexitice_tmp2=thisnuexitice_tmp1-5.E4*nnu;   // get one more step from 5.E4. calculation
+            
+            if (WhereDoesItExitIceForward(thisnuexitice_tmp2,nnu,5.E3, // second pass with finer binning
+                                          thisnuexitice_tmp1, antarctica)) {
+                thisnuexitice_tmp2=thisnuexitice_tmp1-5.E3*nnu;   // get one more step from 5.E3. calculation
+                
+                if (WhereDoesItExitIceForward(thisnuexitice_tmp2,nnu,5.E2, // third pass with finer binning
+                                              thisnuexitice_tmp1, antarctica)) {
+                    thisnuexitice_tmp2=thisnuexitice_tmp1-5.E2*nnu;   // get one more step from 5.E2. calculation
+                    
+                    if (WhereDoesItExitIceForward(thisnuexitice_tmp2,nnu,5.E1, // fourth pass with finer binning (final)
+                                                  thisnuexitice_tmp1, antarctica)) {
+                        thisnuexitice_tmp2=thisnuexitice_tmp1;   // max 50m step result
+                    }
+                }
+            }
+        }
+        else {  // no result from the first step calculation
+            cout<<"no nuexitice result from calculation!!!"<<endl;
+            thisnuexitice_tmp2 = posnu;
+        }
+        nuexitice = thisnuexitice_tmp2;
+    }// else; nu enter the rock of earth, so calculated the ice enter point
+    
+    
+    
+}
+*/
 
 
 

@@ -9,8 +9,11 @@
 #include "Vector.h"
 #include <fstream>
 #include <iomanip>
+#include "Settings.h"
+#ifndef __CINT__
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
+#endif
 
 class Position;
 class IceModel;
@@ -48,13 +51,14 @@ class RaySolver {
 
     public:
         RaySolver();
-        ~RaySolver();
-
 //        RaySolver(int argc, char* argv[]);
 
         void test1();
-        void Solve_Ray_org(Position &source, Position &target, std::vector < std::vector <double> > &outputs);
-        void Solve_Ray(Position &source, Position &target, IceModel *antarctica, std::vector < std::vector <double> > &outputs);
+        void Solve_Ray_org(Position &source, Position &target, std::vector < std::vector <double> > &outputs, Settings *settings1);
+
+        void Solve_Ray_org (double source_x, double source_y, double source_z, double target_x, double target_y, double target_z, double &travel_time, double &travel_dist, int &no_sol, Settings *settings1);
+
+        void Solve_Ray(Position &source, Position &target, IceModel *antarctica, std::vector < std::vector <double> > &outputs, Settings *settings1);
 
         int source_over_surface;
         int solution_toggle;    // no solution : 0  solution exist : 1

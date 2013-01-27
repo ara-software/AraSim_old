@@ -173,9 +173,9 @@ cout<<"nnu x : "<<event->nnu.GetX()<<endl;
 
               int canvasID = 1;
 
-              for ( int j=0; j<detector->params.number_of_strings_station; j++) {
-                  for (int k=0; k<detector->params.number_of_antennas_string; k++) {
-                      cout<<"noise_ID : "<<report->stations[0].strings[j].antennas[k].noise_ID[0]<<endl;
+          for ( int j=0; j<detector->stations[0].size(); j++) {
+              for (int k=0; k<detector->stations[0].strings[j].size(); k++) {
+                  cout<<"noise_ID : "<<report->stations[0].strings[j].antennas[k].noise_ID[0]<<endl;
 
                       // plot waveform
                       double getx[512];
@@ -1011,8 +1011,8 @@ cVmMHz -> Print("VmMHz_evt0.pdf");
 
 AraTree2->GetEvent(0);
 for (int i=0; i<detector->params.number_of_stations; i++) {
-    for (int j=0; j<detector->params.number_of_strings_station; j++) {
-        for (int k=0; k<detector->params.number_of_antennas_string; k++) {
+    for (int j=0; j<detector->stations[i].size(); j++) {
+        for (int k=0; k<detector->stations[i].strings[j].size(); k++) {
             cout<<"Rank of stations["<<i<<"].strings["<<j<<"].antennas["<<k<<"] = "<<report->stations[i].strings[j].antennas[k].Rank[0]<<endl;
             cout<<"PeakV of stations["<<i<<"].strings["<<j<<"].antennas["<<k<<"] = "<<report->stations[i].strings[j].antennas[k].PeakV[0]<<endl;
             cout<<"pathtime of stations["<<i<<"].strings["<<j<<"].antennas["<<k<<"] = "<<report->stations[i].strings[j].antennas[k].arrival_time[0]<<endl;

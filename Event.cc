@@ -3,6 +3,7 @@
 #include "Settings.h"
 #include "Spectra.h"
 #include "Primaries.h"
+#include "TMath.h"
 #include "Report.h"
 
 ClassImp(Event);
@@ -32,7 +33,17 @@ Event::Event (Settings *settings1, Spectra *spectra1, Primaries *primary1, IceMo
 
     if (Event_type == 0) { // if only neutrino events exist
 
+        
         pnu = spectra1->GetNuEnergy();
+//        cout << pnu << endl;
+/*
+        double hereTheta = 10.;
+        Vector output;
+        output.SetX(-1.*TMath::Sin(hereTheta*3.1415926535/180.));
+        output.SetY(0.);
+        output.SetZ(TMath::Cos(hereTheta*3.1415926535/180.));
+        nnu = output;
+*/
         nuflavor = primary1->GetNuFlavor();
 
         if (settings1->NNU_THIS_THETA==1) {    // set specific theta angle for nnu
@@ -54,7 +65,7 @@ Event::Event (Settings *settings1, Spectra *spectra1, Primaries *primary1, IceMo
 
         Nu_temp = new Interaction (pnu, nnu, nuflavor, n_interactions, icemodel, detector, settings1, primary1, signal, sec1 );
         //report_tmp = new Report(detector ,settings1);
-
+        
         Nu_Interaction.push_back(*Nu_temp);  // for the first interaction
         //test_report.push_back(*report_tmp);
 
@@ -71,7 +82,10 @@ Event::Event (Settings *settings1, Spectra *spectra1, Primaries *primary1, IceMo
 */
 
         
-    }
+    } 
+
+    IsCalpulser = primary1->IsCalpulser;
+
 
 
 

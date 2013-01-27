@@ -5,16 +5,12 @@
 #include <cstring>
 #include <sstream>
 #include <iostream>
+#include "Settings.h"
 
 
 RaySolver::RaySolver() {
     //default constructor
     //
-}
-
-
-RaySolver::~RaySolver() {
-
 }
 
 
@@ -72,7 +68,7 @@ void RaySolver::Earth_to_Flat_same_angle (Position &source, Position &target, Ic
 //  input positions are values for flat surface where z = 0 is at ice surface
 //
 //
-void RaySolver::Solve_Ray_org (Position &source, Position &target, std::vector < std::vector <double> > &outputs) {
+void RaySolver::Solve_Ray_org (Position &source, Position &target, std::vector < std::vector <double> > &outputs, Settings *settings1) {
                         
     outputs.clear();
 
@@ -281,9 +277,16 @@ void RaySolver::Solve_Ray_org (Position &source, Position &target, std::vector <
     requiredAccuracy = 0.2;
     frequency = 300;
     polarization = RayTrace::pi/2;
+    
+    if (settings1->NOFZ == 1){
+    
     refractionModel=boost::shared_ptr<exponentialRefractiveIndex>(new exponentialRefractiveIndex(ns,nd,nc));
     attenuationModel=boost::shared_ptr<basicAttenuationModel>(new basicAttenuationModel);
 
+    } else if (settings1->NOFZ == 0){
+        refractionModel=boost::shared_ptr<constantRefractiveIndex>(new constantRefractiveIndex(1.48));
+        attenuationModel=boost::shared_ptr<basicAttenuationModel>(new basicAttenuationModel);
+    }
 
 	
 	unsigned short refl = RayTrace::NoReflection;
@@ -300,11 +303,44 @@ void RaySolver::Solve_Ray_org (Position &source, Position &target, std::vector <
 	trg.SetZ(trg_z);
 */
 
+
 	std::vector<RayTrace::TraceRecord> paths;
+	std::vector<RayTrace::TraceRecord> paths_exc;
 	
 	RayTrace::TraceFinder tf(refractionModel,attenuationModel);
+
+	int sol_cnt;
+        int sol_error;
+
+	int sol_cnt_exc;
+        int sol_error_exc;
+
+        int SrcTrgExc = 0;  // 0 not exchanged, 1 exchanged
+
 	
-	paths=tf.findPaths(src,trg,frequency/1.0e3,polarization,refl,requiredAccuracy);
+	paths=tf.findPaths(src,trg,frequency/1.0e3,polarization, sol_cnt, sol_error, refl,requiredAccuracy);
+
+        // have to fix src trg exchanged case angle outputs
+        //
+        if ( sol_cnt > 0 && sol_error > 0 ) {   // this case do findPahts again with src, trg exchanged
+            paths_exc=tf.findPaths(trg,src,frequency/1.0e3,polarization, sol_cnt_exc, sol_error_exc, refl,requiredAccuracy);
+
+            if ( sol_error > sol_error_exc ) {  // exchanged one is better (less sol_error)
+                paths = paths_exc;
+                SrcTrgExc = 1;
+            }
+            else if (sol_error == sol_error_exc) {  // sol_error are same for both paths. Then use the better miss dist.
+                std::vector<RayTrace::TraceRecord>::const_iterator it_tmp=paths.begin();
+                std::vector<RayTrace::TraceRecord>::const_iterator it_tmp_exc=paths_exc.begin();
+                if ( it_tmp->miss > it_tmp_exc->miss ) {    // if fist one miss dist is worse
+                    paths = paths_exc;
+                    SrcTrgExc = 1;
+                }
+            }
+        }
+
+
+
 	if(showLabels){
 		if(!paths.empty()){
 			//--------------------------------------------------
@@ -328,7 +364,8 @@ void RaySolver::Solve_Ray_org (Position &source, Position &target, std::vector <
 	}
 	if(!dumpPaths){
 		for(std::vector<RayTrace::TraceRecord>::const_iterator it=paths.begin(); it!=paths.end(); ++it){
-			double signal = tf.signalStrength(*it,src,trg,refl);
+                    if ( it->sol_error == 0 ) {
+			//double signal = tf.signalStrength(*it,src,trg,refl, sol_error );
 			//--------------------------------------------------
 			// std::cout << std::left << std::fixed 
 			// << std::setprecision(2) << std::setw(15) << it->pathLen << ' '
@@ -343,20 +380,36 @@ void RaySolver::Solve_Ray_org (Position &source, Position &target, std::vector <
 			// << std::endl;
 			//-------------------------------------------------- 
 
-                        outputs.resize(3);
+                        if ( SrcTrgExc == 0 ) { // src, trg as original
+                            outputs.resize(3);
 
-                        outputs[0].push_back(it->pathLen);
-                        outputs[1].push_back(it->launchAngle);
-                        outputs[2].push_back(it->receiptAngle);
-                        //std::cout<<"outputs[0]["<<sol_no<<"] : "<<outputs[0][sol_no]<<"pathLen : "<<it->pathLen<<"\n";
-                        sol_no++;
+                            outputs[0].push_back(it->pathLen);
+                            outputs[1].push_back(it->launchAngle);
+                            outputs[2].push_back(it->receiptAngle);
+                            //std::cout<<"outputs[0]["<<sol_no<<"] : "<<outputs[0][sol_no]<<"pathLen : "<<it->pathLen<<"\n";
+                            sol_no++;
+                        }
+                        else if ( SrcTrgExc == 1 ) { // src, trg exchanged
+                            outputs.resize(3);
+
+                            outputs[0].push_back(it->pathLen);
+                            outputs[1].push_back(PI - it->receiptAngle);
+                            outputs[2].push_back(PI - it->launchAngle);
+                            //std::cout<<"outputs[0]["<<sol_no<<"] : "<<outputs[0][sol_no]<<"pathLen : "<<it->pathLen<<"\n";
+                            sol_no++;
+                        }
+                    }
 
 		}
 	}
 	else{ //do write out path data
+            // I didn't fix this part yet!
+            int sol_error;
+
 		pathPrinter<RayTrace::minimalRayPosition> print;
 		for(std::vector<RayTrace::TraceRecord>::const_iterator it=paths.begin(); it!=paths.end(); ++it){
-			tf.doTrace<RayTrace::minimalRayPosition>(src_z, it->launchAngle, RayTrace::rayTargetRecord(trg_z,sqrt((trg_x-src_x)*(trg_x-src_x)+(trg_y-src_y)*(trg_y-src_y))), refl, 0.0, 0.0, &print);
+			//tf.doTrace<RayTrace::minimalRayPosition>(src_z, it->launchAngle, RayTrace::rayTargetRecord(trg_z,sqrt((trg_x-src_x)*(trg_x-src_x)+(trg_y-src_y)*(trg_y-src_y))), refl, 0.0, 0.0, &print);
+			tf.doTrace<RayTrace::minimalRayPosition>(src_z, it->launchAngle, RayTrace::rayTargetRecord(trg_z,sqrt((trg_x-src_x)*(trg_x-src_x)+(trg_y-src_y)*(trg_y-src_y))), refl, 0.0, 0.0, sol_error, &print);
 			//std::cout << "\n\n";
 		}
 	}
@@ -368,7 +421,202 @@ void RaySolver::Solve_Ray_org (Position &source, Position &target, std::vector <
 
 
 
+// 
+//
+//  Solve_Ray_org : don't change any positions from earth to flat. (also this version read x, y, z conponents and output travel time and travel distance only)
+//
+//  input positions are values for flat surface where z = 0 is at ice surface
+//
+//
+void RaySolver::Solve_Ray_org (double source_x, double source_y, double source_z, double target_x, double target_y, double target_z, double &travel_time, double &travel_dist, int &no_sol, Settings *settings1) {
+                        
+    //outputs.clear();
 
+    int sol_no = 0;                 // solution number (for vector solutions)
+
+    //Position source_tmp = source;
+    //Position target_tmp = target;
+
+    int test;
+
+    // set error message in case posnu is above Surface
+    if (source_z > 0.) {
+        source_over_surface = 1;
+    }
+    else {
+        source_over_surface = 0;
+    }
+
+
+
+//--------------------------------------------------
+// int main(int argc, char* argv[]){
+//-------------------------------------------------- 
+	double ns,nd,nc;
+	double src_x, src_y, src_z, trg_x, trg_y, trg_z;
+	Vector src,trg;
+	bool showLabels=true;
+	bool dumpPaths=false;
+	bool surface_reflect;
+	bool bedrock_reflect;
+	double requiredAccuracy;
+	double frequency;
+	double polarization;
+	boost::shared_ptr<RayTrace::indexOfRefractionModel> refractionModel;
+	std::string refractionName;
+	boost::shared_ptr<RayTrace::attenuationModel> attenuationModel;
+	std::string attenuationName;
+	
+
+    // Defaults!!!!
+    //src = source_tmp;
+    //trg = target_tmp;
+    
+    ns = 1.35;
+    nd = 1.78;
+    nc = 0.0132;
+    
+    surface_reflect = true;
+    bedrock_reflect = false;
+    //requiredAccuracy = 0.1;
+    //requiredAccuracy = 0.5;
+    requiredAccuracy = 0.2;
+    frequency = 300;
+    polarization = RayTrace::pi/2;
+    
+    if (settings1->NOFZ == 1){
+    
+    refractionModel=boost::shared_ptr<exponentialRefractiveIndex>(new exponentialRefractiveIndex(ns,nd,nc));
+    attenuationModel=boost::shared_ptr<basicAttenuationModel>(new basicAttenuationModel);
+
+    } else if (settings1->NOFZ == 0){
+        refractionModel=boost::shared_ptr<constantRefractiveIndex>(new constantRefractiveIndex(1.48));
+        attenuationModel=boost::shared_ptr<basicAttenuationModel>(new basicAttenuationModel);
+    }
+
+	
+	unsigned short refl = RayTrace::NoReflection;
+	if(surface_reflect)
+		refl|=RayTrace::SurfaceReflection;
+	if(bedrock_reflect)
+		refl|=RayTrace::BedrockReflection;
+
+	src.SetX(source_x);
+	src.SetY(source_y);
+	src.SetZ(source_z);
+	trg.SetX(target_x);
+	trg.SetY(target_y);
+	trg.SetZ(target_z);
+
+
+
+
+
+	std::vector<RayTrace::TraceRecord> paths;
+	std::vector<RayTrace::TraceRecord> paths_exc;
+	
+	RayTrace::TraceFinder tf(refractionModel,attenuationModel);
+
+	int sol_cnt;
+        int sol_error;
+
+	int sol_cnt_exc;
+        int sol_error_exc;
+
+        int SrcTrgExc = 0;  // 0 not exchanged, 1 exchanged
+
+	
+	paths=tf.findPaths(src,trg,frequency/1.0e3,polarization, sol_cnt, sol_error, refl,requiredAccuracy);
+
+        // have to fix src trg exchanged case angle outputs
+        //
+        if ( sol_cnt > 0 && sol_error > 0 ) {   // this case do findPahts again with src, trg exchanged
+            paths_exc=tf.findPaths(trg,src,frequency/1.0e3,polarization, sol_cnt_exc, sol_error_exc, refl,requiredAccuracy);
+
+            if ( sol_error > sol_error_exc ) {  // exchanged one is better (less sol_error)
+                paths = paths_exc;
+                SrcTrgExc = 1;
+            }
+            else if (sol_error == sol_error_exc) {  // sol_error are same for both paths. Then use the better miss dist.
+                std::vector<RayTrace::TraceRecord>::const_iterator it_tmp=paths.begin();
+                std::vector<RayTrace::TraceRecord>::const_iterator it_tmp_exc=paths_exc.begin();
+                if ( it_tmp->miss > it_tmp_exc->miss ) {    // if fist one miss dist is worse
+                    paths = paths_exc;
+                    SrcTrgExc = 1;
+                }
+            }
+        }
+
+
+
+
+
+
+	if(showLabels){
+		if(!paths.empty()){
+			//--------------------------------------------------
+			// std::cout << std::fixed 
+			// << "path length (m) "
+			// << "path time (ns) "
+			// << "launch angle "
+			// << "recipt angle "
+			// << "reflect angle "
+			// << "miss dist. "
+			// << "attenuation "
+			// << "amplitude"
+			// << std::endl;
+			//-------------------------------------------------- 
+                        solution_toggle = 1;
+		}
+		else {
+			//std::cout << "No solutions" << std::endl;
+                        solution_toggle = 0;
+                }
+	}
+	if(!dumpPaths){
+		for(std::vector<RayTrace::TraceRecord>::const_iterator it=paths.begin(); it!=paths.end(); ++it){
+                    if ( it->sol_error == 0 ) {
+			//double signal = tf.signalStrength(*it,src,trg,refl);
+			//--------------------------------------------------
+			// std::cout << std::left << std::fixed 
+			// << std::setprecision(2) << std::setw(15) << it->pathLen << ' '
+			// << std::setprecision(2) << std::setw(14) << 1e9*it->pathTime << ' '
+			// << std::setprecision(4) << std::setw(12) << it->launchAngle << ' '
+			// << std::setprecision(4) << std::setw(12) << it->receiptAngle << ' '
+			// << std::setprecision(3) << std::setw(13) << it->reflectionAngle << ' '
+			// << std::setprecision(2) << std::setw(10) << it->miss << ' ' 
+			// << std::scientific << std::setprecision(4) << std::setw(11) << it->attenuation << ' '
+			// //amplitude calculation, ignoring frequency response at both ends, angular response of receiver
+			// << std::setw(10) << (it->attenuation*signal)
+			// << std::endl;
+			//-------------------------------------------------- 
+
+                        sol_no++;
+                        if (sol_no == 1) { // save only first sol
+                            travel_dist = it->pathLen;
+                            travel_time = it->pathTime; // in s
+                        }
+                    }
+
+		}
+	}
+	else{ //do write out path data
+            // I didn't fix this part yet!
+            int sol_error;
+
+		pathPrinter<RayTrace::minimalRayPosition> print;
+		for(std::vector<RayTrace::TraceRecord>::const_iterator it=paths.begin(); it!=paths.end(); ++it){
+			//tf.doTrace<RayTrace::minimalRayPosition>(src_z, it->launchAngle, RayTrace::rayTargetRecord(trg_z,sqrt((trg_x-src_x)*(trg_x-src_x)+(trg_y-src_y)*(trg_y-src_y))), refl, 0.0, 0.0, &print);
+			tf.doTrace<RayTrace::minimalRayPosition>(src_z, it->launchAngle, RayTrace::rayTargetRecord(trg_z,sqrt((trg_x-src_x)*(trg_x-src_x)+(trg_y-src_y)*(trg_y-src_y))), refl, 0.0, 0.0, sol_error, &print);
+			//std::cout << "\n\n";
+		}
+	}
+	//--------------------------------------------------
+	// return(0);
+	//-------------------------------------------------- 
+
+        no_sol = sol_no;
+}
 
 
 
@@ -385,7 +633,7 @@ void RaySolver::Solve_Ray_org (Position &source, Position &target, std::vector <
 //--------------------------------------------------
 // void RaySolver::Solve_Ray (Position &source, Position &target, IceModel *antarctica, std::vector <double> &outputs) {
 //-------------------------------------------------- 
-void RaySolver::Solve_Ray (Position &source, Position &target, IceModel *antarctica, std::vector < std::vector <double> > &outputs) {
+void RaySolver::Solve_Ray (Position &source, Position &target, IceModel *antarctica, std::vector < std::vector <double> > &outputs, Settings *settings1) {
                         
     outputs.clear();
 
@@ -597,9 +845,16 @@ void RaySolver::Solve_Ray (Position &source, Position &target, IceModel *antarct
     requiredAccuracy = 0.2;
     frequency = 300;
     polarization = RayTrace::pi/2;
-    refractionModel=boost::shared_ptr<exponentialRefractiveIndex>(new exponentialRefractiveIndex(ns,nd,nc));
-    attenuationModel=boost::shared_ptr<basicAttenuationModel>(new basicAttenuationModel);
 
+    if (settings1->NOFZ == 1){
+        
+        refractionModel=boost::shared_ptr<exponentialRefractiveIndex>(new exponentialRefractiveIndex(ns,nd,nc));
+        attenuationModel=boost::shared_ptr<basicAttenuationModel>(new basicAttenuationModel);
+        
+    } else if (settings1->NOFZ == 0){
+        refractionModel=boost::shared_ptr<constantRefractiveIndex>(new constantRefractiveIndex(1.5));
+        attenuationModel=boost::shared_ptr<basicAttenuationModel>(new basicAttenuationModel);
+    }
 	
 	unsigned short refl = RayTrace::NoReflection;
 	if(surface_reflect)
@@ -615,11 +870,50 @@ void RaySolver::Solve_Ray (Position &source, Position &target, IceModel *antarct
 	trg.SetZ(trg_z);
 */
 
+
+        // test print out location
+    //std::cout<<"--src_x="<<src.GetX()<<" --src_y="<<src.GetY()<<" --src_z="<<src.GetZ()<<std::endl;
+    //std::cout<<"--trg_x="<<trg.GetX()<<" --trg_y="<<trg.GetY()<<" --trg_z="<<trg.GetZ()<<std::endl;
+
 	std::vector<RayTrace::TraceRecord> paths;
+	std::vector<RayTrace::TraceRecord> paths_exc;
 	
 	RayTrace::TraceFinder tf(refractionModel,attenuationModel);
+
+	int sol_cnt;
+        int sol_error;
+
+	int sol_cnt_exc;
+        int sol_error_exc;
+
+        int SrcTrgExc = 0;  // 0 not exchanged, 1 exchanged
+
 	
-	paths=tf.findPaths(src,trg,frequency/1.0e3,polarization,refl,requiredAccuracy);
+	paths=tf.findPaths(src,trg,frequency/1.0e3,polarization, sol_cnt, sol_error, refl,requiredAccuracy);
+
+        //std::cout<<"sol cnt : "<<sol_cnt<<" sol error : "<<sol_error<<std::endl;
+        // have to fix src trg exchanged case angle outputs
+        //
+        if ( sol_cnt > 0 && sol_error > 0 ) {   // this case do findPahts again with src, trg exchanged
+            paths_exc=tf.findPaths(trg,src,frequency/1.0e3,polarization, sol_cnt_exc, sol_error_exc, refl,requiredAccuracy);
+
+            //std::cout<<"sol cnt exc : "<<sol_cnt<<" sol error exc : "<<sol_error<<std::endl;
+
+            if ( sol_error > sol_error_exc ) {  // exchanged one is better (less sol_error)
+                paths = paths_exc;
+                SrcTrgExc = 1;
+            }
+            else if (sol_error == sol_error_exc) {  // sol_error are same for both paths. Then use the better miss dist.
+                std::vector<RayTrace::TraceRecord>::const_iterator it_tmp=paths.begin();
+                std::vector<RayTrace::TraceRecord>::const_iterator it_tmp_exc=paths_exc.begin();
+                if ( it_tmp->miss > it_tmp_exc->miss ) {    // if fist one miss dist is worse
+                    paths = paths_exc;
+                    SrcTrgExc = 1;
+                }
+            }
+        }
+	
+	
 	if(showLabels){
 		if(!paths.empty()){
 			//--------------------------------------------------
@@ -643,7 +937,8 @@ void RaySolver::Solve_Ray (Position &source, Position &target, IceModel *antarct
 	}
 	if(!dumpPaths){
 		for(std::vector<RayTrace::TraceRecord>::const_iterator it=paths.begin(); it!=paths.end(); ++it){
-			double signal = tf.signalStrength(*it,src,trg,refl);
+                    if ( it->sol_error == 0 ) {
+			//double signal = tf.signalStrength(*it,src,trg,refl);
 			//--------------------------------------------------
 			// std::cout << std::left << std::fixed 
 			// << std::setprecision(2) << std::setw(15) << it->pathLen << ' '
@@ -658,22 +953,39 @@ void RaySolver::Solve_Ray (Position &source, Position &target, IceModel *antarct
 			// << std::endl;
 			//-------------------------------------------------- 
 
-                        outputs.resize(5);
+                        if ( SrcTrgExc == 0 ) { // src, trg as original
+                            outputs.resize(5);
 
-                        outputs[0].push_back(it->pathLen);
-                        outputs[1].push_back(it->launchAngle);
-                        outputs[2].push_back(it->receiptAngle);
-                        outputs[3].push_back(it->reflectionAngle);
-                        outputs[4].push_back( it->pathTime );   // time in s (not ns)
-                        //std::cout<<"outputs[0]["<<sol_no<<"] : "<<outputs[0][sol_no]<<"\n";
-                        sol_no++;
+                            outputs[0].push_back(it->pathLen);
+                            outputs[1].push_back(it->launchAngle);
+                            outputs[2].push_back(it->receiptAngle);
+                            outputs[3].push_back(it->reflectionAngle);
+                            outputs[4].push_back( it->pathTime );   // time in s (not ns)
+                            //std::cout<<"outputs[0]["<<sol_no<<"] : "<<outputs[0][sol_no]<<"pathLen : "<<it->pathLen<<"\n";
+                            sol_no++;
+                        }
+                        else if ( SrcTrgExc == 1 ) { // src, trg exchanged
+                            outputs.resize(5);
+
+                            outputs[0].push_back(it->pathLen);
+                            outputs[1].push_back(PI - it->receiptAngle);
+                            outputs[2].push_back(PI - it->launchAngle);
+                            outputs[3].push_back(it->reflectionAngle);
+                            outputs[4].push_back( it->pathTime );   // time in s (not ns)
+                            //std::cout<<"outputs[0]["<<sol_no<<"] : "<<outputs[0][sol_no]<<"pathLen : "<<it->pathLen<<"\n";
+                            sol_no++;
+                        }
+                    }
 
 		}
 	}
 	else{ //do write out path data
+            // I didn't fix this part yet!
+            int sol_error;
+
 		pathPrinter<RayTrace::minimalRayPosition> print;
 		for(std::vector<RayTrace::TraceRecord>::const_iterator it=paths.begin(); it!=paths.end(); ++it){
-			tf.doTrace<RayTrace::minimalRayPosition>(src_z, it->launchAngle, RayTrace::rayTargetRecord(trg_z,sqrt((trg_x-src_x)*(trg_x-src_x)+(trg_y-src_y)*(trg_y-src_y))), refl, 0.0, 0.0, &print);
+			tf.doTrace<RayTrace::minimalRayPosition>(src_z, it->launchAngle, RayTrace::rayTargetRecord(trg_z,sqrt((trg_x-src_x)*(trg_x-src_x)+(trg_y-src_y)*(trg_y-src_y))), refl, 0.0, 0.0, sol_error, &print);
 			//std::cout << "\n\n";
 		}
 	}

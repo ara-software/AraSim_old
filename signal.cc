@@ -7,7 +7,7 @@
 //#include "position.hh"
 #include "Position.h"
 #include "Settings.h"
-
+#include <fstream>
 
 
 #include "Constants.h"
@@ -60,6 +60,7 @@ const double Signal::VIEWANGLE_CUT(sqrt(5.)); // require viewangle is no more th
 Signal::Signal() : N_DEPTH(1.79) {
 
   Initialize();
+    
 }
 
 
@@ -68,6 +69,8 @@ Signal::Signal(Settings *settings1) : N_DEPTH(1.79) {
 
   Initialize(settings1);
 
+    
+    
 }
 
 Signal::~Signal() {
@@ -119,6 +122,8 @@ Signal::~Signal() {
 
  void Signal::Initialize() {
 
+  ReadCalPulserSpectrum();
+     
   logscalefactor_taper=0.;
   JAIME_FACTOR=1.0; // factor to multiply Jaime's parameterization for error analysis
 
@@ -181,6 +186,9 @@ Signal::~Signal() {
 
  void Signal::Initialize(Settings *settings1) {
 
+     ReadCalPulserSpectrum();
+
+     
   SetParameterization(settings1->WHICHPARAMETERIZATION);
 
   logscalefactor_taper=0.;
@@ -243,17 +251,22 @@ Signal::~Signal() {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
+ void Signal::ReadCalPulserSpectrum(){
+    int frequency;
+    double vmmhz1m_temp;
+    int count = 0;
+    ifstream infile("calpulser_spectrum.txt");
+    if (infile){
+        while (1) {
+            infile >> frequency >> vmmhz1m_temp;
+            if (!infile.good()) break;
+            CalpulserVmMHz1m[count] = vmmhz1m_temp;
+            count++;
+        }
+    } else {
+        std::cerr << "No calpulser spectrum file!" << std::endl;
+    }
+}
 
 
 
@@ -527,6 +540,35 @@ void Signal::GetSpread(double pnu,
 } //Signal constructor
 
 
+double Signal::GetVmMHz1mCalPulser(int bin) { // constructor
+    
+    vmmhz1m_max = CalpulserVmMHz1m[bin];
+//    std::cout << bin << " : " << vmmhz1m_max << std::endl;
+    
+//    vmmhz1m_max=vmmhz1m_max/2.;  // This factor of 2 is to account for the 2 in the definition of the fourier transform in Equation 8 of the Halzen, Stanev and Zas paper.  The same factor of 2 seems to have propagated through subsequent Jaime papers.
+//    vmmhz1m_max=vmmhz1m_max*sqrt(2.);  // This is to account for the fact that the E fields quoted in the theory papers are double-sided in frequency (they extend from -F to F) whereas we are using it as a single-sided E-field (only from 0 to F).
+    
+    //  cout << "jaime_factor is " << JAIME_FACTOR << "\n";
+//    return vmmhz1m_max*JAIME_FACTOR;
+    return vmmhz1m_max;  
+    
+    //  vmmhz1m=vmmhz1m/sqrt(1.E6/(BW/(double)NFREQ)); //THIS IS NEEDED TO CONSERVE ENERGY FOR DIFFERENT BIN WIDTHS.
+    
+    
+    
+    
+    //      // this is the old version
+    //      double factor=
+    //        X0MEDIUM/X0ICE  // track length
+    //        *(1-1/(N_DEPTH*N_DEPTH))/(1-1/(NICE*NICE)) // cerenkov index of refraction factor
+    //        *N_DEPTH/NICE // to account for cerenkov threshold
+    //        *ECICE/ECMEDIUM;  // to account for critical energy
+    
+    //      double vmmhz1m=factor*(2.53E-7)*(pnu/1.E12)*(freq/nu0)*(1./(1.+pow(freq/nu0_modified,1.44)))*JAIME_FACTOR;
+    
+} //Signal constructor
+
+
  void Signal::SetParameterization(int whichparameterization) {
 
   WHICHPARAMETERIZATION=whichparameterization;
@@ -544,7 +586,7 @@ void Signal::TaperVmMHz(double viewangle,
 
   //--EM
   
-
+    bool calpulser = false;
   double vmmhz1m_em=0; // V/m/MHz at 1m due to EM component of shower
 double vmmhz1m_had=0; // V/m/MHz at 1m due to HAD component of shower
 
@@ -556,18 +598,24 @@ double vmmhz1m_had=0; // V/m/MHz at 1m due to HAD component of shower
   //cout << "dangle, deltheta_em is " << viewangle-changle << " " << deltheta_em << "\n";
   //cout << "rtemp (em) is " << rtemp << "\n";
   // the power goes like exp(-(theta_v-theta_c)^2/Delta^2)
-  // so the e-field is the same with a 1/2 in the exponential
-
-  if (emfrac>pow(10.,-10.)) { // if there is an em component
-    if (rtemp<=20) { // if the viewing angle is less than 20 sigma away from the cerankov angle
-      // this is the effect of the em width on the signal
-      vmmhz1m_em=vmmhz1m*exp(-rtemp);
-    }
-    else // if it's more than 20 sigma just set it to zero 
-      vmmhz1m_em=0.;
-  }
-  else // if the em component is essentially zero than set this to zero
-    vmmhz1m_em=0;
+    // so the e-field is the same with a 1/2 in the exponential
+    
+    if (emfrac>pow(10.,-10.)) { // if there is an em component
+        if (calpulser == false){
+            
+            if (rtemp<=20) { // if the viewing angle is less than 20 sigma away from the cerankov angle
+                // this is the effect of the em width on the signal
+                vmmhz1m_em=vmmhz1m*exp(-rtemp);
+                
+            }
+            else // if it's more than 20 sigma just set it to zero 
+            {vmmhz1m_em=0.;}
+            
+        } else {
+            vmmhz1m_em = vmmhz1m;
+        }
+    } else // if the em component is essentially zero than set this to zero
+            vmmhz1m_em=0;
 
   //--HAD
   // this is the quantity that gets exponentiated
@@ -577,12 +625,17 @@ double vmmhz1m_had=0; // V/m/MHz at 1m due to HAD component of shower
   //cout << "rtemp (had) is " << rtemp << "\n";
 
   if (hadfrac!=0) { // if there is a hadronic fraction
+   if (calpulser == false){
+
     if (rtemp<20) { // if we are less than 20 sigma from cerenkov angle
       vmmhz1m_had=vmmhz1m*exp(-rtemp); // this is the effect of the hadronic width of the signal
    
     }
     else // if we're more than 20 sigma from cerenkov angle
       vmmhz1m_had=0.; // just set it to zero
+   } else {
+       vmmhz1m_had = vmmhz1m;
+   }
   }
   else 
     vmmhz1m_had=0.;

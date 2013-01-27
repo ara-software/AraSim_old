@@ -18,8 +18,8 @@ SRCSUF = ${SrcSuf}
 CXX = g++
 
 #Generic and Site Specific Flags
-CXXFLAGS     += $(SYSINCLUDES) -IAraRootFormat ##$(INC_ARASIM)
-LDFLAGS      += -g -I$(BOOST_ROOT) $(ROOTLDFLAGS) -Llib -L. -lAraSimEvent
+CXXFLAGS     += $(SYSINCLUDES) -Iinclude ##-IAraRootFormat -IAraRoot ##$(INC_ARASIM)
+LDFLAGS      += -g -I$(BOOST_ROOT) $(ROOTLDFLAGS) -Llib -L. -lAraSimEvent -lAraGeom
 
 # copy from ray_solver_makefile (removed -lAra part)
 
@@ -44,12 +44,13 @@ CLASS_HEADERS = Trigger.h Detector.h Settings.h Spectra.h IceModel.h Primaries.h
 
 PROGRAMS = AraSim
 
-ARAROOTLIB = libAraSimEvent.a
+ARAROOTLIB = libAraSimEvent.a libAraGeom.a
 
 all : $(ARAROOTLIB) $(PROGRAMS) 
 	
 $(ARAROOTLIB):
 	@cd AraRootFormat; make all; make install
+	@cd AraRoot; make all; make install
 
 AraSim : $(OBJS)
 	$(LD) $(LDFLAGS) $(OBJS) $(ARA_ROOT_OBJS) $(LIBS) -lAraSimEvent -o $(PROGRAMS) 
@@ -106,5 +107,7 @@ clean:
 	@rm -f $(subst .$(DLLSUF),.so,$(ROOT_LIBRARY))	
 	@rm -f $(TEST)
 	@rm -f $(ARA_ROOT_H) include/araIcrrDefines.h
+	@rm -f $(PROGRAMS)
 	@cd AraRootFormat; make clean
+	@cd AraRoot; make clean
 #############################################################################

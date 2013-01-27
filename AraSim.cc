@@ -215,7 +215,7 @@ int main(int argc, char **argv) {   // read setup.txt file
 
   TTree *AraTree=new TTree("AraTree","AraTree");    // for single entry
   TTree *AraTree2=new TTree("AraTree2","AraTree2"); //for many entries
-  cout<<"assing AraFile, AraTrees"<<endl;
+  cout<<"assign AraFile, AraTrees"<<endl;
 
   AraTree->Branch("detector",&detector);
   cout<<"branch detector"<<endl;
@@ -239,10 +239,12 @@ RaySolver *raysolver = new RaySolver;
 cout<<"called RaySolver"<<endl;
 
     cout << "Make output file that is readable by AraRoot" << endl;
+
     UsefulIcrrStationEvent *theEvent = 0;
+
     TTree *eventTree;
     eventTree = new TTree("eventTree","Tree of ARA Events");
-    eventTree->Branch("UsefulIcrrStationEvent","UsefulIcrrStationEvent",&theEvent);
+    eventTree->Branch("UsefulIcrrStationEvent",&theEvent);
 
 
 cout<<"will call secondaries"<<endl;
@@ -320,16 +322,27 @@ cout<<"powerthreshold : "<<trigger->powerthreshold<<endl;
 
 int check_station_DC;
 
+    ofstream TrigWind;
+    TrigWind.open("outputs/TrigWindowStudy.txt");
+    
+    
+//    for (int iTrigWind = 10; iTrigWind < 201; iTrigWind = iTrigWind+10){
+    
+//        double TRIG_WINDOW_Size = double (iTrigWind * 1.0E-9);
+//        settings1->TRIG_WINDOW = TRIG_WINDOW_Size;
+        
+        Total_Global_Pass = 0;
+cout<<"begin looping events!!"<<endl;
 
-cout<<"begain looping events!!"<<endl;
+    cout << "Calpulser_on: " << settings1->CALPULSER_ON << endl;
    for (int inu=0;inu<settings1->NNU;inu++) { // loop over neutrinos
 
+       
        check_station_DC = 0;
 
        std::cerr<<"*";
 
        event = new Event ( settings1, spectra, primary1, icemodel, detector, signal, sec1 );
-
   
        report = new Report(detector, settings1);
 
@@ -349,12 +362,16 @@ cout<<"begain looping events!!"<<endl;
        // connect Interaction class (nu interaction with ice) and Detector class (detector properties and layout)
        // save signal, noise at each antennas to Report class
        report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1, trigger);
-
        
-//       theEvent = new UsefulIcrrStationEvent();
+//       cout << "report:" << report->theUsefulEvent.fVoltsRF[2][23]<< endl;
+       //theEvent
        if (settings1->WRITE_ALL_EVENTS!=2) {
            theEvent = &report->theUsefulEvent;
            eventTree->Fill();
+//           cout << "theEvent:" << theEvent->fVoltsRF[2][23] << endl;
+       }
+       if (report->Passed_chs.size() > 0){
+           cout << report->Passed_chs[0] << endl;
        }
        theEvent = NULL;
 
@@ -503,17 +520,17 @@ cout<<"begain looping events!!"<<endl;
 //  }
 //-------------------------------------------------- 
 
- //cout<<"evt "<<inu<<endl;
-
 
  delete event;
  delete report;
-       delete theEvent;
-
+ delete theEvent;
 
   } // end loop over neutrinos
+//        TrigWind << TRIG_WINDOW_Size << "\t" << Total_Global_Pass << endl;
+//        cout << "TRIG_WINDOW_Size:Total_Global_Pass:: " << TRIG_WINDOW_Size << " : " << Total_Global_Pass << endl;
 
-
+//    }// end trigger window loop
+    TrigWind.close();
 
                        
 //--------------------------------------------------

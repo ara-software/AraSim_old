@@ -605,6 +605,10 @@ Position IceModel::WhereDoesItEnterIce(const Position &posnu,
 
 Position IceModel::WhereDoesItEnter(const Position &posnu,const Vector &nnu) const {
     // now get neutrino entry point...
+//    cout << posnu.GetX() << " : " << posnu.GetY() << " : " << posnu.GetZ() << endl;
+//    cout << posnu.R() << " : " << posnu.Theta() << " : " << posnu.Phi() << endl;
+//    cout << posnu.Lon() << " : " << posnu.Lat() << endl;
+
     double p = posnu.Mag(); // radius of interaction
     double costheta = (nnu*posnu) / p; // theta of neutrino at interaction position
     double sintheta = sqrt(1-costheta*costheta);
@@ -628,7 +632,7 @@ Position IceModel::WhereDoesItEnter(const Position &posnu,const Vector &nnu) con
 	
 	//cout << "Error in interaction position.  whichray is " << whichray << "\n";
 	cout << "lon, lat from WhereDoesItEnter is " << " " << lon << " " << lat << "\n";
-	cout << "geoid, surface, p, surface-p are " << Geoid(lat) << " " << Surface(lon,lat) << " " << p << " , "<<(Surface(lon,lat)-p)<<"\n";
+	cout << "geoid, surface, p, surface-p are " << Geoid(lat) << " " << Surface(lon,lat) << ", " << p << " , "<<(Surface(lon,lat)-p)<<"\n";
 	
     } //else if: error: interaction takes place above the surface
     

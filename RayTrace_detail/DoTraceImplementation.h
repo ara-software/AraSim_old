@@ -10,11 +10,18 @@ template<typename positionType
 #endif
 >
 TraceRecord TraceFinder::doTrace(const double depth, const double theta, const rayTargetRecord& target, unsigned short allowedReflections, double frequency, double polarization
+//Eugene added sol_error
+, int &sol_error
 #ifdef DO_TRACE_WITH_CALLBACK
 								 , callbackType callback
 #endif
 								 ) const{
+
+        //sol_error = 0; // begin with no solution error
+
 	const unsigned long maxIter = 10000;
+	//const unsigned long maxIter = 10;
+	//const unsigned long maxIter = 100000;
 	const double eps=1e-10;
 	const double targetTol = 0.01; //try to get the final value of x this close to target.distance
 	
@@ -76,12 +83,15 @@ TraceRecord TraceFinder::doTrace(const double depth, const double theta, const r
 		callCallback(callback,pos,RK_STEP);
 #endif
 		
-		//std::cout << "Did step of size " << hdid << " to depth " << pos.z << ", angle now " << pos.theta << std::endl;
+		//std::cout << "Did step of size " << hdid << " to depth " << pos.z << ", angle now " << pos.theta << ", step " << stepCount << std::endl;
 		//std::cout << "Elapsed time is now " << pos.time << std::endl;
 		
 		//check for completion
 		if(pos.x >= (target.distance-targetTol))
+                        {
+                        //std::cout<<"doTrace break1"<<std::endl;
 			break;
+                        }
 		//prevent overshooting
 		if((pos.x+hnext*derivatives.x) > (target.distance+targetTol)){
 			//std::cout << "Expect to go to x=" << (pos.x+hnext*derivatives.x) << std::endl;
@@ -102,7 +112,10 @@ TraceRecord TraceFinder::doTrace(const double depth, const double theta, const r
 #endif
 				}
 				else //stop the ray here
+                                        {
+                                        //std::cout<<"doTrace break2"<<std::endl;
 					break;
+                                        }
 			}
 			else{ //the ray isn't close enough yet, so just stop it from overshooting
 				//std::cout << "Expect to go to z=" << pos.z+hnext*derivatives.z << std::endl;
@@ -122,7 +135,10 @@ TraceRecord TraceFinder::doTrace(const double depth, const double theta, const r
 #endif
 				}
 				else //stop the ray here
+                                        {
+                                        //std::cout<<"doTrace break3"<<std::endl;
 					break;
+                                        }
 			}
 			else{ //the ray isn't close enough yet, so just stop it from overshooting
 				//std::cout << "Expect to go to z=" << pos.z+hnext*derivatives.z << std::endl;
@@ -132,12 +148,34 @@ TraceRecord TraceFinder::doTrace(const double depth, const double theta, const r
 		}
 		
 		h = std::max(targetTol, hnext); //don't let step sizes become too small
+                // test out log
+                
+                // test 
+                //if(stepCount==maxIter-1){
+                if(stepCount==maxIter-1 || (pos.z != pos.z || pos.theta != pos.theta) ){ // maybe make to do same thing with src, trg switched?
+                        //std::cout << "Step arrived maxIter!" << std::endl;
+                        //std::cout << "solution error!" << std::endl;
+                        //sol_error = 1; // solution error
+                        sol_error++; // solution error (error occurs -> sol_error > 0)
+                        result.sol_error=sol_error;
+                        break;
+                        //std::cout << "Was attempting to trace from depth of " << depth << " at an angle of " << theta
+                        //<< " to target " << target.distance << " meters away at a depth " << target.depth << std::endl;
+                        //throw std::runtime_error("TraceFinder::doTrace: exceeded maximum allowed number of steps.");
+                }
+
+
 	}
+        /*
 	if(stepCount==maxIter){
 		//std::cout << "Was attempting to trace from depth of " << depth << " at an angle of " << theta
 		//<< " to target " << target.distance << " meters away at a depth " << target.depth << std::endl;
 		throw std::runtime_error("TraceFinder::doTrace: exceeded maximum allowed number of steps.");
 	}
+        */
+        result.sol_error=sol_error;
+
+
 	//std::cout << "TraceFinder::doTrace: final position is (" << pos.x << ',' << pos.z << ')' << std::endl;
 	result.pathLen=length;
 	pos.giveData(result);

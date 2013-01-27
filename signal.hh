@@ -41,6 +41,7 @@ protected:
   double freq_reference; // reference frequency in MHz
   double pnu_reference; // reference energy in eV
 
+    double CalpulserVmMHz1m[60];
 
 
 
@@ -111,6 +112,8 @@ public:
 		double& vmmhz1m,
 	       double& vmmhz_em); // returns 1 if viewangle-changle<20*width for both em and had showers
   double GetVmMHz1m(double pnu,double freq); // constructor
+    double GetVmMHz1mCalPulser(int bin);
+    void ReadCalPulserSpectrum();
   void GetVmMHz(double vmmhz_max,double vmmhz1m_max,double pnu,double *freq,double notch_min,double notch_max,double *vmmhz,int nfreq);
   void Initialize();
   void Initialize(Settings *settings1);

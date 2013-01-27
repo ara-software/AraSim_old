@@ -117,7 +117,7 @@ class Station_r {
         double max_arrival_time;    // for each station, maximum arrival time (include all ray_solves). this will be used for time delay between antennas.
         double max_PeakV;           // for each station, maximum PeakV value (include all ray_solves). this will also be used for time delay plot (to set same vertical scale)
         int Total_ray_sol;          // total number of ray_sols in the stations. If there is 0 Total_ray_sol, we don't need to do trigger check while there is any Total_ray_sol, we do trigger check.
-        int Global_Pass;    // if global trigger passed or not
+        int Global_Pass;    // if global trigger passed or not: 0 = not passed, >0 passed, number indicates the first bin in the triggered window of the waveform at which the global trigger passed
 
         ClassDef(Station_r,1);
 };
@@ -158,22 +158,19 @@ class Report {
         Report ();
         Report (Detector *detector, Settings *settings1);
         ~Report ();
-
     //make the UsefulIcrrStationEvent for use with AraRoot
     UsefulIcrrStationEvent theUsefulEvent;
-    int GetChannelNumfromStringAntenna (int stringnum, int antennanum);
 
     
         void Initialize (Detector *detector, Settings *settings1);
 
-
         void Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1, Trigger *trigger);
 
-        void Select_Wave_Convlv_Exchange(Settings *settings1, Trigger *trigger, Detector *detector, int signalbin, vector <double> &V, int *noise_ID, int ID);   // literally get noise waveform from trigger class and add signal voltage "V" and do convlv. convlv result will replace the value in Full_window array
+        void Select_Wave_Convlv_Exchange(Settings *settings1, Trigger *trigger, Detector *detector, int signalbin, vector <double> &V, int *noise_ID, int ID, int StationIndex);   // literally get noise waveform from trigger class and add signal voltage "V" and do convlv. convlv result will replace the value in Full_window array
         
-        void Select_Wave_Convlv_Exchange(Settings *settings1, Trigger *trigger, Detector *detector, int signalbin_1, int signalbin_2, vector <double> &V1, vector <double> &V2, int *noise_ID, int ID);   // literally get noise waveform from trigger class and add signal voltage "V" and do convlv. convlv result will replace the value in Full_window array
+        void Select_Wave_Convlv_Exchange(Settings *settings1, Trigger *trigger, Detector *detector, int signalbin_1, int signalbin_2, vector <double> &V1, vector <double> &V2, int *noise_ID, int ID, int StationIndex);   // literally get noise waveform from trigger class and add signal voltage "V" and do convlv. convlv result will replace the value in Full_window array
 
-        void Select_Wave_Convlv_Exchange(Settings *settings1, Trigger *trigger, Detector *detector, int signalbin_0, int signalbin_1, int signalbin_2, vector <double> &V0, vector <double> &V1, vector <double> &V2, int *noise_ID, int ID);   // literally get noise waveform from trigger class and add signal voltage "V" and do convlv. convlv result will replace the value in Full_window array
+        void Select_Wave_Convlv_Exchange(Settings *settings1, Trigger *trigger, Detector *detector, int signalbin_0, int signalbin_1, int signalbin_2, vector <double> &V0, vector <double> &V1, vector <double> &V2, int *noise_ID, int ID, int StationIndex);   // literally get noise waveform from trigger class and add signal voltage "V" and do convlv. convlv result will replace the value in Full_window array
 
         Vector GetPolarization (Vector &nnu, Vector &launch_vector);
 
@@ -191,8 +188,8 @@ class Report {
         void GetNoiseWaveforms(Settings *settings1, Detector *detector, double vhz_noise, double *vnoise);
         void GetNoisePhase(Settings *settings1);
 
-        void MakeArraysforFFT(Settings *settings1, Detector *detector, vector <double> &vsignal_array, double *vsignal_forfft);
-        void MakeArraysforFFT_noise(Settings *settings1, Detector *detector, vector <double> &vsignal_array, double *vsignal_forfft);
+        void MakeArraysforFFT(Settings *settings1, Detector *detector, int StationIndex, vector <double> &vsignal_array, double *vsignal_forfft);
+        void MakeArraysforFFT_noise(Settings *settings1, Detector *detector,  int StationIndex, vector <double> &vsignal_array, double *vsignal_forfft);
 
 
         double FindPeak (double *waveform, int n);  // same with icemc; trigger->AntTrigger::FindPeak

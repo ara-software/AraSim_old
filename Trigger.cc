@@ -53,7 +53,6 @@ void Trigger::SetMeanRmsDiode(Settings *settings1, Detector *detector, Report *r
     int ngeneratedevents=settings1->NOISE_EVENTS;  // should this value read at Settings class
     double v_noise[settings1->DATA_BIN_SIZE];    // noise voltage time domain (with filter applied)
 
-
     meandiode = 0.;
     rmsdiode = 0.;
 
@@ -128,15 +127,6 @@ void Trigger::SetMeanRmsDiode(Settings *settings1, Detector *detector, Report *r
         }
     }
 
-    // copy the before and after the random rician dist information from report to trigger
-    if ( settings1->DATA_SAVE_MODE==0 ) {
-        Vfft_noise_after = report->Vfft_noise_after;
-        Vfft_noise_before = report->Vfft_noise_before;
-        V_noise_timedomain = report->V_noise_timedomain;
-    }
-    report->Vfft_noise_after.clear();
-    report->Vfft_noise_before.clear();
-    report->V_noise_timedomain.clear();
 
 
 

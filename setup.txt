@@ -19,7 +19,8 @@
 
 //DETECTOR=2;   // Detector mode; 0 : testbed, 1 : ARA 1~7 stations, 2 : ARA hexagon layout
 
-//INTERACTION_MODE=1;   // method to choose interaction point posnu. mode 0 : PickUnbiased (randomly in Antarctic ice), mode 1 : PickNear (randomly near by detectors)
+//INTERACTION_MODE=1;   // method to choose interaction point posnu. mode 0 : PickUnbiased (randomly in Antarctic ice), mode 1 : PickNear (randomly near by detectors) mode 2: pick exact position
+INTERACTION_MODE=1
 
 //POSNU_RADIUS=2000;     // when above INTERACTION_MODE = 1, the radius of randomly selected position of interaction in meter.
 
@@ -40,17 +41,17 @@
 // Make sure the name of variable is correct.
 
 //EXPONENT=30
-EXPONENT=18
+EXPONENT=19
 
 //NNU=1
 //NNU=5
 //NNU=70
-NNU=100
+NNU=10
 //NNU=200
 //NNU=500
 //NNU=10000
 //NNU=480
-DETECTOR=1
+DETECTOR=3
 SECONDARIES=0
 
 //POSNU_RADIUS=500
@@ -68,7 +69,7 @@ POWERTHRESHOLD=-6.06
 //POWERTHRESHOLD=-5.865
 //POWERTHRESHOLD=-5
 
-TRIG_ANALYSIS_MODE=0
+TRIG_ANALYSIS_MODE=0 // 0 = signal + noise, 1 = signal only, 2 = noise only
 //DATA_BIN_SIZE=16384
 
 //NOISE_EVENTS=1
@@ -76,23 +77,49 @@ NOISE_EVENTS=100
 //NOISE_EVENTS=7000
 //NOISE_EVENTS=1000
 
-// DATA_SAVE_MODE 0 to save all data, 1 to remove most of data except geometric info, final golbal trigger data V_mimic (pure noise waveforms in trigger class will remain), 2 to remove final global trigger waveform V_mimic also (so just Physics info left)
+//RANDOM_MODE=0
+
+//PICK_POSNU_DEPTH=1
+//N_TRIG=1
+
+// Set trigger modes and values
+//NFOUR=1024 // Set the number of bins of the output waveform
+//TIMESTEP=0.000000000384615 // time step from one time bin to the next
+//TRIG_WINDOW=0.00000025 // time window in seconds for trigger scan - number of bins calculated from this and timestep
+USE_INSTALLED_TRIGGER_SETTINGS=0
+
+// Set options for what information to write out and how it should be written
+// DATA_SAVE_MODE 0 to save all data, 1 to remove most of data except geometric info, final global trigger data V_mimic (pure noise waveforms in trigger class will remain), 2 to remove final global trigger waveform V_mimic also (so just Physics info left)
 DATA_SAVE_MODE=1
 
 // WRITE_ALL_EVENTS 0 only write globally triggered events, 1 Write all event events including events that are not globally triggered
 // Note: NNU is the number of neutrinos that have been thrown in total, not just globally triggered events
 // When writing all events, the waveform stored in UsefulAraSimEvent->VoltsRF[] is just the untriggered, noiseless waveform of the initial signal, and it has not propagated to the antenna yet.
 // new mode, WRITE_ALL_EVENTS 2 will not save waveforms at all.
-WRITE_ALL_EVENTS=2
+WRITE_ALL_EVENTS=1
 
-//RANDOM_MODE=0
+V_MIMIC_MODE=1
 
-BORE_HOLE_ANTENNA_LAYOUT=0
-
-//PICK_POSNU_DEPTH=1
-//N_TRIG=1
 
 // lets work on nnu theta 80 deg +- 1deg
 //NNU_THIS_THETA=1
 //NNU_THETA=1.39626
 //NNU_D_THETA=0.017453
+
+
+BORE_HOLE_ANTENNA_LAYOUT=0
+
+CALPULSER_ON=1
+
+READGEOM=1
+
+READGEOM=1 // reads geometry information from the sqlite file
+DETECTOR=3 // uses testbed geometry only (for now but we intend to add multi-station functionality in the future)
+CALPULSER_ON=0 // Calpulser is off
+
+TRIG_WINDOW=0.0000001 // The trigger window might not be quite right since we are not exactly sure what the actually trigger window used in the TestBed firmware is. Setting it to this value will make the trigger window 100 ns. If you want 250 ns, use 0.00000025.
+
+V_MIMIC_MODE=0 // a setting for how to deal with non-triggered channels on a globally triggered event; a value of 1 means that it will write out the waveform for that channel starting with the last bin of the trigger window, a value of 2 means that it will write out the waveform for that channel centered on the last bin of the trigger window, a value of 0 means that it will write out the waveform for that channel centered on the center of the trigger window- this is closest to what the hardware does, but if you want to examine what the events look like the other mimic modes are more useful
+
+NNU=10000 // set for generating 10000 events
+

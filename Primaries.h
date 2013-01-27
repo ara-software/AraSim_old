@@ -138,7 +138,7 @@ public:
 	double Getyweight(double pnu,double y,int nu_nubar,int currentint);
 	string GetCurrent();
 	string GetNuFlavor();
-
+    int IsCalpulser;
 
         ClassDef(Primaries,1);
 
@@ -193,6 +193,7 @@ class Interaction  {
  vector <double> d_theta_em;
  vector <double> d_theta_had;
  double vmmhz1m_tmp;
+ 
 
  // end variables for GetSignal
  //
@@ -263,7 +264,9 @@ class Interaction  {
   void FlattoEarth ( IceModel *antarctica, double X, double Y, double D);
   void FlattoEarth_Near_Surface ( IceModel *antarctica, double X, double Y, double D, double max_depth);
   void PickNear(IceModel *antarctica, Detector *detector, Settings *settings1);
-  // end move from IceModel
+    void PickExact(IceModel *antarctica, Detector *detector, Settings *settings1, double R, double Theta, double Phi);
+
+    // end move from IceModel
   //
 
 

@@ -126,6 +126,18 @@ outputdir="outputs"; // directory where outputs go
   NNU_D_THETA=0.0873;       // default : nnu d_theta : 5 deg
 
     
+    CALPULSER_ON=0; // default : calpulsers off
+    
+    TESTBED_ON=0; // default : 0 stations[0] is ARA1 not Testbed
+    
+    READGEOM=0; // default : 0 : use idealized geometry and do not read in from sqlite database
+    
+    V_MIMIC_MODE = 1; // default : 1 - write out window for non-triggered events that begins with the last bin in the trigger window
+    
+    USE_INSTALLED_TRIGGER_SETTINGS = 0; // default : 0 - use idealized settings for the trigger
+    
+    NUM_INSTALLED_STATIONS = 2;
+    
 }
 
 void Settings::ReadFile(string setupfile) {
@@ -246,6 +258,16 @@ void Settings::ReadFile(string setupfile) {
               else if (label == "RAYSOL_RANGE") {
                   RAYSOL_RANGE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
               }
+              else if (label == "CALPULSER_ON") {
+                  CALPULSER_ON = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "TESTBED_ON") {
+                  TESTBED_ON = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "READGEOM") {
+                  cout << "Read in READGEOM" << endl;
+                  READGEOM = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
               else if (label == "PICK_POSNU_DEPTH") {
                   PICK_POSNU_DEPTH = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
               }
@@ -264,6 +286,15 @@ void Settings::ReadFile(string setupfile) {
               else if (label == "WRITE_ALL_EVENTS") {
                   WRITE_ALL_EVENTS = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
               }
+              else if (label == "V_MIMIC_MODE") {
+                  V_MIMIC_MODE = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "USE_INSTALLED_TRIGGER_SETTINGS") {
+                  USE_INSTALLED_TRIGGER_SETTINGS = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "NUM_INSTALLED_STATIONS") {
+                  NUM_INSTALLED_STATIONS = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }              
           }
       }
       setFile.close();

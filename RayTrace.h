@@ -3,7 +3,9 @@
 
 #include <ostream>
 #include <vector>
+#ifndef __CINT__
 #include <boost/shared_ptr.hpp>
+#endif
 #include "Vector.h"
 
 namespace RayTrace{
@@ -80,11 +82,19 @@ namespace RayTrace{
 		///This anlge is defined so that a value of zero corresponds to polarization in the direction 
 		///perpedicular to the plane of the ray's propagation
 		double polarization;
+
+
+
+                // Eugene added below parameters for debug
+                int sol_no;
+                int sol_error;
+
 		
 		///\brief Constructs a TraceRecord with default values
 		///
 		///All values are set to 0.0 except pathTime, reflectionAngle, and amplitude. 
-		TraceRecord():pathLen(0.0),pathTime(-1.0),launchAngle(0.0),receiptAngle(0.0),reflectionAngle(noReflection),miss(0.0),attenuation(-1.0),polarization(0.0){}
+		//TraceRecord():pathLen(0.0),pathTime(-1.0),launchAngle(0.0),receiptAngle(0.0),reflectionAngle(noReflection),miss(0.0),attenuation(-1.0),polarization(0.0){}
+		TraceRecord():pathLen(0.0),pathTime(-1.0),launchAngle(0.0),receiptAngle(0.0),reflectionAngle(noReflection),miss(0.0),attenuation(-1.0),polarization(0.0),sol_no(0),sol_error(0){}
 		
 		///\brief Constructs a TraceRecord with the given parameters
 		///
@@ -100,6 +110,9 @@ namespace RayTrace{
 		pathLen(len),pathTime(time),launchAngle(launch),receiptAngle(receipt),reflectionAngle(refl),miss(mis),attenuation(att),polarization(pol){}
 		
 		static const double noReflection;
+
+
+
 	};
 
 	///\brief A class providing a description of the index of refraction of the ice. 
@@ -495,12 +508,13 @@ namespace RayTrace{
 	///
 	class TraceFinder{
 	protected:
-		
+        #ifndef __CINT__
 		///The model of the ice index of refraction used for path calculations
 		boost::shared_ptr<const indexOfRefractionModel> rModel;
 		
 		///The model of the attenuation of radio signals used for path calculations
 		boost::shared_ptr<const attenuationModel> aModel;
+        #endif
 		
 		///\brief Computes the derivatives of the position coordinates with respect to path length
 		///
@@ -616,8 +630,9 @@ namespace RayTrace{
 		///\param cTrace The trace computed at angle c
 		///\param requiredAccuracy The maximum distance by which the result may miss the target
 		///\return The initial angle of the best solution ray path
+		//std::pair<double,double> traceRootImpl(double emit_depth, const rayTargetRecord& target, bool rising, unsigned short allowedReflections, double requiredAccuracy, 
 		std::pair<double,double> traceRootImpl(double emit_depth, const rayTargetRecord& target, bool rising, unsigned short allowedReflections, double requiredAccuracy, 
-							 double a, TraceRecord& aTrace, double c, TraceRecord& cTrace, double angle) const;
+							 double a, TraceRecord& aTrace, double c, TraceRecord& cTrace, double angle, int &sol_error ) const;
 		
 		///\brief Attempts to determine a path which misses the given target vertically by the smallest possible amount. 
 		///
@@ -631,7 +646,8 @@ namespace RayTrace{
 		///\param allowedReflections Which types of reflections are allowed
 		///\param requiredAccuracy The maximum distance by which the result may miss the target
 		///\return The initial angle of the best solution ray path
-		std::pair<double,double> traceRoot(double emit_depth, const rayTargetRecord& target, double minAngle, double maxAngle, bool rising, unsigned short allowedReflections, double requiredAccuracy) const;
+		//std::pair<double,double> traceRoot(double emit_depth, const rayTargetRecord& target, double minAngle, double maxAngle, bool rising, unsigned short allowedReflections, double requiredAccuracy) const;
+		std::pair<double,double> traceRoot(double emit_depth, const rayTargetRecord& target, double minAngle, double maxAngle, bool rising, unsigned short allowedReflections, double requiredAccuracy, int &sol_error ) const;
 		
 		///\brief Attempts to improve an existing estimate of a path which misses the given target vertically by the smallest possible amount. 
 		///
@@ -646,7 +662,7 @@ namespace RayTrace{
 		///\param allowedReflections Which types of reflections are allowed
 		///\param requiredAccuracy The maximum distance by which the result may miss the target
 		///\return The initial angle of the best solution ray path
-		std::pair<double,double> refineRoot(double emit_depth, const rayTargetRecord& target, const TraceRecord& seed, bool rising, unsigned short allowedReflections, double requiredAccuracy) const;
+		std::pair<double,double> refineRoot(double emit_depth, const rayTargetRecord& target, const TraceRecord& seed, bool rising, unsigned short allowedReflections, double requiredAccuracy, int &sol_error ) const;
 		
 		///\brief Attempts to locate the ray path with passes the farthest above the given target
 		///
@@ -654,7 +670,8 @@ namespace RayTrace{
 		///\param target The description of the position of the target
 		///\param left The left bound of the angular search space
 		///\param right The right bound of the angular search space
-		std::pair<bool, double> traceMax(double emit_depth, const rayTargetRecord& target, double left=0.0, double right=pi) const;
+		//std::pair<bool, double> traceMax(double emit_depth, const rayTargetRecord& target, double left=0.0, double right=pi) const;
+		std::pair<bool, double> traceMax(double emit_depth, const rayTargetRecord& target, int &sol_error, double left=0.0, double right=pi ) const;
 		
 		///\brief Attempts to locate the ray path with passes the farthest below the given target
 		///
@@ -662,7 +679,8 @@ namespace RayTrace{
 		///\param target The description of the position of the target
 		///\param left The left bound of the angular search space
 		///\param right The right bound of the angular search space
-		std::pair<bool, double> traceMin(double emit_depth, const rayTargetRecord& target, double left=0.0, double right=pi) const;
+		//std::pair<bool, double> traceMin(double emit_depth, const rayTargetRecord& target, double left=0.0, double right=pi) const;
+		std::pair<bool, double> traceMin(double emit_depth, const rayTargetRecord& target, int &sol_error, double left=0.0, double right=pi ) const;
 		
 		///\brief Solves for rays which pass through the ice surface using fast estimates if possible
 		///
@@ -672,7 +690,8 @@ namespace RayTrace{
 		///\param polarization The direction of polarization of the signal, where zero corresponds 
 		///		to polarization perpeduicular to the plane of propagation
 		///\param requiredAccuracy The maximum distance by which the result may miss the target
-		TraceRecord findUncontainedFast(Vector sourcePos, Vector targetPos, double frequency, double polarization, double requiredAccuracy, pathRecorder<fullRayPosition>* recorder=NULL) const;
+		//TraceRecord findUncontainedFast(Vector sourcePos, Vector targetPos, double frequency, double polarization, double requiredAccuracy, pathRecorder<fullRayPosition>* recorder=NULL) const;
+		TraceRecord findUncontainedFast(Vector sourcePos, Vector targetPos, double frequency, double polarization, double requiredAccuracy, int &sol_error,  pathRecorder<fullRayPosition>* recorder=NULL) const;
 		
 	public:
 		///The thickness of the ice sheet, in meters
@@ -682,7 +701,11 @@ namespace RayTrace{
 		///
 		///\param rm The index of refraction model to be used
 		///\param am The attenuation model to be used
+
+#ifndef __CINT__
+
 		TraceFinder(boost::shared_ptr<const indexOfRefractionModel> rm,boost::shared_ptr<const attenuationModel> am):rModel(rm),aModel(am){}
+#endif		
 		
 		///\brief Attempts to determine all paths which pass between the given source and target.
 		///
@@ -694,8 +717,17 @@ namespace RayTrace{
 		///\param polarization The polarization angle of the signal, in radians
 		///\param allowedReflections Which types of reflections are allowed
 		///\param requiredAccuracy The maximum distance by which the result may miss the target
-		std::vector<TraceRecord> findPaths(Vector sourcePos, Vector targetPos, double frequency, double polarization, unsigned short allowedReflections=NoReflection, double requiredAccuracy=0.1, std::vector<traceReplayRecord>* replayBuffer=NULL) const;
+
+
+
+		//std::vector<TraceRecord> findPaths(Vector sourcePos, Vector targetPos, double frequency, double polarization, unsigned short allowedReflections=NoReflection, double requiredAccuracy=0.1, std::vector<traceReplayRecord>* replayBuffer=NULL) const;
+		//std::vector<TraceRecord> findPaths(Vector sourcePos, Vector targetPos, double frequency, double polarization, int &sol_cnt, unsigned short allowedReflections=NoReflection, double requiredAccuracy=0.1, std::vector<traceReplayRecord>* replayBuffer=NULL) const;
+		std::vector<TraceRecord> findPaths(Vector sourcePos, Vector targetPos, double frequency, double polarization, int &sol_cnt, int &sol_error, unsigned short allowedReflections=NoReflection, double requiredAccuracy=0.1, std::vector<traceReplayRecord>* replayBuffer=NULL) const;
+		//std::vector<TraceRecord> findPaths(Vector sourcePos, Vector targetPos, double frequency, double polarization, int &sol_cnt, int &sol_error, int mode, unsigned short allowedReflections=NoReflection, double requiredAccuracy=0.1, std::vector<traceReplayRecord>* replayBuffer=NULL) const;
 		
+
+
+
 		///\brief Traces one path and reports its properties. 
 		///
 		///This function is templated in the positionType it uses in order to facilitate selecting 
@@ -715,7 +747,8 @@ namespace RayTrace{
 		///\param frequency The frequency of the signal, in GHz
 		///\param polarization The polarization angle of the signal, in radians
 		template<typename positionType>
-		TraceRecord doTrace(double depth, double theta, const rayTargetRecord& target, unsigned short allowedReflections, double frequency, double polarization) const;
+		//TraceRecord doTrace(double depth, double theta, const rayTargetRecord& target, unsigned short allowedReflections, double frequency, double polarization) const;
+		TraceRecord doTrace(double depth, double theta, const rayTargetRecord& target, unsigned short allowedReflections, double frequency, double polarization, int &sol_error ) const;
 		
 		///\brief Traces one path and reports its properties. 
 		///
@@ -746,7 +779,8 @@ namespace RayTrace{
 		///		pointer which will be caled after each step in the trace with the 
 		///		current trace position and the type of the step
 		template<typename positionType, typename callbackType>
-		TraceRecord doTrace(double depth, double theta, const rayTargetRecord& target, unsigned short allowedReflections, double frequency, double polarization, callbackType callback) const;
+		//TraceRecord doTrace(double depth, double theta, const rayTargetRecord& target, unsigned short allowedReflections, double frequency, double polarization, callbackType callback) const;
+		TraceRecord doTrace(double depth, double theta, const rayTargetRecord& target, unsigned short allowedReflections, double frequency, double polarization, int &sol_error, callbackType callback) const;
 		
 		double recalculateAmplitude(const traceReplayRecord& trace, double frequency, double polarization);
 		
@@ -800,6 +834,8 @@ namespace RayTrace{
 		
 		///Gets the index of refraction model used by this TraceFinder
 		///\return The index of refraction model
+
+#ifndef __CINT__
 		boost::shared_ptr<const indexOfRefractionModel> getRefractionModel() const{
 			return(rModel);
 		}
@@ -809,6 +845,7 @@ namespace RayTrace{
 		boost::shared_ptr<const attenuationModel> getAttenuationModel() const{
 			return(aModel);
 		}
+#endif		
 		
 		///\brief Computes the relative signal strength for a signal traveling between two points. 
 		///
@@ -826,7 +863,7 @@ namespace RayTrace{
 		///\param trg The ending position of the path
 		///\param allowedReflections Which types of reflections are allowed
 		///\return The unitless relative electric field strength arriving at the target
-		double signalStrength(const TraceRecord& ray, const Vector& src, const Vector& trg, unsigned short allowedReflections) const;
+		double signalStrength(const TraceRecord& ray, const Vector& src, const Vector& trg, unsigned short allowedReflections, int &sol_error ) const;
 	};
 
 } //namespace RayTrace

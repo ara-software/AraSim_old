@@ -366,3 +366,36 @@ double basicAttenuationModel::attenuationLength(double z, double frequency) cons
 	}
 	return 1./exp(a+bb*w);
 }
+
+constantRefractiveIndex::constantRefractiveIndex(double n): n_fixed(n){}
+
+double constantRefractiveIndex::indexOfRefraction(double z) const {
+    //n_fixed = 1.5;
+    if (z>0.) {
+        return 1.0;
+    } else
+        return n_fixed;
+}
+
+    
+double constantRefractiveIndex::indexOfRefractionDerivative(double z) const{
+	if(z>0.0)
+		return(0.0);
+	return(0.0);
+}
+
+void constantRefractiveIndex::indexOfRefractionWithDerivative(double z, double& n, double& dndz) const{
+	if(z>0.0){
+		n=1.0;
+		dndz=0.0;
+	}
+	else{
+		n=n_fixed;
+		dndz=0.0;
+	}
+}
+
+
+
+
+
