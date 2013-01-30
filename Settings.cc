@@ -132,11 +132,18 @@ outputdir="outputs"; // directory where outputs go
     
     READGEOM=0; // default : 0 : use idealized geometry and do not read in from sqlite database
     
-    V_MIMIC_MODE = 1; // default : 1 - write out window for non-triggered events that begins with the last bin in the trigger window
+    V_MIMIC_MODE = 0; // default : 0 - write out all chs where global triggered bin is center of the window (and ch delay from mean borehole delay)
+                        // 1 - same as above 0 mode but there's no ch delay
     
     USE_INSTALLED_TRIGGER_SETTINGS = 0; // default : 0 - use idealized settings for the trigger
     
     NUM_INSTALLED_STATIONS = 2;
+
+    CALPUL_OFFCONE_ANGLE = 35.;
+
+    CALPUL_AMP = 100.;
+
+    TRIG_ONLY_BH_ON = 0;    // default trigger will occur with all chs (1 will do trigger analysis with BH chs only)
     
 }
 
@@ -294,6 +301,15 @@ void Settings::ReadFile(string setupfile) {
               }
               else if (label == "NUM_INSTALLED_STATIONS") {
                   NUM_INSTALLED_STATIONS = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }              
+              else if (label == "CALPUL_OFFCONE_ANGLE") {
+                  CALPUL_OFFCONE_ANGLE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "CALPUL_AMP") {
+                  CALPUL_AMP = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "TRIG_ONLY_BH_ON") {
+                  TRIG_ONLY_BH_ON = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
               }              
           }
       }

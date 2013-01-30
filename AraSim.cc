@@ -334,6 +334,16 @@ int check_station_DC;
         Total_Global_Pass = 0;
 cout<<"begin looping events!!"<<endl;
 
+
+double pre_posnu_x;
+double pre_posnu_y;
+double pre_posnu_z;
+
+double cur_posnu_x;
+double cur_posnu_y;
+double cur_posnu_z;
+
+
     cout << "Calpulser_on: " << settings1->CALPULSER_ON << endl;
    for (int inu=0;inu<settings1->NNU;inu++) { // loop over neutrinos
 
@@ -370,10 +380,35 @@ cout<<"begin looping events!!"<<endl;
            eventTree->Fill();
 //           cout << "theEvent:" << theEvent->fVoltsRF[2][23] << endl;
        }
+       /*
        if (report->Passed_chs.size() > 0){
            cout << report->Passed_chs[0] << endl;
        }
+       */
        theEvent = NULL;
+
+
+
+       // test if posnu is exactly same in calpulser mode
+       if (settings1->CALPULSER_ON == 1) {
+           cur_posnu_x = event->Nu_Interaction[0].posnu.GetX();
+           cur_posnu_y = event->Nu_Interaction[0].posnu.GetY();
+           cur_posnu_z = event->Nu_Interaction[0].posnu.GetZ();
+           //cout<<"posnu x:"<<cur_posnu_x<<" y:"<<cur_posnu_y<<" z:"<<cur_posnu_z<<endl;
+           if (inu>0) {
+               if (pre_posnu_x==cur_posnu_x && pre_posnu_y==cur_posnu_y && pre_posnu_z==cur_posnu_z) {
+               }
+               else cout<<"posnu location changed!"<<endl;
+           }
+           pre_posnu_x = event->Nu_Interaction[0].posnu.GetX();
+           pre_posnu_y = event->Nu_Interaction[0].posnu.GetY();
+           pre_posnu_z = event->Nu_Interaction[0].posnu.GetZ();
+       }
+
+
+
+
+
 
        /*
 
@@ -436,7 +471,7 @@ cout<<"begin looping events!!"<<endl;
            // check the total global trigger passed
            if (report->stations[i].Global_Pass) {
 
-               cout<<"\nGlobal_Pass : "<<report->stations[i].Global_Pass<<" evt : "<<inu<<" added weight : "<<event->Nu_Interaction[0].weight<<"\n"<<endl;
+               cout<<"\nGlobal_Pass : "<<report->stations[i].Global_Pass<<" evt : "<<inu<<" added weight : "<<event->Nu_Interaction[0].weight<<endl;
 
                if ( check_station_DC == 0) { // count trigger pass only once per event
 

@@ -622,7 +622,7 @@ Interaction::Interaction (double pnu, Vector &nnu_org, string nuflavor, int &n_i
     // pick posnu (position where neutrino interact with ice
     // also they will calculate r_in (position nu enter the earth), r_enterice (position nu enter the ice), nuexitice (position nu exit the ice)
     //
-    if (settings1->CALPULSER_ON == 1)
+    if (settings1->CALPULSER_ON == 1)  // calpulser1 Hpol
 //    {
 //        PickExact(antarctica, detector, settings1, 50.27, 36.35*PI/180., 64.76*PI/180.); 
 //        primary1->IsCalpulser = 1;
@@ -631,12 +631,25 @@ Interaction::Interaction (double pnu, Vector &nnu_org, string nuflavor, int &n_i
         PickExact(antarctica, detector, settings1, 29.5, 2.81*PI/180., -93.6*PI/180.);
         primary1->IsCalpulser = 1;
     }
-    else if(settings1->CALPULSER_ON == 2)
+    else if(settings1->CALPULSER_ON == 2)  // calpulser2 Vpol
     {
-        PickExact(antarctica, detector, settings1, 47.18, 30.15*PI/180., -36.56*PI/180.); 
+        //PickExact(antarctica, detector, settings1, 47.18, 30.15*PI/180., -36.56*PI/180.); 
+        PickExact(antarctica, detector, settings1, 47.18, -20.*PI/180., 34.*PI/180.); // calpulser 2 Vpol location
         primary1->IsCalpulser = 2;
     } 
-    else if (settings1->CALPULSER_ON == 3)
+    else if(settings1->CALPULSER_ON == 3)   // calpulser2 Hpol
+    {
+        //PickExact(antarctica, detector, settings1, 47.18, 30.15*PI/180., -36.56*PI/180.); 
+        PickExact(antarctica, detector, settings1, 47.18, -28.*PI/180., 34.*PI/180.); // calpulser 2 Hpol location
+        primary1->IsCalpulser = 3;
+    } 
+    else if(settings1->CALPULSER_ON == 4)   // calpulser2 middle of Vpol & Hpol
+    {
+        //PickExact(antarctica, detector, settings1, 47.18, 30.15*PI/180., -36.56*PI/180.); 
+        PickExact(antarctica, detector, settings1, 47.18, -24.*PI/180., 34.*PI/180.); // calpulser 2 Hpol location
+        primary1->IsCalpulser = 4;
+    } 
+    else if (settings1->CALPULSER_ON == 5)
     {
         // insert code to switch between the two calpulsers here
     }
@@ -714,6 +727,10 @@ Interaction::Interaction (double pnu, Vector &nnu_org, string nuflavor, int &n_i
                signal->GetSpread(pnu, emfrac, hadfrac, detector->GetFreq(i), d_theta_em[i], d_theta_had[i]);   // get max spread angle and save at d_theta_em[i] and d_theta_had[i]
                //cout<<"Freq : "<<detector->GetFreq(i)<<endl;
                //cout<<"GetSpread, theta_em : "<<d_theta_em[i]<<" theta_had : "<<d_theta_had[i]<<endl;
+
+               //vmmhz1m[i] = signal->GetVmMHz1m( pnu, detector->GetFreq(i) );   // get VmMHz at 1m at cherenkov angle at GetFreq(i)
+
+
                if (primary1->IsCalpulser == 0){
                vmmhz1m[i] = signal->GetVmMHz1m( pnu, detector->GetFreq(i) );   // get VmMHz at 1m at cherenkov angle at GetFreq(i)
                //cout<<"GetVmMHZ1m : "<<vmmhz1m[i]<<endl;
@@ -725,6 +742,8 @@ Interaction::Interaction (double pnu, Vector &nnu_org, string nuflavor, int &n_i
                    }
                    
                }
+
+
                
 //            std::cout << "Frequency bin:vmmhz1m:: " << i << " : " << vmmhz1m[i] << " : " << detector->GetFreqBin() << " : " << detector->GetFreq(i) << std::endl;
            }    // end detector freq bin numbers loop

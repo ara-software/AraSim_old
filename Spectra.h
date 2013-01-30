@@ -28,7 +28,8 @@ private:
 //   TSpline3 *sE2dNdEdAdt;    //spline of E2dNdEdAdt
 //-------------------------------------------------- 
 
-  int EXPONENT_model; // set flux model
+  //int EXPONENT_model; // set flux model
+  double EXPONENT_model; // set flux model
 
   double pnu_EXPONENT;  // if mono energy from EXPONENT, pnu_EXPONENT = log10(pnu), constant pnu for all events.
 
@@ -40,7 +41,8 @@ public:
   double E2dNdEdAdt[E_bin_max]; //flux of incident neutrinos vs. energy E^2*dN/dE/dA/dt
   
   Spectra();    // default constructor
-  Spectra(int EXPONENT); // constructor  
+  //Spectra(int EXPONENT); // constructor  
+  Spectra(double EXPONENT); // constructor  
   ~Spectra();   // destructor
   
   double GetNuEnergy(); // get the neutrino energy which follows neutrino flux. 

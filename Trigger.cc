@@ -56,6 +56,8 @@ void Trigger::SetMeanRmsDiode(Settings *settings1, Detector *detector, Report *r
     meandiode = 0.;
     rmsdiode = 0.;
 
+    rmsvoltage = 0.;
+
     v_noise_timedomain.resize(ngeneratedevents);  // make the size of v_noise_timedomain_diode as ngeneratedevents (this will be huge!)
     v_noise_timedomain_diode.resize(ngeneratedevents);  // make the size of v_noise_timedomain_diode as ngeneratedevents (this will be huge!)
 
@@ -100,6 +102,8 @@ void Trigger::SetMeanRmsDiode(Settings *settings1, Detector *detector, Report *r
         for (int m=(int)(maxt_diode/TIMESTEP);m<settings1->DATA_BIN_SIZE;m++) {
 		
 	    rmsdiode+=(v_noise_timedomain_diode[i][m]-meandiode)*(v_noise_timedomain_diode[i][m]-meandiode)/((double)ngeneratedevents * ((double)settings1->DATA_BIN_SIZE-maxt_diode/TIMESTEP));
+
+	    rmsvoltage+=(v_noise_timedomain[i][m])*(v_noise_timedomain[i][m])/((double)ngeneratedevents * ((double)settings1->DATA_BIN_SIZE-maxt_diode/TIMESTEP));
 		
 	}
     }   // get rmsdiode with 1000 noisewaveforms
@@ -109,7 +113,10 @@ void Trigger::SetMeanRmsDiode(Settings *settings1, Detector *detector, Report *r
 
 
     rmsdiode=sqrt(rmsdiode);
-    cout << "mean, rms are " << meandiode << " " << rmsdiode << "\n";
+    rmsvoltage=sqrt(rmsvoltage);
+    cout << "From pure noise waveforms, diode responses" << "\n";
+    cout << "mean, rms diode are " << meandiode << " " << rmsdiode << "\n";
+    cout << "rms voltage is "<<rmsvoltage<<"\n";
     cout<<" DATA_BIN_SIZE : "<<settings1->DATA_BIN_SIZE<<"\n";
 
 

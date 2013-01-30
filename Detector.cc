@@ -17,6 +17,7 @@
 
 ClassImp(Detector);
 ClassImp(Parameters);
+ClassImp(InstalledStation);
 ClassImp(Surface_antenna);
 ClassImp(Antenna);
 ClassImp(Antenna_string);
@@ -561,7 +562,8 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         } else { // non-idealized geometry
             for (int i=0; i<params.number_of_stations; i++) {
       
-                AraGeomTool *araGeom=AraGeomTool::Instance();
+                //AraGeomTool *araGeom=AraGeomTool::Instance();
+                AraGeomTool *araGeom = new AraGeomTool();
                 
                 for (int i=0; i<params.number_of_stations; i++) {
                     for (int j = 0; j < params.number_of_strings_station; j++){
@@ -790,6 +792,10 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         ReadHgain("ARA_dipoletest1_output.txt");
         // read filter file!!
         ReadFilter("./data/filter.csv", settings1);
+        // read preamp gain file!!
+        ReadPreamp("./data/preamp.csv", settings1);
+        // read FOAM gain file!!
+        ReadFOAM("./data/FOAM.csv", settings1);
         
         
     }
@@ -1163,6 +1169,10 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         ReadHgain("ARA_dipoletest1_output.txt");
         // read filter file!!
         ReadFilter("./data/filter.csv", settings1);
+        // read preamp gain file!!
+        ReadPreamp("./data/preamp.csv", settings1);
+        // read FOAM gain file!!
+        ReadFOAM("./data/FOAM.csv", settings1);
         
         
     }
@@ -1290,8 +1300,8 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         // set station positions
         //cout << "READGEOM:" << settings1->READGEOM << endl;
         
-        UseAntennaInfo(0);
-//            UseAntennaInfo(1);
+        UseAntennaInfo(0, settings1);
+//            UseAntennaInfo(1, settings1);
         for (int i = 0; i < (int)params.number_of_stations; i++){
             stations[i].StationID = i;
             if (settings1->USE_INSTALLED_TRIGGER_SETTINGS == 0){
@@ -1321,12 +1331,13 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
                 for (int k = 0; k < stations[0].strings[j].antennas.size(); k++){
                     
                      cout <<
-                     "DetectorStation2:string:antenna:X:Y:Z:: " <<
+                     "DetectorStation2:string:antenna:X:Y:Z:chno :: " <<
                      j<< " : " <<
                      k<< " : " <<
                      stations[0].strings[j].antennas[k].GetX() << " : " <<
                      stations[0].strings[j].antennas[k].GetY() << " : " <<
-                     stations[0].strings[j].antennas[k].GetZ() << " : " <<
+                     stations[0].strings[j].antennas[k].GetZ() << " : \t" <<
+                     GetChannelfromStringAntenna ( 0, j, k)<<
                      endl;
                      
                 }
@@ -1369,6 +1380,10 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
             ReadHgain("ARA_dipoletest1_output.txt");
             // read filter file!!
             ReadFilter("./data/filter.csv", settings1);
+            // read preamp gain file!!
+            ReadPreamp("./data/preamp.csv", settings1);
+            // read FOAM gain file!!
+            ReadFOAM("./data/FOAM.csv", settings1);
 
 
             
@@ -1459,7 +1474,7 @@ inline void Detector::ReadHgain(string filename) {
 double Detector::GetGain(double freq, double theta, double phi, int ant_m, int ant_o) { // using Interpolation on multidimentions!
     //double GetGain(double freq, double theta, double phi, int ant_m, int ant_o) { // using Interpolation on multidimentions!
     
-    Parameters params;
+    //Parameters params;
     
     // change antenna facing orientation
     if (ant_o == 0) {
@@ -1605,7 +1620,7 @@ double Detector::GetGain(double freq, double theta, double phi, int ant_m, int a
 double Detector::GetGain(double freq, double theta, double phi, int ant_m) {
     //double GetGain(double freq, double theta, double phi, int ant_m) {
     
-    Parameters params;
+    //Parameters params;
     
     int i = (int)(theta/5.);
     int j = (int)(phi/5.);
@@ -1954,6 +1969,143 @@ inline void Detector::ReadFilter(string filename, Settings *settings1) {    // w
     
     
 }
+
+
+inline void Detector::ReadPreamp(string filename, Settings *settings1) {    // will return gain (dB) with same freq bin with antenna gain
+    
+    ifstream Preampgain( filename.c_str() );
+    
+    string line;
+    
+    int N=-1;
+    
+    vector <double> xfreq_tmp;
+    vector <double> ygain_tmp;
+    
+    if ( Preampgain.is_open() ) {
+        while (Preampgain.good() ) {
+            
+            getline (Preampgain, line);
+            //xfreq[N] = atof( line.substr(0, line.find_first_of(",")).c_str() );
+            xfreq_tmp.push_back( atof( line.substr(0, line.find_first_of(",")).c_str() ) );
+            //xfreq.push_back( atof( line.substr(0, line.find_first_of(",")).c_str() ) * 1.E6 );  // from MHz to Hz
+            
+            //xfreq[N] = xfreq[N] * 1.E6; // from MHz to Hz
+            
+            //ygain[N] = atof( line.substr(line.find_first_of(",") + 1).c_str() );
+            ygain_tmp.push_back( atof( line.substr(line.find_first_of(",") + 1).c_str() ) );
+            //ygain.push_back( pow(pow(10,atof( line.substr(line.find_first_of(",") + 1).c_str() ) /10.),0.5) );  // from dB to unitless gain for voltage
+            
+            //ygain[N] = pow(pow(10,yFilter[i]/10.0),0.5);    // from dB to field strength unitless gain
+            
+            N++;
+            
+        }
+        Preampgain.close();
+    }
+    
+    else cout<<"Preamgain file can not opened!!"<<endl;
+    
+    double xfreq[N], ygain[N];  // need array for Tools::SimpleLinearInterpolation
+    double xfreq_databin[settings1->DATA_BIN_SIZE/2];   // array for FFT freq bin
+    double ygain_databin[settings1->DATA_BIN_SIZE/2];   // array for gain in FFT bin
+    double df_fft;
+    
+    df_fft = 1./ ( (double)(settings1->DATA_BIN_SIZE) * settings1->TIMESTEP );
+    
+    for (int i=0;i<N;i++) { // copy values
+        xfreq[i] = xfreq_tmp[i];
+        ygain[i] = ygain_tmp[i];
+    }
+    for (int i=0;i<settings1->DATA_BIN_SIZE/2;i++) {    // this one is for DATA_BIN_SIZE
+        xfreq_databin[i] = (double)i * df_fft / (1.E6); // from Hz to MHz
+    }
+    
+    
+    // Tools::SimpleLinearInterpolation will return Preampgain array (in dB)
+    Tools::SimpleLinearInterpolation( N, xfreq, ygain, freq_step, Freq, PreampGain );
+    
+    Tools::SimpleLinearInterpolation( N, xfreq, ygain, settings1->DATA_BIN_SIZE/2, xfreq_databin, ygain_databin );
+    
+    for (int i=0;i<settings1->DATA_BIN_SIZE/2;i++) {
+        PreampGain_databin.push_back( ygain_databin[i] );
+    }
+    
+    
+    
+    
+}
+
+
+
+inline void Detector::ReadFOAM(string filename, Settings *settings1) {    // will return gain (dB) with same freq bin with antenna gain
+    
+    ifstream FOAMgain( filename.c_str() );
+    
+    string line;
+    
+    int N=-1;
+    
+    vector <double> xfreq_tmp;
+    vector <double> ygain_tmp;
+    
+    if ( FOAMgain.is_open() ) {
+        while (FOAMgain.good() ) {
+            
+            getline (FOAMgain, line);
+            //xfreq[N] = atof( line.substr(0, line.find_first_of(",")).c_str() );
+            xfreq_tmp.push_back( atof( line.substr(0, line.find_first_of(",")).c_str() ) );
+            //xfreq.push_back( atof( line.substr(0, line.find_first_of(",")).c_str() ) * 1.E6 );  // from MHz to Hz
+            
+            //xfreq[N] = xfreq[N] * 1.E6; // from MHz to Hz
+            
+            //ygain[N] = atof( line.substr(line.find_first_of(",") + 1).c_str() );
+            ygain_tmp.push_back( atof( line.substr(line.find_first_of(",") + 1).c_str() ) );
+            //ygain.push_back( pow(pow(10,atof( line.substr(line.find_first_of(",") + 1).c_str() ) /10.),0.5) );  // from dB to unitless gain for voltage
+            
+            //ygain[N] = pow(pow(10,yFilter[i]/10.0),0.5);    // from dB to field strength unitless gain
+            
+            N++;
+            
+        }
+        FOAMgain.close();
+    }
+    
+    else cout<<"Preamgain file can not opened!!"<<endl;
+    
+    double xfreq[N], ygain[N];  // need array for Tools::SimpleLinearInterpolation
+    double xfreq_databin[settings1->DATA_BIN_SIZE/2];   // array for FFT freq bin
+    double ygain_databin[settings1->DATA_BIN_SIZE/2];   // array for gain in FFT bin
+    double df_fft;
+    
+    df_fft = 1./ ( (double)(settings1->DATA_BIN_SIZE) * settings1->TIMESTEP );
+    
+    for (int i=0;i<N;i++) { // copy values
+        xfreq[i] = xfreq_tmp[i];
+        ygain[i] = ygain_tmp[i];
+    }
+    for (int i=0;i<settings1->DATA_BIN_SIZE/2;i++) {    // this one is for DATA_BIN_SIZE
+        xfreq_databin[i] = (double)i * df_fft / (1.E6); // from Hz to MHz
+    }
+    
+    
+    // Tools::SimpleLinearInterpolation will return FOAMgain array (in dB)
+    Tools::SimpleLinearInterpolation( N, xfreq, ygain, freq_step, Freq, FOAMGain );
+    
+    Tools::SimpleLinearInterpolation( N, xfreq, ygain, settings1->DATA_BIN_SIZE/2, xfreq_databin, ygain_databin );
+    
+    for (int i=0;i<settings1->DATA_BIN_SIZE/2;i++) {
+        FOAMGain_databin.push_back( ygain_databin[i] );
+    }
+    
+    
+    
+    
+}
+
+
+
+
 
 /*
 void Detector::ShiftLocationFlat(int stationNum){
@@ -2362,9 +2514,13 @@ void Detector::GetSSAfromChannel ( int stationNum, int channelNum, int * antenna
 }
 
 
-void Detector::UseAntennaInfo(int stationNum){
+void Detector::UseAntennaInfo(int stationNum, Settings *settings1){
     
-    AraGeomTool *araGeom=AraGeomTool::Instance();
+    //AraGeomTool *araGeom=AraGeomTool::Instance();
+    AraGeomTool *araGeom = new AraGeomTool();
+
+    if (stationNum == 0) params.TestBed_BH_Mean_delay = 0.;
+    //cout<<"No of chs in station "<<stationNum<<" : "<<InstalledStations[stationNum].nChannels+1<<endl;
     
     for ( int chan = 1; chan < InstalledStations[stationNum].nChannels+1; chan++){
         
@@ -2419,8 +2575,49 @@ void Detector::UseAntennaInfo(int stationNum){
                 }
                 
             } //end orientation selection
+
+
+            // put DAQ channel type 
+            if (araGeom->fStationInfo[stationNum].fAntInfo[chan-1].daqChanType == AraDaqChanType::kDisconeChan) { // BH chs
+                stations[stationNum].strings[stringNum].antennas[antennaNum].DAQchan = 0;
+            }
+            else if (araGeom->fStationInfo[stationNum].fAntInfo[chan-1].daqChanType == AraDaqChanType::kBatwingChan) { // not BH chs
+                stations[stationNum].strings[stringNum].antennas[antennaNum].DAQchan = 1;
+            }
+
             
-            //                cout << "Borehole: " << chan << " : " << stationNum << " : " << stringNum << " : " << antennaNum << " : " << stations[stationNum].strings[stringNum].antennas[antennaNum].GetX() << " : " << stations[stationNum].strings[stringNum].antennas[antennaNum].GetY() << " : " << stations[stationNum].strings[stringNum].antennas[antennaNum].GetZ() << " : " << stations[stationNum].strings[stringNum].antennas[antennaNum].type << endl;
+            //cout << "Borehole ch: " << chan << " station: " << stationNum << " string: " << stringNum << " ant: " << antennaNum << " X: " << stations[stationNum].strings[stringNum].antennas[antennaNum].GetX() << " Y: " << stations[stationNum].strings[stringNum].antennas[antennaNum].GetY() << " Z: " << stations[stationNum].strings[stringNum].antennas[antennaNum].GetZ() << " Type: " << stations[stationNum].strings[stringNum].antennas[antennaNum].type << endl;
+            cout << "Borehole ch: " << chan << " station: " << stationNum << " string: " << stringNum << " ant: " << antennaNum << " Type: " << stations[stationNum].strings[stringNum].antennas[antennaNum].type << endl;
+
+
+
+            if (stationNum == 0) {
+
+                //cout<<"TestBed ch"<<chan-1<<" delay : "<<araGeom->fStationInfo[stationNum].fAntInfo[chan-1].debugTotalCableDelay<<endl;
+                params.TestBed_Ch_delay[chan-1] = araGeom->fStationInfo[stationNum].fAntInfo[chan-1].debugTotalCableDelay;
+                params.TestBed_Ch_delay_bin[chan-1] = params.TestBed_Ch_delay[chan-1]/(settings1->TIMESTEP * 1.e9); // change TIMESTEP s to ns
+                //cout<<"TestBed ch"<<chan-1<<" delay bin : "<<params.TestBed_Ch_delay_bin[chan-1]<<endl;
+                if (chan<9) params.TestBed_BH_Mean_delay += params.TestBed_Ch_delay[chan-1];
+
+                // give manual delay time for BH chs (for TestBed)
+                if (chan == 2) stations[stationNum].strings[stringNum].antennas[antennaNum].manual_delay = 50.; // additional delay in ns
+                else if (chan == 3) stations[stationNum].strings[stringNum].antennas[antennaNum].manual_delay = -10.; // additional delay in ns
+                else if (chan == 4) stations[stationNum].strings[stringNum].antennas[antennaNum].manual_delay = 20.; // additional delay in ns
+                else if (chan == 5) stations[stationNum].strings[stringNum].antennas[antennaNum].manual_delay = 30.; // additional delay in ns
+                else if (chan == 6) stations[stationNum].strings[stringNum].antennas[antennaNum].manual_delay = 20.; // additional delay in ns
+                else if (chan == 7) stations[stationNum].strings[stringNum].antennas[antennaNum].manual_delay = -10.; // additional delay in ns
+                else if (chan == 8) stations[stationNum].strings[stringNum].antennas[antennaNum].manual_delay = 10.; // additional delay in ns
+                else stations[stationNum].strings[stringNum].antennas[antennaNum].manual_delay = 0.;
+            }
+            else stations[stationNum].strings[stringNum].antennas[antennaNum].manual_delay = 0.;// no manual delay for other stations (not known yet)
+
+            // set manual delay bin
+            stations[stationNum].strings[stringNum].antennas[antennaNum].manual_delay_bin = stations[stationNum].strings[stringNum].antennas[antennaNum].manual_delay / (settings1->TIMESTEP * 1.e9);
+
+
+
+
+
         }// end polarization (antenna type) selection
         else {
             
@@ -2436,10 +2633,20 @@ void Detector::UseAntennaInfo(int stationNum){
             
         }
         
+
+
         
         
     } // end channel loop
     
+    if (stationNum == 0) {
+        params.TestBed_BH_Mean_delay /= 8.;
+        params.TestBed_BH_Mean_delay_bin = params.TestBed_BH_Mean_delay/(settings1->TIMESTEP * 1.e9); // change TIMESTEP s to ns
+        //cout<<"TestBed Mean BH chs delay : "<<params.TestBed_BH_Mean_delay<<endl;
+        //cout<<"TestBed Mean BH chs delay bin : "<<params.TestBed_BH_Mean_delay_bin<<endl;
+
+        params.TestBed_WFtime_offset_ns = -20.;
+    }
     
 }
 

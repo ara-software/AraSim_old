@@ -21,7 +21,8 @@ Spectra::~Spectra() {
 
 }
 
-Spectra::Spectra(int EXPONENT) {
+//Spectra::Spectra(int EXPONENT) {
+Spectra::Spectra(double EXPONENT) {
 
 
     EXPONENT_model = EXPONENT;
@@ -42,7 +43,7 @@ Spectra::Spectra(int EXPONENT) {
   // end of initialization!!
 
 
-  if (EXPONENT==1)  // dNdEdAdt ~ E^-1
+  if (EXPONENT==1.)  // dNdEdAdt ~ E^-1
   {
       E_bin = 12;
       for (int i=0;i<E_bin;i++) {   // set energy, EdNdEdAdt and E2dNdEdAdt
@@ -52,7 +53,7 @@ Spectra::Spectra(int EXPONENT) {
       }
   }
 
-  else if (EXPONENT==2) // dNdEdAdt ~ E^-2
+  else if (EXPONENT==2.) // dNdEdAdt ~ E^-2
   {
       E_bin = 12;
       for (int i=0;i<E_bin;i++) {   // set energy, EdNdEdAdt and E2dNdEdAdt
@@ -62,7 +63,7 @@ Spectra::Spectra(int EXPONENT) {
       }
   }
 
-  else if (EXPONENT==3) // dNdEdAdt ~ E^-3
+  else if (EXPONENT==3.) // dNdEdAdt ~ E^-3
   {
       E_bin = 12;
       for (int i=0;i<E_bin;i++) {   // set energy, EdNdEdAdt and E2dNdEdAdt
@@ -72,7 +73,7 @@ Spectra::Spectra(int EXPONENT) {
       }
   }
 
-  else if (EXPONENT==4) // dNdEdAdt ~ E^-4
+  else if (EXPONENT==4.) // dNdEdAdt ~ E^-4
   {
       E_bin = 12;
       for (int i=0;i<E_bin;i++) {   // set energy, EdNdEdAdt and E2dNdEdAdt
@@ -82,12 +83,12 @@ Spectra::Spectra(int EXPONENT) {
       }
   }
 
-  else if (EXPONENT>=10 && EXPONENT<30)
+  else if (EXPONENT>=10. && EXPONENT<30.)
   {
       pnu_EXPONENT = EXPONENT;
   }
 
-  else if (EXPONENT==30) // ESS baseline model. Used to be EXPONENT "0"
+  else if (EXPONENT==30.) // ESS baseline model. Used to be EXPONENT "0"
   {
       E_bin = 9;
 
@@ -129,7 +130,7 @@ Spectra::Spectra(int EXPONENT) {
     }
   }
 
-  else if (EXPONENT==31) // ESS-cosmological constant. Use Nu_el : Nu_mu ratio. used to be EXPONENT "5"
+  else if (EXPONENT==31.) // ESS-cosmological constant. Use Nu_el : Nu_mu ratio. used to be EXPONENT "5"
   {
       E_bin = 9;
       double emuratio[E_bin];
@@ -198,9 +199,9 @@ Spectra::Spectra(int EXPONENT) {
   } // end if ESS-cosmological constant
 
 
-  else if (EXPONENT>31 && EXPONENT<200)  // use digitized flux from different models
+  else if (EXPONENT>31. && EXPONENT<200.)  // use digitized flux from different models
   {
-      switch (EXPONENT)
+      switch ( (int)EXPONENT )
       {
           case 32:  // ESS3
               GetFlux("essfig9.dat");
@@ -252,52 +253,52 @@ Spectra::Spectra(int EXPONENT) {
       }
   }
 
-  else if (EXPONENT==200)   // Iron model
+  else if (EXPONENT==200.)   // Iron model
   {
       GetFlux("Ave2005_Fe_Emax21.0.dat");
   }
 
-  else if (EXPONENT==201)
+  else if (EXPONENT==201.)
   {
       GetFlux("Ave2005_Fe_Emax21.5.dat");
   }
   
-  else if (EXPONENT==202)
+  else if (EXPONENT==202.)
   {
       GetFlux("Ave2005_Fe_Emax22.0.dat");
   }
 
-  else if (EXPONENT==203)
+  else if (EXPONENT==203.)
   {
       GetFlux("Ave2005_Fe_hi_evo.dat");
   }
 
-  else if (EXPONENT==204)
+  else if (EXPONENT==204.)
   {
       GetFlux("Ave2005_Fe_low_evo.dat");
   }
 
-  else if (EXPONENT==210)
+  else if (EXPONENT==210.)
   {
       GetFlux("Stanev2008_heavy.dat");
   }
 
-  else if (EXPONENT==220)
+  else if (EXPONENT==220.)
   {
       GetFlux("Kotera2010_Fe_only.dat");
   }
 
-  else if (EXPONENT==221)
+  else if (EXPONENT==221.)
   {
       GetFlux("Kotera2010_Fe_rich.dat");
   }
 
-  else if (EXPONENT==222)
+  else if (EXPONENT==222.)
   {
       GetFlux("Kotera2010_mix_max.dat");
   }
 
-  else if (EXPONENT==223)
+  else if (EXPONENT==223.)
   {
       GetFlux("Kotera2010_mix_min.dat");
   }
@@ -362,7 +363,7 @@ double  Spectra::GetNuEnergy() {
   // this uses the dartboard approach
   //cout << "minenergy, maxenergy are " << minenergy << " " << maxenergy << "\n";
   
-  if (EXPONENT_model>=10 && EXPONENT_model<30) {
+  if (EXPONENT_model>=10. && EXPONENT_model<30.) {
       return pow(10.,pnu_EXPONENT);
   }
 
@@ -494,7 +495,7 @@ int Spectra::GetE_bin() {
 
 int Spectra::IsSpectrum() {
     int out;
-    if (EXPONENT_model>=30) {
+    if (EXPONENT_model>=30.) {
         out = 1;
     }
     else {
@@ -505,7 +506,7 @@ int Spectra::IsSpectrum() {
 
 int Spectra::IsMonoenergetic() {
     int out;
-    if (EXPONENT_model>0&&EXPONENT_model<30) {
+    if (EXPONENT_model>0.&&EXPONENT_model<30.) {
         out = 1;
     }
     else {

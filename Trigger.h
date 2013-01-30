@@ -39,6 +39,8 @@ class Trigger {
 
      double meandiode;
      double rmsdiode;
+     double rmsvoltage;// rms voltage value without diode response
+
      vector < vector <double> > v_noise_timedomain;   // time domain noise waveform examples
      vector < vector <double> > v_noise_timedomain_diode; // time domain diode convlved noise waveforms examples
 

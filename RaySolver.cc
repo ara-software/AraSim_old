@@ -897,13 +897,15 @@ void RaySolver::Solve_Ray (Position &source, Position &target, IceModel *antarct
         if ( sol_cnt > 0 && sol_error > 0 ) {   // this case do findPahts again with src, trg exchanged
             paths_exc=tf.findPaths(trg,src,frequency/1.0e3,polarization, sol_cnt_exc, sol_error_exc, refl,requiredAccuracy);
 
-            //std::cout<<"sol cnt exc : "<<sol_cnt<<" sol error exc : "<<sol_error<<std::endl;
+            std::cout<<"sol cnt exc : "<<sol_cnt<<" sol error exc : "<<sol_error<<std::endl;
 
             if ( sol_error > sol_error_exc ) {  // exchanged one is better (less sol_error)
                 paths = paths_exc;
                 SrcTrgExc = 1;
             }
             else if (sol_error == sol_error_exc) {  // sol_error are same for both paths. Then use the better miss dist.
+
+
                 std::vector<RayTrace::TraceRecord>::const_iterator it_tmp=paths.begin();
                 std::vector<RayTrace::TraceRecord>::const_iterator it_tmp_exc=paths_exc.begin();
                 if ( it_tmp->miss > it_tmp_exc->miss ) {    // if fist one miss dist is worse

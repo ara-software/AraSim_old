@@ -638,3 +638,58 @@ triggered) or trigger passed bin number.
 
 
 ===============================================================================
+
+01/30/13 E. Hong;
+
+many updates
+
+1) TestBed structure updated.
+Now with DETECTOR=3 mode, AraSim will read actual TestBed geometry information from sqlite file from AraRoot and put antennas to proper locations. To do this properly, please use READGEOM=1 also.
+
+2) TestBed Calpulser1 and 2 functionality.
+If you want to run AraSim with TestBed, calpulser on, use CALPULSER_ON=1 (calpulser1 in Hpol). There are calpulser 2 mode also
+CALPULSER_ON=2 (calpulser2 Vpol)
+CALPULSER_ON=3 (calpulser2 Hpol)
+CALPULSER_ON=4 (calpulser2 Vpol and Hpol at the same time and location is middle of those two)
+
+You can also change the signal strength of calpulsers.
+CALPUL_AMP=0.15 (reasonable value for calpulser1 Hpol evts)
+CALPUL_AMP=0.25 (reasonable value for calpulser2 evts)
+
+3) Trigger windowing changed.
+To mimic the way how TestBed write the waveform, I added V_MIMIC_MODE in setup class.
+V_MIMIC_MODE=0 (write waveforms with average borehole chs cable delays and then apply each chs cable delay. This doesn't write the waveform same as TestBed)
+
+V_MIMIC_MODE=1 (just write waveforms where global triggered bin is centered at the window. Quite different from TestBed waveforms)
+
+V_MIMIC_MODE=2 (similar to V_MIMIC_MODE=0 but I added extra delays to each chs to match TestBed data waveforms. Manually added delay is less than 100ns)
+
+4) new trigger mode
+To match with TestBed calpulser trigger (in data), I added new trigger mode which trigger only occur by borehole chs (from ch1 to 8).
+TRIG_ONLY_BH_ON=1 (trigger will only check borehole chs)
+by default, it's off.
+
+5) now Preamp, FOAM amplification is added
+Currently just one value for Preamp, FOAM gains.
+Preamp gain file : data/preamp.csv
+FOAM gain file : data/FOAM.csv
+
+6) new time array which mimics TestBed data
+Added new time_mimic vector array in report class. This will return time (ns) for each chs which mimics TestBed waveforms.
+report->stations[i].strings[j].antennas.[k].time_mimic[bin]
+report->stations[i].Global_Pass   this value will now store the global trigger occured bin (from DATA_BIN_SIZE)
+
+7) new method to match string, antenna numbers and actual TestBed ch numbers
+TestBed station number in DETECTOR=3 mode is 0.
+So you can reach TestBed station by detector->stations[0] or report->stations[0].
+Now, to match channel number (from TestBed AraRoot system) and strings, antennas numbers you can use
+detector->GetSSAfromChannel(0, chID+1, &ant, &string);
+function.
+GetSSAfromChannel will return correct antenna number and string number for chID value.
+There is a example code (readTree.cc) which making a plot with channel ordering.
+
+
+There are actually more things that have been changed...
+Hope I can make note for those later.
+
+===============================================================================

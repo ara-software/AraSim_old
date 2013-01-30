@@ -80,6 +80,15 @@ class Parameters {
     double freq_width;  // this value could be changed when Nec2 condition changes! copy to Detector->freq_width
     double freq_init;  // this value could be changed when Nec2 condition changes! copy to Detector->freq_init
 
+
+    double TestBed_Ch_delay[16];
+    int TestBed_Ch_delay_bin[16]; // in bin
+    double TestBed_BH_Mean_delay;
+    int TestBed_BH_Mean_delay_bin; // in bin
+
+    double TestBed_WFtime_offset_ns; // waveform time offset to match TestBed data waveform
+
+
     ClassDef(Parameters,1);
 
 
@@ -115,6 +124,12 @@ class Antenna : public Position {
 //    double z;
     int type;  // type 0 : v-pol (bicone), type 1 : h-pol (bowtie for testbed, QSC for ARA)
     int orient; // 0 : facing x, 1 : y, 2 : -x, 3 : -y.
+
+    int DAQchan;    // DAQ channel type (from AraGeomTools). 0 : discone (BH chs), 1 : BAT (shallow, surf; not first 8 chs)
+
+    int manual_delay;   // to fit the waveform to actual TestBed waveform, added manual delay time
+
+    int manual_delay_bin;   // to fit the waveform to actual TestBed waveform, added manual delay bin
     
     double GetG(Detector *D, double freq, double theta, double phi);    // read gain value from Detector class
 
@@ -154,6 +169,21 @@ class ARA_station : public Position {
 
 
 
+class InstalledStation {
+
+    public:
+    int nSurfaces;
+    int nStrings;
+    vector < int > surfaceChannels;
+    vector < vector < int > > VHChannel;
+    int nChannels;
+    int nChannelsVH;
+    vector < vector < int > > VHID;
+    vector < int > surfaceID;
+
+    ClassDef(InstalledStation,1);
+
+};
 
 
 
@@ -171,6 +201,16 @@ class Detector {
         void ReadFilter(string filename, Settings *settings1);
         double FilterGain[freq_step_max];   // Filter gain (dB) for Detector freq bin array
         vector <double> FilterGain_databin;   // Filter gain (dB) for DATA_BIN_SIZE bin array
+
+        void ReadPreamp(string filename, Settings *settings1);
+        double PreampGain[freq_step_max];   // Filter gain (dB) for Detector freq bin array
+        vector <double> PreampGain_databin;   // Filter gain (dB) for DATA_BIN_SIZE bin array
+
+
+        void ReadFOAM(string filename, Settings *settings1);
+        double FOAMGain[freq_step_max];   // Filter gain (dB) for Detector freq bin array
+        vector <double> FOAMGain_databin;   // Filter gain (dB) for DATA_BIN_SIZE bin array
+
 
         void FlattoEarth_ARA(IceModel *icesurface);
         void FlattoEarth_ARA_sharesurface(IceModel *icesurface);  // each station share the lowest surface
@@ -195,6 +235,13 @@ class Detector {
         double GetGain(double freq, double theta, double phi, int ant_m);   //read antenna gain at certain angle, certain type. (orientation : default)
         double GetFilterGain(int bin) { return FilterGain[bin]; }   // same bin with Vgain, Hgain
         double GetFilterGain_databin(int bin) { return FilterGain_databin[bin]; }   // bin for FFT
+
+        double GetPreampGain(int bin) { return PreampGain[bin]; }   // same bin with Vgain, Hgain
+        double GetPreampGain_databin(int bin) { return PreampGain_databin[bin]; }   // bin for FFT
+
+        double GetFOAMGain(int bin) { return FOAMGain[bin]; }   // same bin with Vgain, Hgain
+        double GetFOAMGain_databin(int bin) { return FOAMGain_databin[bin]; }   // bin for FFT
+
         
         double Getfreq_init() {return freq_init;}
 
@@ -225,9 +272,10 @@ class Detector {
     int GetChannelfromStringAntenna (int stationNum, int stringnum, int antennanum );
     void GetSSAfromChannel ( int stationNum, int channelNum, int * antennaNum, int * stringNum );
     
-    void UseAntennaInfo (int stationNum);
+    void UseAntennaInfo (int stationNum, Settings *settings1);
    
     
+    /*
     struct InstalledStation {
         int nSurfaces;
         int nStrings;
@@ -239,6 +287,7 @@ class Detector {
         vector < int > surfaceID;
 
     };
+    */
     
     vector < InstalledStation > InstalledStations;
     

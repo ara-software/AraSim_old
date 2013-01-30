@@ -7,6 +7,7 @@
 
 #pragma link C++ class Detector+;
 #pragma link C++ class Parameters+;
+#pragma link C++ class InstalledStation+;
 #pragma link C++ class Trigger+;
 
 #pragma link C++ class ARA_station+;

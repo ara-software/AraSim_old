@@ -41,7 +41,7 @@ INTERACTION_MODE=1
 // Make sure the name of variable is correct.
 
 //EXPONENT=30
-EXPONENT=19
+//EXPONENT=19
 
 //NNU=1
 //NNU=5
@@ -73,7 +73,7 @@ TRIG_ANALYSIS_MODE=0 // 0 = signal + noise, 1 = signal only, 2 = noise only
 //DATA_BIN_SIZE=16384
 
 //NOISE_EVENTS=1
-NOISE_EVENTS=100
+//NOISE_EVENTS=100
 //NOISE_EVENTS=7000
 //NOISE_EVENTS=1000
 
@@ -98,7 +98,7 @@ DATA_SAVE_MODE=1
 // new mode, WRITE_ALL_EVENTS 2 will not save waveforms at all.
 WRITE_ALL_EVENTS=1
 
-V_MIMIC_MODE=1
+//V_MIMIC_MODE=1
 
 
 // lets work on nnu theta 80 deg +- 1deg
@@ -109,17 +109,29 @@ V_MIMIC_MODE=1
 
 BORE_HOLE_ANTENNA_LAYOUT=0
 
-CALPULSER_ON=1
+//CALPULSER_ON=1
 
-READGEOM=1
+//READGEOM=1
 
 READGEOM=1 // reads geometry information from the sqlite file
 DETECTOR=3 // uses testbed geometry only (for now but we intend to add multi-station functionality in the future)
-CALPULSER_ON=0 // Calpulser is off
+//CALPULSER_ON=0 // Calpulser is off
+CALPULSER_ON=1
+CALPUL_AMP=0.15 // calpulser1 amp
+//CALPUL_AMP=0.25 // calpulser2 amp
+TRIG_ONLY_BH_ON=1
 
-TRIG_WINDOW=0.0000001 // The trigger window might not be quite right since we are not exactly sure what the actually trigger window used in the TestBed firmware is. Setting it to this value will make the trigger window 100 ns. If you want 250 ns, use 0.00000025.
+NOISE_EVENTS=1000
 
-V_MIMIC_MODE=0 // a setting for how to deal with non-triggered channels on a globally triggered event; a value of 1 means that it will write out the waveform for that channel starting with the last bin of the trigger window, a value of 2 means that it will write out the waveform for that channel centered on the last bin of the trigger window, a value of 0 means that it will write out the waveform for that channel centered on the center of the trigger window- this is closest to what the hardware does, but if you want to examine what the events look like the other mimic modes are more useful
+V_MIMIC_MODE=2
 
-NNU=10000 // set for generating 10000 events
+//TRIG_WINDOW=0.0000001 // The trigger window might not be quite right since we are not exactly sure what the actually trigger window used in the TestBed firmware is. Setting it to this value will make the trigger window 100 ns. If you want 250 ns, use 0.00000025.
+TRIG_WINDOW=2.5E-7
+
+TIMESTEP=5.E-10
+
+
+//V_MIMIC_MODE=0 // a setting for how to deal with non-triggered channels on a globally triggered event; a value of 1 means that it will write out the waveform for that channel starting with the last bin of the trigger window, a value of 2 means that it will write out the waveform for that channel centered on the last bin of the trigger window, a value of 0 means that it will write out the waveform for that channel centered on the center of the trigger window- this is closest to what the hardware does, but if you want to examine what the events look like the other mimic modes are more useful
+
+NNU=1000 // set for generating 10000 events
 

@@ -113,6 +113,7 @@ void Antenna_r::clear() {   // if any vector variable added in Antenna_r, need t
     Vfft_noise.clear();
 
     time.clear();
+    time_mimic.clear();
     V_mimic.clear();
     Ax.clear();
     Ay.clear();
@@ -194,6 +195,7 @@ void Antenna_r::clear_useless(Settings *settings1) {   // to reduce the size of 
     
     // clear global trigger waveform info also
     time.clear();
+    time_mimic.clear();
     V_mimic.clear();
     }
 
@@ -371,7 +373,9 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 //                                       switch (event->IsCalpulser){
 //                                           case 0:
                                        if (event->IsCalpulser > 0){
-                                           vmmhz1m_tmp = event->Nu_Interaction[0].vmmhz1m[l]*100;
+                                           vmmhz1m_tmp = event->Nu_Interaction[0].vmmhz1m[l]*settings1->CALPUL_AMP;
+                                           //vmmhz1m_tmp = event->Nu_Interaction[0].vmmhz1m[l];// calpulser -> let's use slight offset from cone
+                                           //signal->TaperVmMHz( settings1->CALPUL_OFFCONE_ANGLE*RADDEG, event->Nu_Interaction[0].d_theta_em[l], event->Nu_Interaction[0].d_theta_had[l], event->Nu_Interaction[0].emfrac, event->Nu_Interaction[0].hadfrac, vmmhz1m_tmp, vmmhz1m_em);
                                        } else {
                                            vmmhz1m_tmp = event->Nu_Interaction[0].vmmhz1m[l];
                                            signal->TaperVmMHz( viewangle, event->Nu_Interaction[0].d_theta_em[l], event->Nu_Interaction[0].d_theta_had[l], event->Nu_Interaction[0].emfrac, event->Nu_Interaction[0].hadfrac, vmmhz1m_tmp, vmmhz1m_em);
@@ -418,8 +422,21 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                        stations[i].strings[j].antennas[k].Heff[ray_sol_cnt].push_back( heff );
 
                                        // apply pol factor, heff
-                                       if (event->IsCalpulser > 0){
+                                       if (event->IsCalpulser == 1){
+                                           //cout<<"set signal pol as Hpol for Calpulser1 evts"<<endl;
                                            Pol_vector = n_trg_slappy;
+                                       }
+                                       else if (event->IsCalpulser == 2){
+                                           //cout<<"set signal pol as Vpol for Calpulser2 evts"<<endl;
+                                           Pol_vector = n_trg_pokey;
+                                       }
+                                       else if (event->IsCalpulser == 3){
+                                           //cout<<"set signal pol as Hpol for Calpulser2 evts"<<endl;
+                                           Pol_vector = n_trg_slappy;
+                                       }
+                                       else if (event->IsCalpulser == 4){
+                                           //cout<<"set signal pol as Vpol + Hpol for Calpulser2 evts"<<endl;
+                                           Pol_vector = n_trg_slappy + n_trg_pokey;
                                        }
                                        
                                        ApplyAntFactors(heff, n_trg_pokey, n_trg_slappy, Pol_vector, detector->stations[i].strings[j].antennas[k].type, Pol_factor, vmmhz1m_tmp);
@@ -429,6 +446,13 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                                        // apply filter
                                        ApplyFilter(l, detector, vmmhz1m_tmp);
+
+                                       // apply Preamp gain
+                                       ApplyPreamp(l, detector, vmmhz1m_tmp);
+
+                                       // apply FOAM gain
+                                       ApplyFOAM(l, detector, vmmhz1m_tmp);
+
 
                                        //stations[i].strings[j].antennas[k].Vfft[ray_sol_cnt].push_back( vmmhz1m_tmp );
                                        stations[i].strings[j].antennas[k].VHz_filter[ray_sol_cnt].push_back( vmmhz1m_tmp );
@@ -834,25 +858,54 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                        int string_i = detector->getStringfromArbAntID( i, trig_j);
                        int antenna_i = detector->getAntennafromArbAntID( i, trig_j);
-                       
-                       //for ( trig_bin=0; trig_bin<trig_window_bin; trig_bin++) {
-                       trig_bin = 0;
-                       while (trig_bin < trig_window_bin ) {
 
-                           //cout<<"trig_bin : "<<trig_bin<<endl;
+                       // check if we want to use BH chs only for trigger analysis
+                       if (settings1->TRIG_ONLY_BH_ON == 1) {
 
-                           if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode) ) {   // if this channel passed the trigger!
-                               //cout<<"trigger passed at bin "<<trig_i+trig_bin<<" ch : "<<trig_j<<endl;
-                               //stations[i].strings[(int)((trig_j)/4)].antennas[(int)((trig_j)%4)].Trig_Pass = trig_i+trig_bin;
-                               stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
-                               N_pass++;
-                               if (last_trig_bin < trig_i+trig_bin) last_trig_bin = trig_i+trig_bin;    // added for fixed V_mimic
-                               trig_bin = trig_window_bin;  // if confirmed this channel passed the trigger, no need to do rest of bins
-                               Passed_chs.push_back(trig_j);
+                           // check if this channel is BH ch (DAQchan)
+                           if ( detector->stations[i].strings[string_i].antennas[antenna_i].DAQchan == 0 ) {
+
+                               trig_bin = 0;
+                               while (trig_bin < trig_window_bin ) {
+
+                                   //cout<<"trig_bin : "<<trig_bin<<endl;
+
+                                   if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode) ) {   // if this channel passed the trigger!
+                                       //cout<<"trigger passed at bin "<<trig_i+trig_bin<<" ch : "<<trig_j<<endl;
+                                       //stations[i].strings[(int)((trig_j)/4)].antennas[(int)((trig_j)%4)].Trig_Pass = trig_i+trig_bin;
+                                       stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
+                                       N_pass++;
+                                       if (last_trig_bin < trig_i+trig_bin) last_trig_bin = trig_i+trig_bin;    // added for fixed V_mimic
+                                       trig_bin = trig_window_bin;  // if confirmed this channel passed the trigger, no need to do rest of bins
+                                       Passed_chs.push_back(trig_j);
+                                   }
+
+                                   trig_bin++;
+
+                               }
                            }
 
-                           trig_bin++;
+                       }
+                       
+                       else if (settings1->TRIG_ONLY_BH_ON == 0) {
+                           trig_bin = 0;
+                           while (trig_bin < trig_window_bin ) {
 
+                               //cout<<"trig_bin : "<<trig_bin<<endl;
+
+                               if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode) ) {   // if this channel passed the trigger!
+                                   //cout<<"trigger passed at bin "<<trig_i+trig_bin<<" ch : "<<trig_j<<endl;
+                                   //stations[i].strings[(int)((trig_j)/4)].antennas[(int)((trig_j)%4)].Trig_Pass = trig_i+trig_bin;
+                                   stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
+                                   N_pass++;
+                                   if (last_trig_bin < trig_i+trig_bin) last_trig_bin = trig_i+trig_bin;    // added for fixed V_mimic
+                                   trig_bin = trig_window_bin;  // if confirmed this channel passed the trigger, no need to do rest of bins
+                                   Passed_chs.push_back(trig_j);
+                               }
+
+                               trig_bin++;
+
+                           }
                        }
 
                        // check all triggered channels not just 3
@@ -865,7 +918,9 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                    //if ( N_pass > 2 ) {  // now as global trigged!! = more or eq to 3 triggered
                    if ( N_pass > settings1->N_TRIG-1 ) {  // now as global trigged!! = more or eq to N_TRIG triggered
                        check_ch = 0;
-                       stations[i].Global_Pass = trig_i;
+                       //stations[i].Global_Pass = trig_i;
+                       stations[i].Global_Pass = last_trig_bin; // where actually global trigger occured
+
                        //trig_i = settings1->DATA_BIN_SIZE;    // also if we know this station is trigged, don't need to check rest of time window
                        trig_i = max_total_bin;    // also if we know this station is trigged, don't need to check rest of time window
                        for (int ch_loop=0; ch_loop<ch_ID; ch_loop++) {
@@ -876,9 +931,10 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                
                                //skip this passed ch as it already has bin info
                                //cout<<"trigger passed at bin "<<stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].Trig_Pass<<"  passed ch : "<<ch_loop<<" Direct dist btw posnu : "<<event->Nu_Interaction[0].posnu.Distance( detector->stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)] )<<endl;
-                               cout<<endl<<"trigger passed at bin "<<stations[i].strings[string_i].antennas[antenna_i].Trig_Pass<<"  passed ch : "<<ch_loop<<" Direct dist btw posnu : "<<event->Nu_Interaction[0].posnu.Distance( detector->stations[i].strings[string_i].antennas[antenna_i] )<<endl;
+                               cout<<endl<<"trigger passed at bin "<<stations[i].strings[string_i].antennas[antenna_i].Trig_Pass<<"  passed ch : "<<ch_loop<<" Direct dist btw posnu : "<<event->Nu_Interaction[0].posnu.Distance( detector->stations[i].strings[string_i].antennas[antenna_i] );
+
                                //cout << "True station number: " << detector->InstalledStations[0].VHChannel[string_i][antenna_i] << endl;
-                               cout << event->Nu_Interaction[0].posnu[0] << " : " <<  event->Nu_Interaction[0].posnu[1] << " : " << event->Nu_Interaction[0].posnu[2] << endl;
+                               //cout << event->Nu_Interaction[0].posnu[0] << " : " <<  event->Nu_Interaction[0].posnu[1] << " : " << event->Nu_Interaction[0].posnu[2] << endl;
                                //cout << event->nnu[0] << " : " << event->nnu[1] << " : " << event->nnu[2] << endl;
                                check_ch++;
 
@@ -886,8 +942,25 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                
                                for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
                                    //stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].V_mimic.push_back( trigger->Full_window_V[ch_loop][ stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].Trig_Pass - settings1->NFOUR/4 + mimicbin ] );
-                                   stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( trigger->Full_window_V[ch_loop][ stations[i].strings[string_i].antennas[antenna_i].Trig_Pass - settings1->NFOUR/4 + mimicbin ] );
-                                   stations[i].strings[string_i].antennas[antenna_i].time.push_back( stations[i].strings[string_i].antennas[antenna_i].Trig_Pass - settings1->NFOUR/4 + mimicbin );
+                                   //
+                                   //stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( trigger->Full_window_V[ch_loop][ stations[i].strings[string_i].antennas[antenna_i].Trig_Pass - settings1->NFOUR/4 + mimicbin ] );
+                                   //stations[i].strings[string_i].antennas[antenna_i].time.push_back( stations[i].strings[string_i].antennas[antenna_i].Trig_Pass - settings1->NFOUR/4 + mimicbin );
+                                   // new DAQ waveform writing mechanism test
+                                   if (V_mimic_mode == 0) { // Global passed bin is the center of the window + delay to each chs from araGeom
+                                       stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( ( trigger->Full_window_V[ch_loop][ last_trig_bin - (detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin) - settings1->NFOUR/4 + mimicbin ] )*1.e3 );// save in mV
+                                       stations[i].strings[string_i].antennas[antenna_i].time.push_back( last_trig_bin - (detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin) - settings1->NFOUR/4 + mimicbin );
+                                       stations[i].strings[string_i].antennas[antenna_i].time_mimic.push_back( ( -(detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin) - settings1->NFOUR/4 + mimicbin) * settings1->TIMESTEP*1.e9  );// save in ns
+                                   }
+                                   else if (V_mimic_mode == 1) { // Global passed bin is the center of the window
+                                       stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( ( trigger->Full_window_V[ch_loop][ last_trig_bin - settings1->NFOUR/4 + mimicbin ] )*1.e3 );// save in mV
+                                       stations[i].strings[string_i].antennas[antenna_i].time.push_back( last_trig_bin - settings1->NFOUR/4 + mimicbin );
+                                       stations[i].strings[string_i].antennas[antenna_i].time_mimic.push_back( ( settings1->NFOUR/4 + mimicbin) * settings1->TIMESTEP*1.e9  );// save in ns
+                                   }
+                                   else if (V_mimic_mode == 2) { // Global passed bin is the center of the window + delay to each chs from araGeom + fitted by eye
+                                       stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( ( trigger->Full_window_V[ch_loop][ last_trig_bin - (detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin + detector->stations[i].strings[string_i].antennas[antenna_i].manual_delay_bin) - settings1->NFOUR/4 + mimicbin ] )*1.e3 );// save in mV
+                                       stations[i].strings[string_i].antennas[antenna_i].time.push_back( last_trig_bin - (detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin + detector->stations[i].strings[string_i].antennas[antenna_i].manual_delay_bin) - settings1->NFOUR/4 + mimicbin );
+                                       stations[i].strings[string_i].antennas[antenna_i].time_mimic.push_back( ( -(detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin + detector->stations[i].strings[string_i].antennas[antenna_i].manual_delay_bin) - settings1->NFOUR/4 + mimicbin) * settings1->TIMESTEP*1.e9 + detector->params.TestBed_WFtime_offset_ns );// save in ns
+                                   }
                                }
 
                            }
@@ -895,7 +968,8 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                //stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].Trig_Pass = stations[i].Global_Pass + settings1->NFOUR/4;   // so that global trig is 
                                //stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].Trig_Pass = 0.;
                                stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = 0.;
-                               
+
+                               /*
                                // now save the voltage waveform to V_mimic
                                if (V_mimic_mode == 1) { // store V_mimic starting from last_trig_bin
                                for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
@@ -915,6 +989,28 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                        stations[i].strings[string_i].antennas[antenna_i].time.push_back( stations[i].Global_Pass + trig_window_bin/2 - settings1->NFOUR/4 + mimicbin );
                                    }
                                }
+                               */
+
+                               // new DAQ waveform writing mechanism test
+                               for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
+                                   if (V_mimic_mode == 0) { // Global passed bin is the center of the window + delay to each chs from araGeom
+                                       stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( ( trigger->Full_window_V[ch_loop][ last_trig_bin - (detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin) - settings1->NFOUR/4 + mimicbin ] )*1.e3 );// save in mV
+                                       stations[i].strings[string_i].antennas[antenna_i].time.push_back( last_trig_bin - (detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin) - settings1->NFOUR/4 + mimicbin );
+                                       stations[i].strings[string_i].antennas[antenna_i].time_mimic.push_back( ( -(detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin) - settings1->NFOUR/4 + mimicbin) * settings1->TIMESTEP*1.e9 );// save in ns
+                                   }
+                                   else if (V_mimic_mode == 1) { // Global passed bin is the center of the window
+                                       stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( ( trigger->Full_window_V[ch_loop][ last_trig_bin - settings1->NFOUR/4 + mimicbin ] )*1.e3 );// save in mV
+                                       stations[i].strings[string_i].antennas[antenna_i].time.push_back( last_trig_bin - settings1->NFOUR/4 + mimicbin );
+                                       stations[i].strings[string_i].antennas[antenna_i].time_mimic.push_back( ( settings1->NFOUR/4 + mimicbin) * settings1->TIMESTEP*1.e9 );// save in ns
+                                   }
+                                   if (V_mimic_mode == 2) { // Global passed bin is the center of the window + delay to each chs from araGeom + fitted delay
+                                       //stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( trigger->Full_window_V[ch_loop][ last_trig_bin - (detector->params.TestBed_Ch_delay_bin[ch_loop]-detector->params.TestBed_BH_Mean_delay_bin) - settings1->NFOUR/4 + mimicbin ] );
+                                       stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( ( trigger->Full_window_V[ch_loop][ last_trig_bin - (detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin + detector->stations[i].strings[string_i].antennas[antenna_i].manual_delay_bin) - settings1->NFOUR/4 + mimicbin ] )*1.e3 );// save in mV
+                                       stations[i].strings[string_i].antennas[antenna_i].time.push_back( last_trig_bin - (detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin + detector->stations[i].strings[string_i].antennas[antenna_i].manual_delay_bin) - settings1->NFOUR/4 + mimicbin );
+                                       stations[i].strings[string_i].antennas[antenna_i].time_mimic.push_back( ( -(detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin + detector->stations[i].strings[string_i].antennas[antenna_i].manual_delay_bin) - settings1->NFOUR/4 + mimicbin) * settings1->TIMESTEP*1.e9 + detector->params.TestBed_WFtime_offset_ns );// save in ns
+                                   }
+                               }
+
                                // done V_mimic for non-triggered chs ( done fixed V_mimic )
                            }
                            double arrivtime = stations[i].strings[string_i].antennas[antenna_i].arrival_time[0];
@@ -1273,9 +1369,35 @@ void Report::ApplyFilter(int bin_n, Detector *detector, double &vmmhz) {  // rea
 }
 
 
+void Report::ApplyPreamp(int bin_n, Detector *detector, double &vmmhz) {  // read filter gain in dB and apply unitless gain to vmmhz
+
+    vmmhz = vmmhz * pow(10., ( detector->GetPreampGain(bin_n) )/20.);   // from dB to unitless gain for voltage
+
+}
+
+
+void Report::ApplyFOAM(int bin_n, Detector *detector, double &vmmhz) {  // read filter gain in dB and apply unitless gain to vmmhz
+
+    vmmhz = vmmhz * pow(10., ( detector->GetFOAMGain(bin_n) )/20.);   // from dB to unitless gain for voltage
+
+}
+
+
 void Report::ApplyFilter_databin(int bin_n, Detector *detector, double &vmmhz) {  // read filter gain in dB and apply unitless gain to vmmhz
 
     vmmhz = vmmhz * pow(10., ( detector->GetFilterGain_databin(bin_n) )/20.);   // from dB to unitless gain for voltage
+
+}
+
+void Report::ApplyPreamp_databin(int bin_n, Detector *detector, double &vmmhz) {  // read filter gain in dB and apply unitless gain to vmmhz
+
+    vmmhz = vmmhz * pow(10., ( detector->GetPreampGain_databin(bin_n) )/20.);   // from dB to unitless gain for voltage
+
+}
+
+void Report::ApplyFOAM_databin(int bin_n, Detector *detector, double &vmmhz) {  // read filter gain in dB and apply unitless gain to vmmhz
+
+    vmmhz = vmmhz * pow(10., ( detector->GetFOAMGain_databin(bin_n) )/20.);   // from dB to unitless gain for voltage
 
 }
 
@@ -1331,13 +1453,16 @@ void Report::GetNoiseWaveforms(Settings *settings1, Detector *detector, double v
             V_tmp = v_noise / sqrt(2.) ; // copy original flat H_n [V] value, and apply 1/sqrt2 for SURF/TURF divide same as signal
 
             ApplyFilter_databin(k, detector, V_tmp);
+            ApplyPreamp_databin(k, detector, V_tmp);
+            ApplyFOAM_databin(k, detector, V_tmp);
+
             Vfft_noise_before.push_back( V_tmp );
 
 
             current_phase = noise_phase[k];
 
-            //Tools::get_random_rician( 0., 0., sqrt(2./ M_PI) * V_tmp, current_amplitude, current_phase);    // use real value array value
-            Tools::get_random_rician( 0., 0., sqrt(2./M_PI)/1.177 * V_tmp, current_amplitude, current_phase);    // use real value array value, extra 1/1.177 to make total power same with "before random_rician".
+            Tools::get_random_rician( 0., 0., sqrt(2./ M_PI) * V_tmp, current_amplitude, current_phase);    // use real value array value
+            //Tools::get_random_rician( 0., 0., sqrt(2./M_PI)/1.177 * V_tmp, current_amplitude, current_phase);    // use real value array value, extra 1/1.177 to make total power same with "before random_rician".
 
             // vnoise is currently noise spectrum (before fft, unit : V)
            //vnoise[2 * k] = sqrt(current_amplitude) * cos(noise_phase[k]);

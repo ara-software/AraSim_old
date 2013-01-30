@@ -65,6 +65,7 @@ class Antenna_r {
 
         // below time domain simulation output
         vector <double> time;   // time of time domain Askaryan radiation
+        vector <double> time_mimic;   // time of time domain Askaryan radiation (same time range with data)
         vector <double> V_mimic;    // signal + noise waveform which mimics the data (size : NFOUR/2 bin)
 
         vector < vector <double> > Ax;     // vector potential x component
@@ -182,6 +183,16 @@ class Report {
 
         void ApplyFilter(int bin_n, Detector *detector, double &vmmhz);
         void ApplyFilter_databin(int bin_n, Detector *detector, double &vmmhz);
+
+
+        // apply gain in Preamp
+        void ApplyPreamp(int bin_n, Detector *detector, double &vmmhz);
+        void ApplyPreamp_databin(int bin_n, Detector *detector, double &vmmhz);
+
+        // apply gain in FOAM
+        void ApplyFOAM(int bin_n, Detector *detector, double &vmmhz);
+        void ApplyFOAM_databin(int bin_n, Detector *detector, double &vmmhz);
+
 
         void GetAngleAnt(Vector &rec_vector, Position &antenna, double &ant_theta, double &ant_phi);
 

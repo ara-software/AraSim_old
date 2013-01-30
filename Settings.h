@@ -118,6 +118,12 @@ class Settings
 
         double NNU_D_THETA;     // nnu theta variation from NNU_THETA, when NNU_THIS_THETA=1 case
 
+        double CALPUL_OFFCONE_ANGLE;    // for calpulser events, what's the offcone angle value?
+
+        double CALPUL_AMP;    // for calpulser events, how strong the calpulser waveforms?
+
+        int TRIG_ONLY_BH_ON;    // if trigger will occur with all chs (0, default) or only borehole chs (1)
+
 
     // below : values from icemc
     
