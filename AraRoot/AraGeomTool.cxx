@@ -145,9 +145,9 @@ void AraGeomTool::readChannelMapDb(Int_t stationId){
     }  
     
     //jpd this is where we would decide to have a different database
-    sprintf(fileName, "%s/AntennaInfo.sqlite", calibDir);
+    sprintf(fileName, "./AraRoot/AntennaInfo.sqlite");
     //if(stationId==1) sprintf(fileName, "%s/AntennaInfo.sqlite", calibDir);
-    
+    std::cout << fileName << std::endl;
     //open the database
     
     int rc = sqlite3_open_v2(fileName, &db, SQLITE_OPEN_READONLY, NULL);

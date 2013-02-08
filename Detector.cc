@@ -242,6 +242,7 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         double R_surface = 60.;
         double z_max = 200.;
         double z_btw = 20.;
+        double z_btw_2 = 2.;
         params.stations_per_side = 4;       // total 37 stations
         params.station_spacing = 2000.;     // 2km spacing
         params.antenna_orientation = 0;     // all antenna facing x
