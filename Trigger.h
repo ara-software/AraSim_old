@@ -36,13 +36,27 @@ class Trigger {
 
      double V_noise_freqbin;    // thermal noise freq bin value
 
+     vector <double> V_noise_freqbin_ch;    // thermal noise freq bin value for chs
+
 
      double meandiode;
      double rmsdiode;
      double rmsvoltage;// rms voltage value without diode response
 
+     vector <double> meandiode_ch;
+     vector <double> rmsdiode_ch;
+     vector <double> rmsvoltage_ch;
+
+
      vector < vector <double> > v_noise_timedomain;   // time domain noise waveform examples
      vector < vector <double> > v_noise_timedomain_diode; // time domain diode convlved noise waveforms examples
+
+     vector < vector < vector <double> > > v_noise_timedomain_ch;   // time domain noise waveform examples
+     vector < vector < vector <double> > > v_noise_timedomain_diode_ch; // time domain diode convlved noise waveforms examples
+
+
+     vector <double> Vfft_noise_before;   // pure noise spectrum before Rayleigh dist.
+
 
      double powerthreshold; // threshold for the trigger
 
@@ -53,17 +67,25 @@ class Trigger {
      Trigger(Detector *detector, Settings *settings1);
      ~Trigger();
 
+
+     void ClearNoiseWaveforms();
+
+
      void SetMeanRmsDiode(Settings *settings1, Detector *detector, Report *report);
+
+     void GetNewNoiseWaveforms(Settings *settings1, Detector *detector, Report *report);
 
      int CheckChannelsPass( vector <double> &V_total_diode);
      
      
      void myconvlv(vector <double> &data, const int NFOUR, vector <double> &fdiode, vector <double> &diodeconv);
+
      void myconvlv(double *data, const int NFOUR, vector <double> &fdiode, vector <double> &diodeconv);
 
      
 
      void myconvlv_half(vector <double> &data, const int NFOUR, vector <double> &fdiode, vector <double> &diodeconv);
+
      void myconvlv_half(double *data, const int NFOUR, vector <double> &fdiode, vector <double> &diodeconv);
 
 

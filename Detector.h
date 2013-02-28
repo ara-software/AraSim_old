@@ -212,6 +212,21 @@ class Detector {
         vector <double> FOAMGain_databin;   // Filter gain (dB) for DATA_BIN_SIZE bin array
 
 
+
+        void ReadGainOffset_TestBed(string filename, Settings *settings1);
+        vector <double> GainOffset_TB_ch;   // constant gain offset for the TestBed chs 
+
+        void ReadThresOffset_TestBed(string filename, Settings *settings1);
+        vector <double> ThresOffset_TB_ch;   // constant gain offset for the TestBed chs 
+
+        void ReadTemp_TestBed(string filename, Settings *settings1);
+        //vector <double> Temp_TB_ch;   // constant gain offset for the TestBed chs 
+
+        void ReadRFCM_TestBed(string filename, Settings *settings1);
+        double RFCM_TB_ch[16][freq_step_max];   // Filter gain (dB) for Detector freq bin array
+        vector < vector <double> > RFCM_TB_databin_ch;   // RFCM gain measured value for the TestBed (for each ch)
+
+
         void FlattoEarth_ARA(IceModel *icesurface);
         void FlattoEarth_ARA_sharesurface(IceModel *icesurface);  // each station share the lowest surface
 
@@ -242,7 +257,19 @@ class Detector {
         double GetFOAMGain(int bin) { return FOAMGain[bin]; }   // same bin with Vgain, Hgain
         double GetFOAMGain_databin(int bin) { return FOAMGain_databin[bin]; }   // bin for FFT
 
+
+        double GetRFCMGain(int ch, int bin) { return RFCM_TB_ch[ch][bin]; }   // same bin with Vgain, Hgain
+        double GetRFCMGain_databin(int ch, int bin) { return RFCM_TB_databin_ch[ch][bin]; }   // bin for FFT
+
         
+        double GetGainOffset( int StationID, int ch, Settings *settings1 );  // returns voltage factor for specific channel gain off set
+
+        double GetThresOffset( int StationID, int ch, Settings *settings1 );  // returns voltage factor for specific channel gain off set
+
+        double GetTemp( int StationID, int ch, Settings *settings1 );  // returns voltage factor for specific channel gain off set
+        vector <double> Temp_TB_ch;   // constant gain offset for the TestBed chs 
+
+
         double Getfreq_init() {return freq_init;}
 
         int Get_mode() {return Detector_mode;}
@@ -273,6 +300,11 @@ class Detector {
     void GetSSAfromChannel ( int stationNum, int channelNum, int * antennaNum, int * stringNum );
     
     void UseAntennaInfo (int stationNum, Settings *settings1);
+
+
+// more general used function
+    void GetSSAfromChannel ( int stationNum, int channelNum, int * antennaNum, int * stringNum, Settings *settings1);
+    int GetChannelfromStringAntenna ( int stationNum, int stringnum, int antennanum, Settings *settings1);
    
     
     /*

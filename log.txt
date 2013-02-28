@@ -693,3 +693,55 @@ There are actually more things that have been changed...
 Hope I can make note for those later.
 
 ===============================================================================
+
+02/27/13 E. Hong;
+
+many updates
+Most of things are related to installed TestBed mode (DETECTOR=3 case).
+Some other bug fixed related to ideal station cases.
+
+Bug fixed and functionalities for entire modes
+
+1) broken ideal station modes are fixed (DETECTOR=1 and 2 with READGEOM=0 case)
+
+2) new noise waveform generation mode is added.
+As previous method of generating noise waveforms (before looping over neutrino events, generate noise waveforms and use them) required a lot of memory and virtual memory, I added new method to avoid this problem.
+NOISE_WAVEFORM_GENERATE_MODE=0 will generate noise waveforms newly for each events. So you don't need to ask a lot of noise waveforms (NOISE_EVENTS) in this case. You will still need to make at least the number of total channels you have to avoid using same noise waveform for different channels. (ex. 1 station case NOISE_EVENTS=16 is enough) As this method is much more healthy for machines you are using, I set this new mode as a default mode.
+NOISE_WAVEFORM_GENERATE_MODE=1 is the old way of generating noise waveforms. It will generate noise waveforms before event loop and use those generated noise waveforms. Becareful when you use this mode as this will require lot of memory. (ex. NOISE_EVENTS=10000 will require approximately 1.3 GByte of mem)
+
+3) settings compatibility check before event loop
+In AraSim.cc, before start looping over events it will check if there's any settings compatibility problem. (if you asked impossible settings). It will print out what settings have compatibility issues and stop the loop. As there will be some unfound compatibility problem, please let me know if any one find new bug and what to add to this settings compatibility check.
+
+4) fixed V_MIMIC_MODE order
+V_MIMIC_MODE=0 (just write waveforms where global triggered bin is centered at the window. default)
+V_MIMIC_MODE=1 (write waveforms with average borehole chs cable delays and then apply each chs cable delay. This doesn't write the waveform same as TestBed)
+V_MIMIC_MODE=2 (similar to V_MIMIC_MODE=1 but I added extra delays to each chs to match TestBed data waveforms. Manually added delay is less than 100ns)
+
+
+
+New functionalities added for installed TestBed mode
+
+1) Each channels can have different system temperatures in NOISE_TEMP_MODE=1 and 2.
+
+NOISE_TEMP_MODE=1 will use different system temperatures for all 16 chs and generate noise waveforms for each channel specified.
+
+NOISE_TEMP_MODE=2 will use different system temperatures for borehole 8 chs and other 8 chs will use NOISE_TEMP value (for TestBed borehole chs analysis). Noise waveforms will generated separately for borehole chs and other channels will share different noise waveforms with NOISE_TEMP systemp temperature.
+
+2) gain offset to different channels
+As different channels have different total gain, we can apply gain offset to each channel.
+USE_CH_GAINOFFSET=0 will not apply any additional gain offset
+USE_CH_GAINOFFSET=1 will read data/preamp_ch_gain_offset.csv file and apply those values to each channels. The value is in unit of voltage.
+There's also different way to apply gain offset to entire channels manually.
+USE_MANUAL_GAINOFFSET=0 will not apply manual gain offset
+USE_MANUAL_GAINOFFSET=1 will apply MANUAL_GAINOFFSET_VALUE to entire channels. Again this MANUAL_GAINOFFSET_VALUE is in unit of voltage.
+We can't use USE_CH_GAINOFFSET and USE_MANUAL_GAINOFFSET at the same time.
+
+3) Each channels can have different threshold for triggering.
+By default, if you use different system temperature modes (NOISE_TEMP_MODE=1 or 2), channels which have different temperatures will have different pure noise diode response RMS values and therefore the threshold will be different for different channels.
+Additional to this difference, you can give an offset to the threshold to each channels.
+TRIG_THRES_MODE=0 will not give any threshold offset (default)
+TRIG_THRES_MODE=1 will read data/threshold_offset.csv file and apply those values to each channels. (ex. if the value for ch1 in csv file is 2, threshold will be rms_diode * powerthreshold * 2)
+TRIG_THRES_MODE=2 will not read data/threshold_offset.csv file but use the gain offset for each channels as threshold offset. (ex. if gain offset for ch1 is 2, threshold will be rms_diode * powerthreshold * 2^2) 
+
+
+===============================================================================

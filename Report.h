@@ -173,6 +173,13 @@ class Report {
 
         void Select_Wave_Convlv_Exchange(Settings *settings1, Trigger *trigger, Detector *detector, int signalbin_0, int signalbin_1, int signalbin_2, vector <double> &V0, vector <double> &V1, vector <double> &V2, int *noise_ID, int ID, int StationIndex);   // literally get noise waveform from trigger class and add signal voltage "V" and do convlv. convlv result will replace the value in Full_window array
 
+
+        void Apply_Gain_Offset(Settings *settings1, Trigger *trigger, Detector *detector, int ID, int StationIndex); // we need to apply a gain offset to the basic waveforms.
+
+
+
+        int GetChNumFromArbChID( Detector *detector, int ID, int StationIndex, Settings *settings1);// get actual ch number from arb chID
+
         Vector GetPolarization (Vector &nnu, Vector &launch_vector);
 
         void GetParameters (Position &src, Position &trg, Vector &nnu, double &viewangle, double receive_angle, Vector &launch_vector, Vector &receive_vector, Vector &n_trg_slappy, Vector &n_trg_pokey );    // get viewangle, launch, receive vectors  (it reads launch angle as a viewangle and returns actual viewangle)
@@ -194,9 +201,16 @@ class Report {
         void ApplyFOAM_databin(int bin_n, Detector *detector, double &vmmhz);
 
 
+        // apply RFCM gain
+        void ApplyRFCM(int ch, int bin_n, Detector *detector, double &vmmhz, double RFCM_OFFSET);
+        void ApplyRFCM_databin(int ch, int bin_n, Detector *detector, double &vmmhz, double RFCM_OFFSET);
+
+
         void GetAngleAnt(Vector &rec_vector, Position &antenna, double &ant_theta, double &ant_phi);
 
         void GetNoiseWaveforms(Settings *settings1, Detector *detector, double vhz_noise, double *vnoise);
+        void GetNoiseWaveforms_ch(Settings *settings1, Detector *detector, double vhz_noise, double *vnoise, int ch);
+
         void GetNoisePhase(Settings *settings1);
 
         void MakeArraysforFFT(Settings *settings1, Detector *detector, int StationIndex, vector <double> &vsignal_array, double *vsignal_forfft);
@@ -210,9 +224,11 @@ class Report {
 
         vector <double> Vfft_noise_after;   // noise Vfft after get_random_rician
         vector <double> Vfft_noise_before;   // noise Vfft before get_random_rician
-        vector <double> V_noise_timedomain;   // noise V timedomain after get_random_rician and inverse fft
+        //vector <double> V_noise_timedomain;   // noise V timedomain after get_random_rician and inverse fft
         double Vfft_noise_org;              // V/Hz for thermal noise from Johnson-Nyquist
 
+
+        void clear_useless(Settings *settings1);   // to reduce the size of output AraOut.root, remove some information
 
         vector <Station_r> stations;
         vector <String_r> strings;

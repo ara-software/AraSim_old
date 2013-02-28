@@ -40,65 +40,52 @@ INTERACTION_MODE=1
 // order is not important.
 // Make sure the name of variable is correct.
 
-//EXPONENT=30
-//EXPONENT=19
 
-//NNU=1
-//NNU=5
-//NNU=70
-NNU=10
-//NNU=200
-//NNU=500
-//NNU=10000
-//NNU=480
-DETECTOR=3
+
+///////////////////
+
+
+EXPONENT=18
+NNU=10 // number of neutrino events
+NOISE_WAVEFORM_GENERATE_MODE=0 // generate new noise waveforms for each events
+NOISE_EVENTS=16 // number of pure noise waveforms
+TRIG_ANALYSIS_MODE=0 // 0 = signal + noise, 1 = signal only, 2 = noise only
+DETECTOR=1 // ARA stations 1 to 7
+
+TIMESTEP=5.E-10 // value for 2GHz actual station value
+TRIG_WINDOW=1.E-7 // 100ns which is actual testbed trig window
+POWERTHRESHOLD=-6.06 // 100Hz global trig rate for 3 out of 16 ARA stations
+//DATA_BIN_SIZE=8192
+
+POSNU_RADIUS=3000
+V_MIMIC_MODE=0 // 0 : global trig is located center of readout windows
+DATA_SAVE_MODE=2 // 2 : don't save any waveform informations at all
+WRITE_ALL_EVENTS=2 // don't save any waveform informations to eventTree
+BORE_HOLE_ANTENNA_LAYOUT=0
 SECONDARIES=0
 
-//POSNU_RADIUS=500
-POSNU_RADIUS=3000
-//POSNU_RADIUS=4000
-//POSNU_RADIUS=3500
+// below settings are available for only TestBed mode (DETECTOR=3 case)
+TRIG_ONLY_BH_ON=0
+CALPULSER_ON=0
+USE_MANUAL_GAINOFFSET=0
+USE_TESTBED_RFCM_ON=0
+NOISE_TEMP_MODE=0
+TRIG_THRES_MODE=0
+READGEOM=0 // reads geometry information from the sqlite file or not (0 : don't read)
 
-//POWERTHRESHOLD=-10000
-//POWERTHRESHOLD=-6.7
-//POWERTHRESHOLD=-6.17  // with 300 evts
-//POWERTHRESHOLD=-6.06  // with 10000 evts (also 7000 NOISE_EVENTS)
-POWERTHRESHOLD=-6.06
-//POWERTHRESHOLD=-6
-//POWERTHRESHOLD=-5.865 // with 7000 NOISE_EVENTS,  single trigger rate : 19573.3 (near to 19589.4 which is 3 outof 12 global trigger rate is 100Hz (with 1us deadtime)
-//POWERTHRESHOLD=-5.865
-//POWERTHRESHOLD=-5
 
-TRIG_ANALYSIS_MODE=0 // 0 = signal + noise, 1 = signal only, 2 = noise only
-//DATA_BIN_SIZE=16384
 
-//NOISE_EVENTS=1
-//NOISE_EVENTS=100
-//NOISE_EVENTS=7000
-//NOISE_EVENTS=1000
+///////////////////
 
-//RANDOM_MODE=0
-
-//PICK_POSNU_DEPTH=1
-//N_TRIG=1
-
-// Set trigger modes and values
-//NFOUR=1024 // Set the number of bins of the output waveform
-//TIMESTEP=0.000000000384615 // time step from one time bin to the next
-//TRIG_WINDOW=0.00000025 // time window in seconds for trigger scan - number of bins calculated from this and timestep
-USE_INSTALLED_TRIGGER_SETTINGS=0
 
 // Set options for what information to write out and how it should be written
 // DATA_SAVE_MODE 0 to save all data, 1 to remove most of data except geometric info, final global trigger data V_mimic (pure noise waveforms in trigger class will remain), 2 to remove final global trigger waveform V_mimic also (so just Physics info left)
-DATA_SAVE_MODE=1
 
 // WRITE_ALL_EVENTS 0 only write globally triggered events, 1 Write all event events including events that are not globally triggered
 // Note: NNU is the number of neutrinos that have been thrown in total, not just globally triggered events
 // When writing all events, the waveform stored in UsefulAraSimEvent->VoltsRF[] is just the untriggered, noiseless waveform of the initial signal, and it has not propagated to the antenna yet.
 // new mode, WRITE_ALL_EVENTS 2 will not save waveforms at all.
-WRITE_ALL_EVENTS=1
 
-//V_MIMIC_MODE=1
 
 
 // lets work on nnu theta 80 deg +- 1deg
@@ -107,31 +94,10 @@ WRITE_ALL_EVENTS=1
 //NNU_D_THETA=0.017453
 
 
-BORE_HOLE_ANTENNA_LAYOUT=0
-
-//CALPULSER_ON=1
-
-//READGEOM=1
-
-READGEOM=1 // reads geometry information from the sqlite file
-DETECTOR=3 // uses testbed geometry only (for now but we intend to add multi-station functionality in the future)
 //CALPULSER_ON=0 // Calpulser is off
-CALPULSER_ON=1
-CALPUL_AMP=0.15 // calpulser1 amp
+//CALPULSER_ON=1
+//CALPUL_AMP=0.15 // calpulser1 amp
 //CALPUL_AMP=0.25 // calpulser2 amp
-TRIG_ONLY_BH_ON=1
+//TRIG_ONLY_BH_ON=1
 
-NOISE_EVENTS=1000
-
-V_MIMIC_MODE=2
-
-//TRIG_WINDOW=0.0000001 // The trigger window might not be quite right since we are not exactly sure what the actually trigger window used in the TestBed firmware is. Setting it to this value will make the trigger window 100 ns. If you want 250 ns, use 0.00000025.
-TRIG_WINDOW=2.5E-7
-
-TIMESTEP=5.E-10
-
-
-//V_MIMIC_MODE=0 // a setting for how to deal with non-triggered channels on a globally triggered event; a value of 1 means that it will write out the waveform for that channel starting with the last bin of the trigger window, a value of 2 means that it will write out the waveform for that channel centered on the last bin of the trigger window, a value of 0 means that it will write out the waveform for that channel centered on the center of the trigger window- this is closest to what the hardware does, but if you want to examine what the events look like the other mimic modes are more useful
-
-NNU=1000 // set for generating 10000 events
 

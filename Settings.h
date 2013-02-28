@@ -4,6 +4,9 @@
 #include <string>
 #include "TObject.h"
 
+
+class Detector;
+
 using namespace std;
 //using std::string;
 
@@ -17,6 +20,10 @@ class Settings
         ~Settings();
         void Initialize();
         void ReadFile(string setupfile);
+
+
+        int CheckCompatibilities(Detector *detector);// check if settings are not compatible to each other
+
 
         int NNU;
 
@@ -101,7 +108,9 @@ class Settings
     
         int READGEOM;
     
-        int V_MIMIC_MODE; // default : 2 : write out window for non-triggered events that is centered on the last bin in the trigger window, other options: 1 - write out window for non-triggered events that begins with the last bin in the trigger window, 0 - write out window for non-triggered events thatis the trigger window
+        int V_MIMIC_MODE; // default : 0 - write out all chs where global triggered bin is center of the window
+                        // 1 - same as above 0 mode but apply TestBed ch delay - average BH ch delay
+                        // 2 - same as above 0 mode but apply TestBed ch delay - average BH ch delay + additional delay to match with actual TestBed data waveforms
     
         int USE_INSTALLED_TRIGGER_SETTINGS; // default : 0 - use idealized settings for the trigger
         //other options:  1 - use trigger settings for installed stations, i.e. trigger window, etc.
@@ -123,6 +132,29 @@ class Settings
         double CALPUL_AMP;    // for calpulser events, how strong the calpulser waveforms?
 
         int TRIG_ONLY_BH_ON;    // if trigger will occur with all chs (0, default) or only borehole chs (1)
+
+        int TRIG_THRES_MODE;    // if trigger threshold will use no specific offset value (0, default). or use data/threshold_offset.csv file values as a threshold offset for each chs
+
+        int NOISE_TEMP_MODE;    // if using same noise temp for all chs (0, default), using diff temp for all chs (1), using diff temp for first 8 chs and share same temp for other chs (2)
+
+        double CONST_MEANDIODE;
+    
+        double CONST_RMSDIODE;  // in case NOISE_TEMP_MODE = 1, just using this CONST_RMSDIODE value for threshold
+
+
+        int USE_TESTBED_RFCM_ON;    // use RFCM measurement for testbed or not (default 0)
+    
+        double RFCM_OFFSET;  // if above USE_TESTBED_RFCM_ON = 1, we need RFCM attenuator factor cancel (default 80)
+
+        int USE_MANUAL_GAINOFFSET; //if use gain offset file to read values or just use constant gain offset from setup file (default 0 : use file)
+    
+        double MANUAL_GAINOFFSET_VALUE; // gain offset value
+
+        int NOISE_WAVEFORM_GENERATE_MODE; // default 0 : generate new noise waveforms for each evts, if you set other values, noise waveforms will be generated once and use them for all evts
+
+
+        int USE_CH_GAINOFFSET; // default 0 : don't apply any individul channels' gain offset. 1 : apply ch gain offset by using data/preamp_gain_offset.csv file (only installed TestBed mode available)
+
 
 
     // below : values from icemc

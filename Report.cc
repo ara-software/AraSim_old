@@ -48,7 +48,7 @@ Report::~Report() {
     Passed_chs.clear();
     Vfft_noise_after.clear();
     Vfft_noise_before.clear();
-    V_noise_timedomain.clear();
+    //V_noise_timedomain.clear();
 
 
 }
@@ -200,6 +200,29 @@ void Antenna_r::clear_useless(Settings *settings1) {   // to reduce the size of 
     }
 
 
+
+}
+
+
+
+void Report::clear_useless(Settings *settings1) {   // to reduce the size of output AraOut.root, remove some information
+
+
+
+    if (settings1->DATA_SAVE_MODE != 0) {
+
+        // also clear all vector info to reduce output root file size
+        noise_phase.clear();
+        signal_bin.clear();
+        signal_dbin.clear();
+        connect_signals.clear();
+        Passed_chs.clear();
+        Vfft_noise_after.clear();
+        Vfft_noise_before.clear();
+        //V_noise_timedomain.clear();
+        // done clear vector info in report head
+
+    }
 
 }
 
@@ -609,7 +632,8 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
 
                // calculate total number of bins we need to do trigger check
-               max_total_bin = (stations[i].max_arrival_time - stations[i].min_arrival_time)/settings1->TIMESTEP + settings1->NFOUR/2 + trigger->maxt_diode_bin;
+               //max_total_bin = (stations[i].max_arrival_time - stations[i].min_arrival_time)/settings1->TIMESTEP + settings1->NFOUR/2 + trigger->maxt_diode_bin;
+               max_total_bin = (stations[i].max_arrival_time - stations[i].min_arrival_time)/settings1->TIMESTEP + settings1->NFOUR*2 + trigger->maxt_diode_bin; // make more time
 
 
                // now, check if DATA_BIN_SIZE is enough for total time delay between antennas
@@ -631,44 +655,132 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                        // select noise waveform from trigger class
                        for (int l=0; l<N_noise; l++) {
 
-                           // get random noise_ID and check if there are same noise_ID in different ch.
-                           // if there's same noise_ID, get noise_ID again until no noise_ID are same between chs
-                           noise_pass_nogo = 1;
-                           while ( noise_pass_nogo ) {
-                               noise_ID[l] = (int)(settings1->NOISE_EVENTS * gRandom->Rndm() );
-                               noise_pass_nogo = 0;
-                               for (int j_sub=0; j_sub<j; j_sub++) {
-                                   for (int k_sub=0; k_sub<k; k_sub++) {
-                                       if (noise_ID[l] == stations[i].strings[j_sub].antennas[k_sub].noise_ID[0]) { // check only first one;;;
-                                           //cout<<"\nget noise_ID again as there's same noise_ID in different ch : str["<<j_sub<<"].ant["<<k_sub<<"] ID:"<<noise_ID[l]<<" current str:"<<j<<" ant:"<<k<<endl;
-                                           noise_pass_nogo = 1;
+
+                           // if we are sharing same noise waveform for all chs, make sure diff chs use diff noise waveforms
+                           if ( settings1->NOISE_TEMP_MODE==0) {
+
+                               // get random noise_ID and check if there are same noise_ID in different ch.
+                               // if there's same noise_ID, get noise_ID again until no noise_ID are same between chs
+                               noise_pass_nogo = 1;
+                               while ( noise_pass_nogo ) {
+                                   noise_ID[l] = (int)(settings1->NOISE_EVENTS * gRandom->Rndm() );
+                                   noise_pass_nogo = 0;
+                                   for (int j_sub=0; j_sub<j; j_sub++) {
+                                       for (int k_sub=0; k_sub<k; k_sub++) {
+                                           if (noise_ID[l] == stations[i].strings[j_sub].antennas[k_sub].noise_ID[0]) { // check only first one;;;
+                                               //cout<<"\nget noise_ID again as there's same noise_ID in different ch : str["<<j_sub<<"].ant["<<k_sub<<"] ID:"<<noise_ID[l]<<" current str:"<<j<<" ant:"<<k<<endl;
+                                               noise_pass_nogo = 1;
+                                           }
                                        }
                                    }
                                }
-                           }
+                           }// if NOISE_TEMP_MODE = 0
+
+
+                           // if we are using diff noise waveform for diff chs, just pick any noise waveform
+                           else if ( settings1->NOISE_TEMP_MODE==1) {
+                               noise_ID[l] = (int)(settings1->NOISE_EVENTS * gRandom->Rndm() );
+                           }// if NOISE_TEMP_MODE = 1
+
+                           // if we are using diff noise waveform for diff chs, just pick any noise waveform
+                           else if ( settings1->NOISE_TEMP_MODE==2) {
+                               noise_ID[l] = (int)(settings1->NOISE_EVENTS * gRandom->Rndm() );
+                           }// if NOISE_TEMP_MODE = 1
+
+
 
                            // save noise ID
                            stations[i].strings[j].antennas[k].noise_ID.push_back( noise_ID[l] );
 
                            //cout<<"noise_ID for "<<l<<"th noisewaveform is : "<<noise_ID[l]<<"  N_noise : "<<N_noise<<" ray_sol_cnt : "<<stations[i].strings[j].antennas[k].ray_sol_cnt<<endl;
 
-                           if (l == N_noise-1) {    // when it's final noise waveform
-                               //Full_window[ch_ID].insert( Full_window[ch_ID].end(), trigger->v_noise_timedomain_diode[noise_ID[l]].begin(), trigger->v_noise_timedomain_diode[noise_ID[l]].begin() + remain_bin );
-                               //for (int bin=0; bin<remain_bin; bin++) {
-                               for (int bin=0; bin<settings1->DATA_BIN_SIZE; bin++) {   // test for full window
-                                   trigger->Full_window[ch_ID][bin] = ( trigger->v_noise_timedomain_diode[noise_ID[l]][bin] );
-                                   trigger->Full_window_V[ch_ID][bin] = ( trigger->v_noise_timedomain[noise_ID[l]][bin] );
+
+
+
+                           // if we are sharing same noise waveform for all chs, make sure diff chs use diff noise waveforms
+                           if ( settings1->NOISE_TEMP_MODE==0) {
+                               if (l == N_noise-1) {    // when it's final noise waveform
+                                   //for (int bin=0; bin<remain_bin; bin++) {
+                                   for (int bin=0; bin<settings1->DATA_BIN_SIZE; bin++) {   // test for full window
+                                       trigger->Full_window[ch_ID][bin] = ( trigger->v_noise_timedomain_diode[noise_ID[l]][bin] );
+                                       trigger->Full_window_V[ch_ID][bin] = ( trigger->v_noise_timedomain[noise_ID[l]][bin] );
+                                   }
+                                   //cout<<"last noise filled in Full_window!"<<endl;
                                }
-                               //cout<<"last noise filled in Full_window!"<<endl;
-                           }
-                           else {   // when it's not final noise waveform
-                               //cout<<"full noise will fill in Full_window!"<<endl;
-                               //Full_window[ch_ID].insert( Full_window[ch_ID].end(), trigger->v_noise_timedomain_diode[noise_ID[l]].begin(), trigger->v_noise_timedomain_diode[noise_ID[l]].begin() + settings1->DATA_BIN_SIZE );
-                               for (int bin=0; bin<settings1->DATA_BIN_SIZE; bin++) {
-                                   trigger->Full_window[ch_ID][bin] = ( trigger->v_noise_timedomain_diode[noise_ID[l]][bin] );
-                                   trigger->Full_window_V[ch_ID][bin] = ( trigger->v_noise_timedomain[noise_ID[l]][bin] );
+                               else {   // when it's not final noise waveform
+                                   //cout<<"full noise will fill in Full_window!"<<endl;
+                                   for (int bin=0; bin<settings1->DATA_BIN_SIZE; bin++) {
+                                       trigger->Full_window[ch_ID][bin] = ( trigger->v_noise_timedomain_diode[noise_ID[l]][bin] );
+                                       trigger->Full_window_V[ch_ID][bin] = ( trigger->v_noise_timedomain[noise_ID[l]][bin] );
+                                   }
                                }
                            }
+
+                           // if we are sharing same noise waveform for all chs, make sure diff chs use diff noise waveforms
+                           else if ( settings1->NOISE_TEMP_MODE==1) {
+                               if (l == N_noise-1) {    // when it's final noise waveform
+                                   //for (int bin=0; bin<remain_bin; bin++) {
+                                   for (int bin=0; bin<settings1->DATA_BIN_SIZE; bin++) {   // test for full window
+                                       trigger->Full_window[ch_ID][bin] = ( trigger->v_noise_timedomain_diode_ch[ GetChNumFromArbChID(detector,ch_ID,i,settings1)-1 ][noise_ID[l]][bin] );
+                                       trigger->Full_window_V[ch_ID][bin] = ( trigger->v_noise_timedomain_ch[ GetChNumFromArbChID(detector,ch_ID,i,settings1)-1 ][noise_ID[l]][bin] );
+                                   }
+                                   //cout<<"last noise filled in Full_window!"<<endl;
+                               }
+                               else {   // when it's not final noise waveform
+                                   //cout<<"full noise will fill in Full_window!"<<endl;
+                                   for (int bin=0; bin<settings1->DATA_BIN_SIZE; bin++) {
+                                       trigger->Full_window[ch_ID][bin] = ( trigger->v_noise_timedomain_diode_ch[ GetChNumFromArbChID(detector,ch_ID,i,settings1)-1 ][noise_ID[l]][bin] );
+                                       trigger->Full_window_V[ch_ID][bin] = ( trigger->v_noise_timedomain_ch[ GetChNumFromArbChID(detector,ch_ID,i,settings1)-1 ][noise_ID[l]][bin] );
+                                   }
+                               }
+                           }
+
+                           // if we are sharing same noise waveform for first 8 chs and share same noisewaveforms for others, make sure diff chs use diff noise waveforms
+                           else if ( settings1->NOISE_TEMP_MODE==2) {
+
+                               if ( (GetChNumFromArbChID(detector,ch_ID,i,settings1)-1) < 8) {
+
+                                   if (l == N_noise-1) {    // when it's final noise waveform
+                                       //for (int bin=0; bin<remain_bin; bin++) {
+                                       for (int bin=0; bin<settings1->DATA_BIN_SIZE; bin++) {   // test for full window
+                                           trigger->Full_window[ch_ID][bin] = ( trigger->v_noise_timedomain_diode_ch[ GetChNumFromArbChID(detector,ch_ID,i,settings1)-1 ][noise_ID[l]][bin] );
+                                           trigger->Full_window_V[ch_ID][bin] = ( trigger->v_noise_timedomain_ch[ GetChNumFromArbChID(detector,ch_ID,i,settings1)-1 ][noise_ID[l]][bin] );
+                                       }
+                                       //cout<<"last noise filled in Full_window!"<<endl;
+                                   }
+                                   else {   // when it's not final noise waveform
+                                       //cout<<"full noise will fill in Full_window!"<<endl;
+                                       for (int bin=0; bin<settings1->DATA_BIN_SIZE; bin++) {
+                                           trigger->Full_window[ch_ID][bin] = ( trigger->v_noise_timedomain_diode_ch[ GetChNumFromArbChID(detector,ch_ID,i,settings1)-1 ][noise_ID[l]][bin] );
+                                           trigger->Full_window_V[ch_ID][bin] = ( trigger->v_noise_timedomain_ch[ GetChNumFromArbChID(detector,ch_ID,i,settings1)-1 ][noise_ID[l]][bin] );
+                                       }
+                                   }
+
+                               }
+
+                               else {
+
+                                   if (l == N_noise-1) {    // when it's final noise waveform
+                                       //for (int bin=0; bin<remain_bin; bin++) {
+                                       for (int bin=0; bin<settings1->DATA_BIN_SIZE; bin++) {   // test for full window
+                                           trigger->Full_window[ch_ID][bin] = ( trigger->v_noise_timedomain_diode_ch[8][noise_ID[l]][bin] );
+                                           trigger->Full_window_V[ch_ID][bin] = ( trigger->v_noise_timedomain_ch[8][noise_ID[l]][bin] );
+                                       }
+                                       //cout<<"last noise filled in Full_window!"<<endl;
+                                   }
+                                   else {   // when it's not final noise waveform
+                                       //cout<<"full noise will fill in Full_window!"<<endl;
+                                       for (int bin=0; bin<settings1->DATA_BIN_SIZE; bin++) {
+                                           trigger->Full_window[ch_ID][bin] = ( trigger->v_noise_timedomain_diode_ch[8][noise_ID[l]][bin] );
+                                           trigger->Full_window_V[ch_ID][bin] = ( trigger->v_noise_timedomain_ch[8][noise_ID[l]][bin] );
+                                       }
+                                   }
+
+                               }
+
+
+                           }
+
 
                        }
                        // currently there is a initial spoiled bins (maxt_diode_bin) at the initial Full_window "AND" at the initial of connected noisewaveform (we can fix this by adding values but not accomplished yet)
@@ -696,9 +808,8 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                        for (int m=0; m<stations[i].strings[j].antennas[k].ray_sol_cnt; m++) {   // loop over raysol numbers
                            //signal_bin.push_back( (stations[i].strings[j].antennas[k].arrival_time[m] - stations[i].min_arrival_time)/(settings1->TIMESTEP) + settings1->NFOUR/4 );
-                           signal_bin.push_back( (stations[i].strings[j].antennas[k].arrival_time[m] - stations[i].min_arrival_time)/(settings1->TIMESTEP) + settings1->NFOUR/2 + trigger->maxt_diode_bin );
-                           //signal_bin.push_back( (stations[i].strings[j].antennas[k].arrival_time[m] - stations[i].min_arrival_time)/(settings1->TIMESTEP) + settings1->NFOUR/2 + trigger->maxt_diode_bin + 1000);
-                           //cout<<" signal_bin["<<m<<"] : "<<signal_bin[m];
+                           //signal_bin.push_back( (stations[i].strings[j].antennas[k].arrival_time[m] - stations[i].min_arrival_time)/(settings1->TIMESTEP) + settings1->NFOUR/2 + trigger->maxt_diode_bin );
+                           signal_bin.push_back( (stations[i].strings[j].antennas[k].arrival_time[m] - stations[i].min_arrival_time)/(settings1->TIMESTEP) + settings1->NFOUR*2 + trigger->maxt_diode_bin );
 
                            if (m>0) {
                                signal_dbin.push_back( signal_bin[m] - signal_bin[m-1] );
@@ -812,6 +923,12 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
 
                        //cout<<"done convlv for signal + noise"<<endl;
+                       //
+                       //
+                       // I think I have to apply gain difference factors in here...
+                       //
+                       Apply_Gain_Offset(settings1, trigger, detector, ch_ID, i ); // last i for stationID
+
 
 
                        ch_ID++; // now to next channel
@@ -842,8 +959,13 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                
                int check_ch;
                
-               //for ( trig_i=trigger->maxt_diode_bin; trig_i<settings1->DATA_BIN_SIZE - trig_window_bin; trig_i++) {
-               trig_i = trigger->maxt_diode_bin;
+               //trig_i = trigger->maxt_diode_bin;
+               trig_i = trigger->maxt_diode_bin + settings1->NFOUR; // give some time shift for mimicing force trig events
+
+               // avoid really long trig_window_bin case (change trig_window to check upto max_total_bin)
+               if (max_total_bin - trig_window_bin <= trig_i) trig_window_bin = max_total_bin - trig_i -1;
+
+
                //while (trig_i < settings1->DATA_BIN_SIZE - trig_window_bin ) {
                while (trig_i < max_total_bin - trig_window_bin ) {
 
@@ -859,8 +981,10 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                        int string_i = detector->getStringfromArbAntID( i, trig_j);
                        int antenna_i = detector->getAntennafromArbAntID( i, trig_j);
 
+                       int channel_num = detector->GetChannelfromStringAntenna ( i, string_i, antenna_i, settings1 );
                        // check if we want to use BH chs only for trigger analysis
-                       if (settings1->TRIG_ONLY_BH_ON == 1) {
+                       //if (settings1->TRIG_ONLY_BH_ON == 1) {
+                       if ( (settings1->TRIG_ONLY_BH_ON == 1)&&(settings1->DETECTOR==3) ) { // trig by BH is only for TestBed case
 
                            // check if this channel is BH ch (DAQchan)
                            if ( detector->stations[i].strings[string_i].antennas[antenna_i].DAQchan == 0 ) {
@@ -870,15 +994,44 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                                    //cout<<"trig_bin : "<<trig_bin<<endl;
 
-                                   if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode) ) {   // if this channel passed the trigger!
-                                       //cout<<"trigger passed at bin "<<trig_i+trig_bin<<" ch : "<<trig_j<<endl;
-                                       //stations[i].strings[(int)((trig_j)/4)].antennas[(int)((trig_j)%4)].Trig_Pass = trig_i+trig_bin;
-                                       stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
-                                       N_pass++;
-                                       if (last_trig_bin < trig_i+trig_bin) last_trig_bin = trig_i+trig_bin;    // added for fixed V_mimic
-                                       trig_bin = trig_window_bin;  // if confirmed this channel passed the trigger, no need to do rest of bins
-                                       Passed_chs.push_back(trig_j);
+                                   if ( settings1->NOISE_TEMP_MODE==0) {
+                                       // with threshold offset by chs
+                                       if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
+                                           //cout<<"trigger passed at bin "<<trig_i+trig_bin<<" ch : "<<trig_j<<endl;
+                                           //stations[i].strings[(int)((trig_j)/4)].antennas[(int)((trig_j)%4)].Trig_Pass = trig_i+trig_bin;
+                                           stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
+                                           N_pass++;
+                                           if (last_trig_bin < trig_i+trig_bin) last_trig_bin = trig_i+trig_bin;    // added for fixed V_mimic
+                                           trig_bin = trig_window_bin;  // if confirmed this channel passed the trigger, no need to do rest of bins
+                                           Passed_chs.push_back(trig_j);
+                                       }
                                    }
+                                   else if ( settings1->NOISE_TEMP_MODE==1) {
+                                       // with threshold offset by chs
+                                       if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode_ch[channel_num-1] * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
+                                           //cout<<"trigger passed at bin "<<trig_i+trig_bin<<" ch : "<<trig_j<<endl;
+                                           //stations[i].strings[(int)((trig_j)/4)].antennas[(int)((trig_j)%4)].Trig_Pass = trig_i+trig_bin;
+                                           stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
+                                           N_pass++;
+                                           if (last_trig_bin < trig_i+trig_bin) last_trig_bin = trig_i+trig_bin;    // added for fixed V_mimic
+                                           trig_bin = trig_window_bin;  // if confirmed this channel passed the trigger, no need to do rest of bins
+                                           Passed_chs.push_back(trig_j);
+                                       }
+                                   }
+                                   else if ( settings1->NOISE_TEMP_MODE==2) {
+                                       // with threshold offset by chs
+                                       // for TRIG_ONLY_BH_ON = 1 case, we are only using first 8 chs so don't worry about other chs
+                                       if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode_ch[channel_num-1] * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
+                                           //cout<<"trigger passed at bin "<<trig_i+trig_bin<<" ch : "<<trig_j<<endl;
+                                           //stations[i].strings[(int)((trig_j)/4)].antennas[(int)((trig_j)%4)].Trig_Pass = trig_i+trig_bin;
+                                           stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
+                                           N_pass++;
+                                           if (last_trig_bin < trig_i+trig_bin) last_trig_bin = trig_i+trig_bin;    // added for fixed V_mimic
+                                           trig_bin = trig_window_bin;  // if confirmed this channel passed the trigger, no need to do rest of bins
+                                           Passed_chs.push_back(trig_j);
+                                       }
+                                   }
+
 
                                    trig_bin++;
 
@@ -887,20 +1040,55 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                        }
                        
-                       else if (settings1->TRIG_ONLY_BH_ON == 0) {
+                       //else if (settings1->TRIG_ONLY_BH_ON == 0) {
+                       else { // other cases, use all possible chs for trigger analysis
                            trig_bin = 0;
                            while (trig_bin < trig_window_bin ) {
 
-                               //cout<<"trig_bin : "<<trig_bin<<endl;
 
-                               if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode) ) {   // if this channel passed the trigger!
-                                   //cout<<"trigger passed at bin "<<trig_i+trig_bin<<" ch : "<<trig_j<<endl;
-                                   //stations[i].strings[(int)((trig_j)/4)].antennas[(int)((trig_j)%4)].Trig_Pass = trig_i+trig_bin;
-                                   stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
-                                   N_pass++;
-                                   if (last_trig_bin < trig_i+trig_bin) last_trig_bin = trig_i+trig_bin;    // added for fixed V_mimic
-                                   trig_bin = trig_window_bin;  // if confirmed this channel passed the trigger, no need to do rest of bins
-                                   Passed_chs.push_back(trig_j);
+                               if ( settings1->NOISE_TEMP_MODE==0) {
+                                   // with threshold offset by chs
+                                   if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
+                                       //cout<<"trigger passed at bin "<<trig_i+trig_bin<<" ch : "<<trig_j<<endl;
+                                       //stations[i].strings[(int)((trig_j)/4)].antennas[(int)((trig_j)%4)].Trig_Pass = trig_i+trig_bin;
+                                       stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
+                                       N_pass++;
+                                       if (last_trig_bin < trig_i+trig_bin) last_trig_bin = trig_i+trig_bin;    // added for fixed V_mimic
+                                       trig_bin = trig_window_bin;  // if confirmed this channel passed the trigger, no need to do rest of bins
+                                       Passed_chs.push_back(trig_j);
+                                   }
+                               }
+                               else if ( settings1->NOISE_TEMP_MODE==1) {
+                                   // with threshold offset by chs
+                                   if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode_ch[channel_num-1] * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
+                                       stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
+                                       N_pass++;
+                                       if (last_trig_bin < trig_i+trig_bin) last_trig_bin = trig_i+trig_bin;    // added for fixed V_mimic
+                                       trig_bin = trig_window_bin;  // if confirmed this channel passed the trigger, no need to do rest of bins
+                                       Passed_chs.push_back(trig_j);
+                                   }
+                               }
+                               else if ( settings1->NOISE_TEMP_MODE==2) {
+                                   // with threshold offset by chs
+                                   // for TRIG_ONLY_BH_ON = 1 case, we are only using first 8 chs so don't worry about other chs
+                                   if (channel_num-1 < 8) {
+                                       if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode_ch[channel_num-1] * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
+                                           stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
+                                           N_pass++;
+                                           if (last_trig_bin < trig_i+trig_bin) last_trig_bin = trig_i+trig_bin;    // added for fixed V_mimic
+                                           trig_bin = trig_window_bin;  // if confirmed this channel passed the trigger, no need to do rest of bins
+                                           Passed_chs.push_back(trig_j);
+                                       }
+                                   }
+                                   else { // chs starting from 8 (counted from 0), uses same rmsdiode value
+                                       if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode_ch[8] * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
+                                           stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
+                                           N_pass++;
+                                           if (last_trig_bin < trig_i+trig_bin) last_trig_bin = trig_i+trig_bin;    // added for fixed V_mimic
+                                           trig_bin = trig_window_bin;  // if confirmed this channel passed the trigger, no need to do rest of bins
+                                           Passed_chs.push_back(trig_j);
+                                       }
+                                   }
                                }
 
                                trig_bin++;
@@ -946,15 +1134,15 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                    //stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( trigger->Full_window_V[ch_loop][ stations[i].strings[string_i].antennas[antenna_i].Trig_Pass - settings1->NFOUR/4 + mimicbin ] );
                                    //stations[i].strings[string_i].antennas[antenna_i].time.push_back( stations[i].strings[string_i].antennas[antenna_i].Trig_Pass - settings1->NFOUR/4 + mimicbin );
                                    // new DAQ waveform writing mechanism test
-                                   if (V_mimic_mode == 0) { // Global passed bin is the center of the window + delay to each chs from araGeom
-                                       stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( ( trigger->Full_window_V[ch_loop][ last_trig_bin - (detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin) - settings1->NFOUR/4 + mimicbin ] )*1.e3 );// save in mV
-                                       stations[i].strings[string_i].antennas[antenna_i].time.push_back( last_trig_bin - (detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin) - settings1->NFOUR/4 + mimicbin );
-                                       stations[i].strings[string_i].antennas[antenna_i].time_mimic.push_back( ( -(detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin) - settings1->NFOUR/4 + mimicbin) * settings1->TIMESTEP*1.e9  );// save in ns
-                                   }
-                                   else if (V_mimic_mode == 1) { // Global passed bin is the center of the window
+                                   if (V_mimic_mode == 0) { // Global passed bin is the center of the window
                                        stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( ( trigger->Full_window_V[ch_loop][ last_trig_bin - settings1->NFOUR/4 + mimicbin ] )*1.e3 );// save in mV
                                        stations[i].strings[string_i].antennas[antenna_i].time.push_back( last_trig_bin - settings1->NFOUR/4 + mimicbin );
                                        stations[i].strings[string_i].antennas[antenna_i].time_mimic.push_back( ( settings1->NFOUR/4 + mimicbin) * settings1->TIMESTEP*1.e9  );// save in ns
+                                   }
+                                   else if (V_mimic_mode == 1) { // Global passed bin is the center of the window + delay to each chs from araGeom
+                                       stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( ( trigger->Full_window_V[ch_loop][ last_trig_bin - (detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin) - settings1->NFOUR/4 + mimicbin ] )*1.e3 );// save in mV
+                                       stations[i].strings[string_i].antennas[antenna_i].time.push_back( last_trig_bin - (detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin) - settings1->NFOUR/4 + mimicbin );
+                                       stations[i].strings[string_i].antennas[antenna_i].time_mimic.push_back( ( -(detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin) - settings1->NFOUR/4 + mimicbin) * settings1->TIMESTEP*1.e9  );// save in ns
                                    }
                                    else if (V_mimic_mode == 2) { // Global passed bin is the center of the window + delay to each chs from araGeom + fitted by eye
                                        stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( ( trigger->Full_window_V[ch_loop][ last_trig_bin - (detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin + detector->stations[i].strings[string_i].antennas[antenna_i].manual_delay_bin) - settings1->NFOUR/4 + mimicbin ] )*1.e3 );// save in mV
@@ -993,15 +1181,15 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                                // new DAQ waveform writing mechanism test
                                for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
-                                   if (V_mimic_mode == 0) { // Global passed bin is the center of the window + delay to each chs from araGeom
-                                       stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( ( trigger->Full_window_V[ch_loop][ last_trig_bin - (detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin) - settings1->NFOUR/4 + mimicbin ] )*1.e3 );// save in mV
-                                       stations[i].strings[string_i].antennas[antenna_i].time.push_back( last_trig_bin - (detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin) - settings1->NFOUR/4 + mimicbin );
-                                       stations[i].strings[string_i].antennas[antenna_i].time_mimic.push_back( ( -(detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin) - settings1->NFOUR/4 + mimicbin) * settings1->TIMESTEP*1.e9 );// save in ns
-                                   }
-                                   else if (V_mimic_mode == 1) { // Global passed bin is the center of the window
+                                   if (V_mimic_mode == 0) { // Global passed bin is the center of the window
                                        stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( ( trigger->Full_window_V[ch_loop][ last_trig_bin - settings1->NFOUR/4 + mimicbin ] )*1.e3 );// save in mV
                                        stations[i].strings[string_i].antennas[antenna_i].time.push_back( last_trig_bin - settings1->NFOUR/4 + mimicbin );
                                        stations[i].strings[string_i].antennas[antenna_i].time_mimic.push_back( ( settings1->NFOUR/4 + mimicbin) * settings1->TIMESTEP*1.e9 );// save in ns
+                                   }
+                                   else if (V_mimic_mode == 1) { // Global passed bin is the center of the window + delay to each chs from araGeom
+                                       stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( ( trigger->Full_window_V[ch_loop][ last_trig_bin - (detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin) - settings1->NFOUR/4 + mimicbin ] )*1.e3 );// save in mV
+                                       stations[i].strings[string_i].antennas[antenna_i].time.push_back( last_trig_bin - (detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin) - settings1->NFOUR/4 + mimicbin );
+                                       stations[i].strings[string_i].antennas[antenna_i].time_mimic.push_back( ( -(detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin) - settings1->NFOUR/4 + mimicbin) * settings1->TIMESTEP*1.e9 );// save in ns
                                    }
                                    if (V_mimic_mode == 2) { // Global passed bin is the center of the window + delay to each chs from araGeom + fitted delay
                                        //stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( trigger->Full_window_V[ch_loop][ last_trig_bin - (detector->params.TestBed_Ch_delay_bin[ch_loop]-detector->params.TestBed_BH_Mean_delay_bin) - settings1->NFOUR/4 + mimicbin ] );
@@ -1019,10 +1207,13 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                             double Z = detector->stations[i].strings[string_i].antennas[antenna_i].GetZ();
                            //std::cout << "Arrival time:X:Y:Z " << arrivtime << " : " << X << " : " << Y << " : " << Z << std::endl;
                            for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
+			     int AraRootChannel = 0;
+                                 
+                             AraRootChannel = detector->GetChannelfromStringAntenna (i, string_i, antenna_i, settings1);
 
-                               int AraRootChannel = detector->GetChannelfromStringAntenna (i, string_i, antenna_i);
                                theUsefulEvent.fVoltsRF[AraRootChannel-1][mimicbin] = stations[i].strings[string_i].antennas[antenna_i].V_mimic[mimicbin];
-                               theUsefulEvent.fTimesRF[AraRootChannel-1][mimicbin] = double(stations[i].strings[string_i].antennas[antenna_i].time[mimicbin])*settings1->TIMESTEP*1.0E9;
+                               //theUsefulEvent.fTimesRF[AraRootChannel-1][mimicbin] = double(stations[i].strings[string_i].antennas[antenna_i].time[mimicbin])*settings1->TIMESTEP*1.0E9;
+                               theUsefulEvent.fTimesRF[AraRootChannel-1][mimicbin] = stations[i].strings[string_i].antennas[antenna_i].time_mimic[mimicbin];
                                //cout << theUsefulEvent->fVoltsRF[ch_loop][mimicbin] << endl;
                                //cout << theUsefulEvent->fTimesRF[ch_loop][mimicbin] <<endl;
                            }
@@ -1041,7 +1232,10 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                            int string_i = detector->getStringfromArbAntID( i, ch_loop);
                            int antenna_i = detector->getAntennafromArbAntID( i, ch_loop);
                            for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
-                               int AraRootChannel = detector->GetChannelfromStringAntenna (i, string_i, antenna_i);
+			     int AraRootChannel = 0;
+
+			       AraRootChannel = detector->GetChannelfromStringAntenna (i, string_i, antenna_i, settings1);
+
                                theUsefulEvent.fVoltsRF[AraRootChannel-1][mimicbin] = 0;
                                theUsefulEvent.fTimesRF[AraRootChannel-1][mimicbin] = 0;
                                //cout << theUsefulEvent->fVoltsRF[ch_loop][mimicbin] << endl;
@@ -1080,15 +1274,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
 
         // also clear all vector info to reduce output root file size
-        noise_phase.clear();
-        signal_bin.clear();
-        signal_dbin.clear();
-        connect_signals.clear();
-        Passed_chs.clear();
-        Vfft_noise_after.clear();
-        Vfft_noise_before.clear();
-        V_noise_timedomain.clear();
-        // done clear vector info in report head
+        clear_useless(settings1);   // to reduce the size of output AraOut.root, remove some information
 
 
 
@@ -1096,6 +1282,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
 
 }   // end Connect_Interaction_Detector
+
 
 
 
@@ -1117,7 +1304,23 @@ void Report::Select_Wave_Convlv_Exchange(Settings *settings1, Trigger *trigger, 
         bin_value = signalbin - BINSIZE/2 + bin;
 
         // save the noise + signal waveform
-        V_total_forconvlv.push_back( trigger->v_noise_timedomain[ noise_ID[ (int)( bin_value / settings1->DATA_BIN_SIZE) ] ][ (int)( bin_value % settings1->DATA_BIN_SIZE ) ]  + V[bin] );
+                           
+        if ( settings1->NOISE_TEMP_MODE==0) {
+            V_total_forconvlv.push_back( trigger->v_noise_timedomain[ noise_ID[ (int)( bin_value / settings1->DATA_BIN_SIZE) ] ][ (int)( bin_value % settings1->DATA_BIN_SIZE ) ]  + V[bin] );
+        }
+        else if ( settings1->NOISE_TEMP_MODE==1) {
+            V_total_forconvlv.push_back( trigger->v_noise_timedomain_ch[ GetChNumFromArbChID(detector,ID,StationIndex,settings1)-1 ][ noise_ID[ (int)( bin_value / settings1->DATA_BIN_SIZE) ] ][ (int)( bin_value % settings1->DATA_BIN_SIZE ) ]  + V[bin] );
+        }
+
+        else if ( settings1->NOISE_TEMP_MODE==2) {
+            if ( (GetChNumFromArbChID(detector,ID,StationIndex,settings1)-1) < 8) {
+                V_total_forconvlv.push_back( trigger->v_noise_timedomain_ch[ GetChNumFromArbChID(detector,ID,StationIndex,settings1)-1 ][ noise_ID[ (int)( bin_value / settings1->DATA_BIN_SIZE) ] ][ (int)( bin_value % settings1->DATA_BIN_SIZE ) ]  + V[bin] );
+            }
+            else {
+                V_total_forconvlv.push_back( trigger->v_noise_timedomain_ch[8][ noise_ID[ (int)( bin_value / settings1->DATA_BIN_SIZE) ] ][ (int)( bin_value % settings1->DATA_BIN_SIZE ) ]  + V[bin] );
+            }
+        }
+
 
     }
 
@@ -1162,7 +1365,20 @@ void Report::Select_Wave_Convlv_Exchange(Settings *settings1, Trigger *trigger, 
         bin_value = signalbin1 - BINSIZE/2 + bin;
 
         // save the noise waveform
-        V_total_forconvlv.push_back( trigger->v_noise_timedomain[ noise_ID[ (int)( bin_value / settings1->DATA_BIN_SIZE) ] ][ (int)( bin_value % settings1->DATA_BIN_SIZE ) ] );
+        if ( settings1->NOISE_TEMP_MODE==0) {
+            V_total_forconvlv.push_back( trigger->v_noise_timedomain[ noise_ID[ (int)( bin_value / settings1->DATA_BIN_SIZE) ] ][ (int)( bin_value % settings1->DATA_BIN_SIZE ) ] );
+        }
+        else if ( settings1->NOISE_TEMP_MODE==1) {
+            V_total_forconvlv.push_back( trigger->v_noise_timedomain_ch[ GetChNumFromArbChID(detector,ID,StationIndex,settings1)-1 ][ noise_ID[ (int)( bin_value / settings1->DATA_BIN_SIZE) ] ][ (int)( bin_value % settings1->DATA_BIN_SIZE ) ] );
+        }
+        else if ( settings1->NOISE_TEMP_MODE==2) {
+            if ( (GetChNumFromArbChID(detector,ID,StationIndex,settings1)-1) < 8) {
+                V_total_forconvlv.push_back( trigger->v_noise_timedomain_ch[ GetChNumFromArbChID(detector,ID,StationIndex,settings1)-1 ][ noise_ID[ (int)( bin_value / settings1->DATA_BIN_SIZE) ] ][ (int)( bin_value % settings1->DATA_BIN_SIZE ) ] );
+            }
+            else {
+                V_total_forconvlv.push_back( trigger->v_noise_timedomain_ch[8][ noise_ID[ (int)( bin_value / settings1->DATA_BIN_SIZE) ] ][ (int)( bin_value % settings1->DATA_BIN_SIZE ) ] );
+            }
+        }
 
 
         // exchange from pure noise to noise + signal
@@ -1224,7 +1440,20 @@ void Report::Select_Wave_Convlv_Exchange(Settings *settings1, Trigger *trigger, 
         bin_value = signalbin1 - BINSIZE/2 + bin;
 
         // save the noise waveform
-        V_total_forconvlv.push_back( trigger->v_noise_timedomain[ noise_ID[ (int)( bin_value / settings1->DATA_BIN_SIZE) ] ][ (int)( bin_value % settings1->DATA_BIN_SIZE ) ] );
+        if ( settings1->NOISE_TEMP_MODE==0) {
+            V_total_forconvlv.push_back( trigger->v_noise_timedomain[ noise_ID[ (int)( bin_value / settings1->DATA_BIN_SIZE) ] ][ (int)( bin_value % settings1->DATA_BIN_SIZE ) ] );
+        }
+        else if ( settings1->NOISE_TEMP_MODE==1) {
+            V_total_forconvlv.push_back( trigger->v_noise_timedomain_ch[ GetChNumFromArbChID(detector,ID,StationIndex,settings1)-1 ][ noise_ID[ (int)( bin_value / settings1->DATA_BIN_SIZE) ] ][ (int)( bin_value % settings1->DATA_BIN_SIZE ) ] );
+        }
+        else if ( settings1->NOISE_TEMP_MODE==2) {
+            if ( (GetChNumFromArbChID(detector,ID,StationIndex,settings1)-1) < 8) {
+                V_total_forconvlv.push_back( trigger->v_noise_timedomain_ch[ GetChNumFromArbChID(detector,ID,StationIndex,settings1)-1 ][ noise_ID[ (int)( bin_value / settings1->DATA_BIN_SIZE) ] ][ (int)( bin_value % settings1->DATA_BIN_SIZE ) ] );
+            }
+            else {
+                V_total_forconvlv.push_back( trigger->v_noise_timedomain_ch[8][ noise_ID[ (int)( bin_value / settings1->DATA_BIN_SIZE) ] ][ (int)( bin_value % settings1->DATA_BIN_SIZE ) ] );
+            }
+        }
 
 
         // exchange from pure noise to noise + signal
@@ -1276,6 +1505,36 @@ void Report::Select_Wave_Convlv_Exchange(Settings *settings1, Trigger *trigger, 
 
 
 
+
+void Report::Apply_Gain_Offset(Settings *settings1, Trigger *trigger, Detector *detector, int ID, int StationIndex ) {
+
+    int string_num = detector->getStringfromArbAntID( StationIndex, ID );
+    int ant_num = detector->getAntennafromArbAntID( StationIndex, ID );
+
+    //int channel_num = detector->GetChannelfromStringAntenna ( StationIndex, string_num, ant_num );
+    int channel_num = detector->GetChannelfromStringAntenna ( StationIndex, string_num, ant_num, settings1 );
+    //cout<<"station "<<StationIndex<<" ch"<<channel_num<<" applying gain offset "<<detector->GetGainOffset( StationIndex, channel_num, settings1 )<<" applying"<<endl;
+
+    for (int bin=0; bin<settings1->DATA_BIN_SIZE; bin++) {   // test for full window
+        
+        trigger->Full_window[ID][bin] = ( trigger->Full_window[ID][bin] * detector->GetGainOffset( StationIndex, channel_num-1, settings1 ) * detector->GetGainOffset( StationIndex, channel_num-1, settings1 ) ); // offset in voltage factor so we need power (V^2 factor to diode response)
+        trigger->Full_window_V[ID][bin] = ( trigger->Full_window_V[ID][bin] * detector->GetGainOffset( StationIndex, channel_num-1, settings1 ) ); // gain in voltage factor
+    }
+
+}
+
+
+
+int Report::GetChNumFromArbChID( Detector *detector, int ID, int StationIndex, Settings *settings1 ) {
+
+    int string_num = detector->getStringfromArbAntID( StationIndex, ID );
+    int ant_num = detector->getAntennafromArbAntID( StationIndex, ID );
+
+    //int channel_num = detector->GetChannelfromStringAntenna ( StationIndex, string_num, ant_num );
+    int channel_num = detector->GetChannelfromStringAntenna ( StationIndex, string_num, ant_num, settings1 );
+
+    return channel_num;
+}
 
 
 
@@ -1383,6 +1642,13 @@ void Report::ApplyFOAM(int bin_n, Detector *detector, double &vmmhz) {  // read 
 }
 
 
+void Report::ApplyRFCM(int ch, int bin_n, Detector *detector, double &vmmhz, double RFCM_OFFSET) {  // read RFCM gain in dB and apply unitless gain to vmmhz
+
+    vmmhz = vmmhz * pow(10., ( detector->GetRFCMGain(ch,bin_n) + RFCM_OFFSET )/20.);   // from dB to unitless gain for voltage
+
+}
+
+
 void Report::ApplyFilter_databin(int bin_n, Detector *detector, double &vmmhz) {  // read filter gain in dB and apply unitless gain to vmmhz
 
     vmmhz = vmmhz * pow(10., ( detector->GetFilterGain_databin(bin_n) )/20.);   // from dB to unitless gain for voltage
@@ -1401,6 +1667,12 @@ void Report::ApplyFOAM_databin(int bin_n, Detector *detector, double &vmmhz) {  
 
 }
 
+
+void Report::ApplyRFCM_databin(int ch, int bin_n, Detector *detector, double &vmmhz, double RFCM_OFFSET) {  // read RFCM gain in dB and apply unitless gain to vmmhz
+
+    vmmhz = vmmhz * pow(10., ( detector->GetRFCMGain_databin(ch,bin_n) + RFCM_OFFSET )/20.);   // from dB to unitless gain for voltage
+
+}
 
 
 void Report::GetAngleAnt(Vector &rec_vector, Position &antenna, double &ant_theta, double &ant_phi) {   //ant_theta and ant_phi is in degree 
@@ -1436,7 +1708,7 @@ void Report::GetNoiseWaveforms(Settings *settings1, Detector *detector, double v
 
         Vfft_noise_after.clear();  // remove previous Vfft_noise values
         Vfft_noise_before.clear();  // remove previous Vfft_noise values
-        V_noise_timedomain.clear(); // remove previous V_noise_timedomain values
+        //V_noise_timedomain.clear(); // remove previous V_noise_timedomain values
 
 
         double V_tmp; // copy original flat H_n [V] value
@@ -1452,17 +1724,27 @@ void Report::GetNoiseWaveforms(Settings *settings1, Detector *detector, double v
 
             V_tmp = v_noise / sqrt(2.) ; // copy original flat H_n [V] value, and apply 1/sqrt2 for SURF/TURF divide same as signal
 
-            ApplyFilter_databin(k, detector, V_tmp);
-            ApplyPreamp_databin(k, detector, V_tmp);
-            ApplyFOAM_databin(k, detector, V_tmp);
+            if (settings1->USE_TESTBED_RFCM_ON == 0) {
+                ApplyFilter_databin(k, detector, V_tmp);
+                ApplyPreamp_databin(k, detector, V_tmp);
+                ApplyFOAM_databin(k, detector, V_tmp);
+            }
+            else if (settings1->USE_TESTBED_RFCM_ON == 1) {
+                // apply RFCM gain
+                // as this mode don't have different chs' noise waveform separately, just use ch0 RFCM gain...
+                cerr<<"Trying not allowed mode : NOISE_TEMP_MODE=0 and USE_TESTBED_RFCM_ON=1 same time!"<<endl;
+                break;
+                //ApplyRFCM_databin(0, detector, V_tmp);
+            }
+
 
             Vfft_noise_before.push_back( V_tmp );
 
 
             current_phase = noise_phase[k];
 
-            Tools::get_random_rician( 0., 0., sqrt(2./ M_PI) * V_tmp, current_amplitude, current_phase);    // use real value array value
-            //Tools::get_random_rician( 0., 0., sqrt(2./M_PI)/1.177 * V_tmp, current_amplitude, current_phase);    // use real value array value, extra 1/1.177 to make total power same with "before random_rician".
+            //Tools::get_random_rician( 0., 0., sqrt(2./ M_PI) * V_tmp, current_amplitude, current_phase);    // use real value array value
+            Tools::get_random_rician( 0., 0., sqrt(2./M_PI)/1.177 * V_tmp, current_amplitude, current_phase);    // use real value array value, extra 1/1.177 to make total power same with "before random_rician".
 
             // vnoise is currently noise spectrum (before fft, unit : V)
            //vnoise[2 * k] = sqrt(current_amplitude) * cos(noise_phase[k]);
@@ -1492,9 +1774,11 @@ void Report::GetNoiseWaveforms(Settings *settings1, Detector *detector, double v
 
         
         // save timedomain noise to Report class
+        /*
         for (int k=0; k<settings1->DATA_BIN_SIZE; k++) {
             V_noise_timedomain.push_back( vnoise[k] );
         }
+        */
 
     }
     else {  // currently there are no more options!
@@ -1503,6 +1787,100 @@ void Report::GetNoiseWaveforms(Settings *settings1, Detector *detector, double v
 
 
 }
+
+
+
+// generate DATA_BIN_SIZE sized noise waveform array in time domain
+void Report::GetNoiseWaveforms_ch(Settings *settings1, Detector *detector, double v_noise, double *vnoise, int ch) {
+
+    if (settings1->NOISE == 0) {    // NOISE == 0 : flat thermal noise with Johnson-Nyquist noise
+        //V_noise_fft_bin = sqrt( (double)(NFOUR/2) * 50. * KBOLTZ * T_noise / (2. * TIMESTEP) ); 
+        //
+
+
+        Vfft_noise_after.clear();  // remove previous Vfft_noise values
+        Vfft_noise_before.clear();  // remove previous Vfft_noise values
+        //V_noise_timedomain.clear(); // remove previous V_noise_timedomain values
+
+
+
+        double V_tmp; // copy original flat H_n [V] value
+        double current_amplitude, current_phase;
+
+        GetNoisePhase(settings1); // get random phase for noise
+
+        //MakeArraysforFFT_noise(settings1, detector, vhz_noise_tmp , vnoise);
+        // returned array vnoise currently have real value = imag value as no phase term applied
+
+
+        //for (int k=0; k<settings1->NFOUR/4; k++) {
+        for (int k=0; k<settings1->DATA_BIN_SIZE/2; k++) {
+
+            V_tmp = v_noise / sqrt(2.) ; // copy original flat H_n [V] value, and apply 1/sqrt2 for SURF/TURF divide same as signal
+
+            if (settings1->USE_TESTBED_RFCM_ON == 0) {
+                ApplyFilter_databin(k, detector, V_tmp);
+                ApplyPreamp_databin(k, detector, V_tmp);
+                ApplyFOAM_databin(k, detector, V_tmp);
+            }
+            else if (settings1->USE_TESTBED_RFCM_ON == 1) {
+                // apply RFCM gain
+                ApplyRFCM_databin(ch, k, detector, V_tmp, settings1->RFCM_OFFSET);
+            }
+
+            Vfft_noise_before.push_back( V_tmp );
+
+
+            current_phase = noise_phase[k];
+
+            //Tools::get_random_rician( 0., 0., sqrt(2./ M_PI) * V_tmp, current_amplitude, current_phase);    // use real value array value
+            Tools::get_random_rician( 0., 0., sqrt(2./M_PI)/1.177 * V_tmp, current_amplitude, current_phase);    // use real value array value, extra 1/1.177 to make total power same with "before random_rician".
+
+            // vnoise is currently noise spectrum (before fft, unit : V)
+           //vnoise[2 * k] = sqrt(current_amplitude) * cos(noise_phase[k]);
+           //vnoise[2 * k + 1] = sqrt(current_amplitude) * sin(noise_phase[k]);
+           vnoise[2 * k] = (current_amplitude) * cos(noise_phase[k]);
+           vnoise[2 * k + 1] = (current_amplitude) * sin(noise_phase[k]);
+
+
+
+           //vnoise[2 * k] = (V_tmp) * cos(noise_phase[k]);
+           //vnoise[2 * k + 1] = (V_tmp) * sin(noise_phase[k]);
+           
+
+            Vfft_noise_after.push_back( vnoise[2*k] );
+            Vfft_noise_after.push_back( vnoise[2*k+1] );
+
+            // inverse FFT normalization factor!
+            vnoise[2 * k] *= 2./((double)settings1->DATA_BIN_SIZE);
+            vnoise[2 * k + 1] *= 2./((double)settings1->DATA_BIN_SIZE);
+
+
+        }
+
+
+
+        // now vnoise is time domain waveform
+        Tools::realft( vnoise, -1, settings1->DATA_BIN_SIZE);
+
+        
+        // save timedomain noise to Report class
+        /*
+        for (int k=0; k<settings1->DATA_BIN_SIZE; k++) {
+            V_noise_timedomain.push_back( vnoise[k] );
+        }
+        */
+
+    }
+    else {  // currently there are no more options!
+        cout<<"no noise option for NOISE = "<<settings1->NOISE<<endl;
+    }
+
+
+}
+
+
+
 
 
 void Report::GetNoisePhase(Settings *settings1) {

@@ -264,6 +264,11 @@ cout<<"finish calling secondaries and signal"<<endl;
 
 // before start looping events set noise values (this case, thermal)
 trigger->SetMeanRmsDiode(settings1, detector, report);
+
+if (settings1->NOISE_WAVEFORM_GENERATE_MODE == 0) {// noise waveforms will be generated for each evts
+    trigger->ClearNoiseWaveforms();
+}
+
 // now in Trigger class, there will be meandiode, rmsdiode values for noise (we need this for trigger later)
 
 
@@ -345,6 +350,33 @@ double cur_posnu_z;
 
 
     cout << "Calpulser_on: " << settings1->CALPULSER_ON << endl;
+
+    // test Detector set correctly
+    cout<<"number of stations : "<<detector->params.number_of_stations << endl;
+    cout<<"total number of antennas : "<<detector->params.number_of_antennas << endl;
+    int ch_count = 0;
+    for (int i=0; i<detector->params.number_of_stations; i++) {
+        for (int j=0; j<detector->stations[i].strings.size(); j++) {
+            for (int k=0; k<detector->stations[i].strings[j].antennas.size(); k++) {
+                ch_count++;
+                cout<<"station["<<i<<"].strings["<<j<<"].antennas["<<k<<"] no_ch:"<<ch_count<<endl;
+            }
+        }
+    }
+
+
+
+        
+    // check if settings have to compatibility problems
+    // if there's any, stop AraSim
+    int settings_compatibility_error = settings1->CheckCompatibilities(detector);
+    if (settings_compatibility_error > 0) {
+        cerr<<"There are "<< settings_compatibility_error<<" errors from settings. Check error messages."<<endl;
+        return -1;
+    }
+                
+
+
    for (int inu=0;inu<settings1->NNU;inu++) { // loop over neutrinos
 
        
@@ -355,6 +387,13 @@ double cur_posnu_z;
        event = new Event ( settings1, spectra, primary1, icemodel, detector, signal, sec1 );
   
        report = new Report(detector, settings1);
+
+
+
+       if (settings1->NOISE_WAVEFORM_GENERATE_MODE == 0) {// noise waveforms will be generated for each evts
+           trigger->GetNewNoiseWaveforms(settings1, detector, report);
+       }
+
 
 //--------------------------------------------------
 //        cout<<"inu : "<<inu<<endl;
@@ -373,19 +412,6 @@ double cur_posnu_z;
        // save signal, noise at each antennas to Report class
        report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1, trigger);
        
-//       cout << "report:" << report->theUsefulEvent.fVoltsRF[2][23]<< endl;
-       //theEvent
-       if (settings1->WRITE_ALL_EVENTS!=2) {
-           theEvent = &report->theUsefulEvent;
-           eventTree->Fill();
-//           cout << "theEvent:" << theEvent->fVoltsRF[2][23] << endl;
-       }
-       /*
-       if (report->Passed_chs.size() > 0){
-           cout << report->Passed_chs[0] << endl;
-       }
-       */
-       theEvent = NULL;
 
 
 
@@ -539,6 +565,26 @@ double cur_posnu_z;
 
 
 
+       // for 1, save all events whether passed trigger or not
+       if (settings1->WRITE_ALL_EVENTS==1) {
+           theEvent = &report->theUsefulEvent;
+           eventTree->Fill();
+       }
+       // for 0, save events which passed trigger
+       else if (settings1->WRITE_ALL_EVENTS==0) {
+           //if ( Global_Pass_Flag == 1 ) {
+           if ( check_station_DC > 0 ) {
+               theEvent = &report->theUsefulEvent;
+               eventTree->Fill();
+           }
+       }
+
+
+       theEvent = NULL;
+
+
+
+
 //--------------------------------------------------
 // 
 //  for (int i=0; i<4; i++) { // for strings
@@ -554,6 +600,14 @@ double cur_posnu_z;
 //      }
 //  }
 //-------------------------------------------------- 
+
+
+
+       if (settings1->NOISE_WAVEFORM_GENERATE_MODE == 0) {// noise waveforms will be generated for each evts
+           // remove noise waveforms for next evt
+           trigger->ClearNoiseWaveforms();
+       }
+
 
 
  delete event;
@@ -627,14 +681,19 @@ double cur_posnu_z;
 
 
    // remove noisewaveform info if DATA_SAVE_MODE == 2
-   if (settings1->DATA_SAVE_MODE == 2) {
+   // remove noisewaveform info if DATA_SAVE_MODE is not 0
+   if (settings1->DATA_SAVE_MODE != 0) {
        trigger->v_noise_timedomain.clear();
        trigger->v_noise_timedomain_diode.clear();
    }
+   if (settings1->DATA_SAVE_MODE == 2) {// in DATA_SAVE_MODE==2, remove noise spectrum before Rayleigh dist.
+       trigger->Vfft_noise_before.clear();
+   }
+
   
   AraTree->Fill();  // fill tree for one entry
   AraFile->Write();
-  AraFile->Close();
+  //AraFile->Close();
 
 
  efficiencies->summarize(); // summarize the results in an output file  

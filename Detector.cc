@@ -112,6 +112,10 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
     string ARA37_file = "ARA37_info.txt";
     
     string line, label;
+
+    // setup installed station information
+    // setup actual installed staion information regardless of what DETECTOR mode is in use
+    SetupInstalledStations();
     
     //    IceModel *icesurface = new IceModel;
     //cout<<"Ice surface at 0,0 : "<<icesurface->Geoid(0.)<<endl;
@@ -241,15 +245,14 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         double R_string = 10.;  // all units are in meter
         double R_surface = 60.;
         double z_max = 200.;
-        double z_btw = 20.;
-        double z_btw_2 = 2.;
+        double z_btw = 10.;
+	double z_btw_2 = 2.;
         params.stations_per_side = 4;       // total 37 stations
         params.station_spacing = 2000.;     // 2km spacing
         params.antenna_orientation = 0;     // all antenna facing x
         params.bore_hole_antenna_layout = settings1->BORE_HOLE_ANTENNA_LAYOUT;
         // finish initialization
         //
-        
         
         
         
@@ -398,7 +401,8 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         // set antenna values from parameters
         // set station positions
         if (settings1->READGEOM == 0) { // use idealized geometry
-        
+            //SetupInstalledStations();
+
             for (int i=0; i<params.number_of_stations; i++) {
                 
                 //
@@ -559,12 +563,21 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
                 stations[i].surfaces[3].SetX( stations[i].GetX() );
                 stations[i].surfaces[3].SetY( stations[i].GetY() );
                 
-            }
-        } else { // non-idealized geometry
-            for (int i=0; i<params.number_of_stations; i++) {
+            }// loop over stations i
+
+
+
+
+
+        } // if idealized geometry
+        else { // non-idealized geometry
+
+	  //SetupInstalledStations();        
+            //for (int i=0; i<params.number_of_stations; i++) {
       
                 //AraGeomTool *araGeom=AraGeomTool::Instance();
                 AraGeomTool *araGeom = new AraGeomTool();
+                cout<<"read AraGeomTool"<<endl;
                 
                 for (int i=0; i<params.number_of_stations; i++) {
                     for (int j = 0; j < params.number_of_strings_station; j++){
@@ -573,12 +586,14 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
                         
                         for (int k = 0; k < params.number_of_antennas_string; k++){
                             
-                            int chan = GetChannelfromStringAntenna (i,j,k);
+                            //int chan = GetChannelfromStringAntenna (i+1,j,k);
+                            int chan = GetChannelfromStringAntenna (i+1,j,k,settings1);
                             
                             stations[i].strings[j].antennas[k].SetX(stations[i].GetX()+araGeom->fStationInfo[i+1].fAntInfo[chan-1].antLocation[0]);
                             stations[i].strings[j].antennas[k].SetY(stations[i].GetX()+araGeom->fStationInfo[i+1].fAntInfo[chan-1].antLocation[1]);
+                            //stations[i].strings[j].antennas[k].SetZ(araGeom->fStationInfo[i+1].fAntInfo[chan-1].antLocation[2]-double(settings1->DEPTH_CHANGE));
                             stations[i].strings[j].antennas[k].SetZ(araGeom->fStationInfo[i+1].fAntInfo[chan-1].antLocation[2]);
-                            /*                        cout <<
+                                                    cout <<
                              "DetectorStation:string:antenna:X:Y:Z:: " <<
                              i<< " : " <<
                              j<< " : " <<
@@ -586,48 +601,21 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
                              stations[i].strings[j].antennas[k].GetX() << " : " <<
                              stations[i].strings[j].antennas[k].GetY() << " : " <<
                              stations[i].strings[j].antennas[k].GetZ() << " : " <<
+			     chan << " : " <<	
+			     //araGeom->fStationInfo[i+1].fAntInfo[chan-1].antLocation[2]-double(settings1->DEPTH_CHANGE) << " : " <<
+			     //double(settings1->DEPTH_CHANGE) << " : " <<
                              endl;
-                             */
+                             
                         }
                         
-                        int chanstring = GetChannelfromStringAntenna (i, j,2);
+                        //int chanstring = GetChannelfromStringAntenna (i+1, j,2);
+                        int chanstring = GetChannelfromStringAntenna (i+1, j,2,settings1);
                         
                         stations[i].strings[j].SetX(stations[i].GetX()+araGeom->fStationInfo[i+1].fAntInfo[chanstring-1].antLocation[0]);
                         stations[i].strings[j].SetY(stations[i].GetX()+araGeom->fStationInfo[i+1].fAntInfo[chanstring-1].antLocation[1]);
                         
                     }
                 
-//                //
-//                // set string postions based on station position
-//                stations[i].strings[0].SetX( stations[i].GetX() + (-4.035) );
-//                stations[i].strings[0].SetY( stations[i].GetY() + (7.535) );
-//                
-//                stations[i].strings[1].SetX( stations[i].GetX() + (8.557) );
-//                stations[i].strings[1].SetY( stations[i].GetY() + (1.2046) );
-//                
-//                stations[i].strings[2].SetX( stations[i].GetX() + (-9.746) );
-//                stations[i].strings[2].SetY( stations[i].GetY() + (-5.3326) );
-//                
-//                stations[i].strings[3].SetX( stations[i].GetX() + (2.2106) );
-//                stations[i].strings[3].SetY( stations[i].GetY() + (-10.781) );
-//                
-//                stations[i].strings[0].antennas[0].SetZ( -82.66);
-//                stations[i].strings[0].antennas[1].SetZ( -79.26);
-//                stations[i].strings[0].antennas[2].SetZ( -61.73);
-//                stations[i].strings[0].antennas[3].SetZ( -61.73);
-//                stations[i].strings[1].antennas[0].SetZ( -73.58);
-//                stations[i].strings[1].antennas[1].SetZ( -70.13);
-//                stations[i].strings[1].antennas[2].SetZ( -55.70);
-//                stations[i].strings[1].antennas[3].SetZ( -53.64);
-//                stations[i].strings[2].antennas[0].SetZ( -73.66);
-//                stations[i].strings[2].antennas[1].SetZ( -70.20);
-//                stations[i].strings[2].antennas[2].SetZ( -54.79);
-//                stations[i].strings[2].antennas[3].SetZ( -52.73);
-//                stations[i].strings[3].antennas[0].SetZ( -79.36);
-//                stations[i].strings[3].antennas[1].SetZ( -76.21);
-//                stations[i].strings[3].antennas[2].SetZ( -61.79);
-//                stations[i].strings[3].antennas[3].SetZ( -59.73);
-//                
                 
                 //
                 // set antenna postions in borehole
@@ -768,22 +756,15 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
                 
                 stations[i].surfaces[3].SetX( stations[i].GetX() );
                 stations[i].surfaces[3].SetY( stations[i].GetY() );
-                
-            }
 
+                
+            } // end loop over stations i
+
+
+            //}// end loop over stations i
             
             
-            
-            
-            
-            
-        }
-        
-        // change coordinate from flat surface to curved Earth surface
-        //FlattoEarth_ARA(icesurface);
-        FlattoEarth_ARA_sharesurface(icesurface);   // this one will share the lowest surface at each station.
-        
-        
+        }// if non-idealized geom
         
         
         
@@ -797,12 +778,15 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         ReadPreamp("./data/preamp.csv", settings1);
         // read FOAM gain file!!
         ReadFOAM("./data/FOAM.csv", settings1);
+        // read gain offset for chs file!!
+        ReadGainOffset_TestBed("./data/preamp_ch_gain_offset.csv", settings1);// only TestBed for now
+        // read threshold offset for chs file!!
+        ReadThresOffset_TestBed("./data/threshold_offset.csv", settings1);// only TestBed for now
+        // read system temperature for chs file!!
+        ReadTemp_TestBed("./data/system_temperature.csv", settings1);// only TestBed for now
         
         
-    }
-    
-    }
-    
+    } // if mode == 1
     
     
     
@@ -816,7 +800,9 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         cout<<"\n\tBy default, ARA-37 is set"<<endl;
         ifstream ARA37( ARA37_file.c_str() );
         cout<<"We use "<<ARA37_file.c_str()<<" as antenna info."<<endl;
-        
+
+        //SetupInstalledStations();
+
         
         //
         // initialize info
@@ -832,7 +818,7 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         double R_string = 10.;
         double R_surface = 60.;
         double z_max = 200.;
-        double z_btw = 20.;
+        double z_btw = 10.;
         params.stations_per_side = 4;       // total 37 stations
         params.station_spacing = 2000.;     // 2km spacing
         params.antenna_orientation = 0;     // all antenna facing x
@@ -1154,13 +1140,9 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
             stations[i].surfaces[3].SetX( stations[i].GetX() );
             stations[i].surfaces[3].SetY( stations[i].GetY() );
             
-        }
+        }// loop over stations i
         
         
-        
-        // change coordinate from flat surface to curved Earth surface
-        //FlattoEarth_ARA(icesurface);
-        FlattoEarth_ARA_sharesurface(icesurface);   // this one will share the lowest surface at each station
         
         
         
@@ -1174,6 +1156,12 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         ReadPreamp("./data/preamp.csv", settings1);
         // read FOAM gain file!!
         ReadFOAM("./data/FOAM.csv", settings1);
+        // read gain offset for chs file!!
+        ReadGainOffset_TestBed("./data/preamp_ch_gain_offset.csv", settings1);// only TestBed for now
+        // read threshold offset for chs file!!
+        ReadThresOffset_TestBed("./data/threshold_offset.csv", settings1);// only TestBed for now
+        // read system temperature for chs file!!
+        ReadTemp_TestBed("./data/system_temperature.csv", settings1);// only TestBed for now
         
         
     }
@@ -1181,10 +1169,9 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
     
     /////////////////////////////////////////////////////////////////////////////////    
     else if (mode == 3) {        //        cout<<"\n\tDector mode 3 : Testbed and eventual inclusion of a specific number of stations (less than 7 stations) !"<<endl;
-        ifstream ARA_N( ARA_N_file.c_str() );
         //        cout<<"We use "<<ARA_N_file.c_str()<<" as antenna info."<<endl;
         
-        SetupInstalledStations();        
+        //SetupInstalledStations();        
         
         // initialize info
         params.number_of_stations = 1; //including Testbed
@@ -1208,7 +1195,13 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         // finish initialization
         //
         
+
+        
+        // mode == 3 currently just use installed TestBed station geom information.
+        // So don't need to read any more information
+        /*
         // Read new parameters if there are...
+        ifstream ARA_N( ARA_N_file.c_str() );
         if ( ARA_N.is_open() ) {
             while (ARA_N.good() ) {
                 getline (ARA_N, line);
@@ -1257,6 +1250,7 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
             ARA_N.close();
         }
         // finished reading new parameters
+        */
         
         
         params.number_of_antennas_string = 4;
@@ -1318,7 +1312,7 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
                     stations[i].TRIG_WINDOW = 2.5E-7;
                     stations[i].DATA_BIN_SIZE = settings1->DATA_BIN_SIZE;
                 }
-                if (stations[i].StationID == 1){
+               if (stations[i].StationID == 1){
                     stations[i].NFOUR = 1024;
                     stations[i].TIMESTEP = 1./2.6*1.E-9;
                     stations[i].TRIG_WINDOW = 2.5E-7;
@@ -1327,6 +1321,9 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
             }
         }
         
+        params.number_of_antennas = 0;
+
+            cout<<"DETECTOR=3 TB station geom info"<<endl;
         
             for (int j = 0; j < stations[0].strings.size(); j++){
                 for (int k = 0; k < stations[0].strings[j].antennas.size(); k++){
@@ -1338,18 +1335,18 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
                      stations[0].strings[j].antennas[k].GetX() << " : " <<
                      stations[0].strings[j].antennas[k].GetY() << " : " <<
                      stations[0].strings[j].antennas[k].GetZ() << " : \t" <<
-                     GetChannelfromStringAntenna ( 0, j, k)<<
+                     //GetChannelfromStringAntenna ( 0, j, k)<<
+                     GetChannelfromStringAntenna ( 0, j, k, settings1)<<
                      endl;
-                     
+
+                     params.number_of_antennas++;
                 }
             }
         
-    }
-            // change coordinate from flat surface to curved Earth surface
-            //FlattoEarth_ARA(icesurface);
-            FlattoEarth_ARA_sharesurface(icesurface);   // this one will share the lowest surface at each station.
 
 
+
+            cout<<"after FlattoEarth, station0 location"<<endl;
     for (int j = 0; j < stations[0].strings.size(); j++){
         for (int k = 0; k < stations[0].strings[j].antennas.size(); k++){
 
@@ -1367,10 +1364,10 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
              icesurface->Surface(stations[0].strings[j].antennas[k].Lon(), stations[0].strings[j].antennas[k].Lat()) << " : " <<
 //             icesurface->Surface(stations[0].strings[j].antennas[k].Lat(), stations[0].strings[j].antennas[k].Lon()) << " : " <<
              endl;
-             
                  
-             }
-             }
+                     
+        }
+    }
 
             
             
@@ -1386,10 +1383,45 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
             // read FOAM gain file!!
             ReadFOAM("./data/FOAM.csv", settings1);
 
+            // read RFCM gain file!! (measured value in ICL)
+            ReadRFCM_TestBed("data/TestBed_RFCM/R1C1.csv", settings1); // read and save RFCM gain for ch1
+            ReadRFCM_TestBed("data/TestBed_RFCM/R1C2.csv", settings1); // read and save RFCM gain for ch2
+            ReadRFCM_TestBed("data/TestBed_RFCM/R1C3.csv", settings1); // read and save RFCM gain for ch3
+            ReadRFCM_TestBed("data/TestBed_RFCM/R1C4.csv", settings1); // read and save RFCM gain for ch4
+            ReadRFCM_TestBed("data/TestBed_RFCM/R2C5.csv", settings1); // read and save RFCM gain for ch5
+            ReadRFCM_TestBed("data/TestBed_RFCM/R2C6.csv", settings1); // read and save RFCM gain for ch6
+            ReadRFCM_TestBed("data/TestBed_RFCM/R2C7.csv", settings1); // read and save RFCM gain for ch7
+            ReadRFCM_TestBed("data/TestBed_RFCM/R2C8.csv", settings1); // read and save RFCM gain for ch8
+            ReadRFCM_TestBed("data/TestBed_RFCM/R3C9.csv", settings1); // read and save RFCM gain for ch9
+            ReadRFCM_TestBed("data/TestBed_RFCM/R3C10.csv", settings1); // read and save RFCM gain for ch10
+            ReadRFCM_TestBed("data/TestBed_RFCM/R3C11.csv", settings1); // read and save RFCM gain for ch11
+            ReadRFCM_TestBed("data/TestBed_RFCM/R3C12.csv", settings1); // read and save RFCM gain for ch12
+            ReadRFCM_TestBed("data/TestBed_RFCM/R4C13.csv", settings1); // read and save RFCM gain for ch13
+            ReadRFCM_TestBed("data/TestBed_RFCM/R4C14.csv", settings1); // read and save RFCM gain for ch14
+            ReadRFCM_TestBed("data/TestBed_RFCM/R4C15.csv", settings1); // read and save RFCM gain for ch15
+            ReadRFCM_TestBed("data/TestBed_RFCM/R4C16.csv", settings1); // read and save RFCM gain for ch16
+
+            // read gain offset for chs file!!
+            ReadGainOffset_TestBed("./data/preamp_ch_gain_offset.csv", settings1);// only TestBed for now
+            // read threshold offset for chs file!!
+            ReadThresOffset_TestBed("./data/threshold_offset.csv", settings1);// only TestBed for now
+            // read system temperature for chs file!!
+            ReadTemp_TestBed("./data/system_temperature.csv", settings1);// only TestBed for now
+
+    }// if mode == 3
+
+
+    /////////////////////////////////////////////////////////////////////////////////    
+
+
 
             
         
     
+            
+    // change coordinate from flat surface to curved Earth surface
+    //FlattoEarth_ARA(icesurface);
+    FlattoEarth_ARA_sharesurface(icesurface);   // this one will share the lowest surface at each station.
 
     
     
@@ -1402,6 +1434,8 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
     
     //cout<<"test2"<<endl;
 }
+
+
 
 
 inline void Detector::ReadVgain(string filename) {
@@ -1885,21 +1919,21 @@ inline void Detector::FlattoEarth_ARA_sharesurface(IceModel *icesurface) {    //
         
     } // end loop over stations
     
-//    for (int i = 0; i < int(stations.size()); i++){
-//        for (int j = 0; j < int(stations[i].strings.size()); j++){
-//            for (int k = 0; k < int(stations[i].strings[j].antennas.size()); k++){
-//        cout << "Sharesurface: " <<
-//        GetChannelfromStringAntenna( i , j , k) << " : " <<
-//        i << " : " <<
-//        j << " : " <<
-//        k << " : " <<
-//        stations[i].strings[j].antennas[k].GetX() << " : " <<
-//        stations[i].strings[j].antennas[k].GetY() << " : " <<
-//        stations[i].strings[j].antennas[k].GetZ() << " : " <<
-//        endl;
-//            }
-//        }
-//    }
+    for (int i = 0; i < int(stations.size()); i++){
+        for (int j = 0; j < int(stations[i].strings.size()); j++){
+            for (int k = 0; k < int(stations[i].strings[j].antennas.size()); k++){
+        cout << "Sharesurface: " <<
+//        GetChannelfromStringAntenna( i+1 , j , k) << " : " <<
+        i << " : " <<
+        j << " : " <<
+        k << " : " <<
+        stations[i].strings[j].antennas[k].GetX() << " : " <<
+        stations[i].strings[j].antennas[k].GetY() << " : " <<
+        stations[i].strings[j].antennas[k].GetZ() << " : " <<
+        endl;
+            }
+        }
+    }
     
     
     
@@ -2105,6 +2139,219 @@ inline void Detector::ReadFOAM(string filename, Settings *settings1) {    // wil
 }
 
 
+
+
+inline void Detector::ReadGainOffset_TestBed(string filename, Settings *settings1) {    // will return gain offset (unit in voltage) for different chs
+
+    if (settings1->USE_MANUAL_GAINOFFSET == 0) {
+
+        if (settings1->USE_CH_GAINOFFSET == 1) {
+
+            ifstream GainOffset( filename.c_str() );
+            
+            string line;
+            
+            int N=0;
+            
+            if ( GainOffset.is_open() ) {
+                while (GainOffset.good() ) {
+                    
+                    getline (GainOffset, line);
+                    
+                    GainOffset_TB_ch.push_back( atof( line.c_str() ) );
+                    cout<<"GainOffset ch"<<N<<" : "<<GainOffset_TB_ch[N]<<endl;
+                    
+                    N++;
+                    
+                }
+                GainOffset.close();
+            }
+        }
+
+        else {// not using gain offset file, just 1. as gain offset (no gain offset)
+            for (int i=0; i<params.number_of_antennas; i++) {
+                GainOffset_TB_ch.push_back( 1. );
+            }
+        }
+
+    }
+    // use manual gain offset from setup file
+    else if (settings1->USE_MANUAL_GAINOFFSET == 1) {
+        for (int N=0; N<16; N++) {
+            GainOffset_TB_ch.push_back( settings1->MANUAL_GAINOFFSET_VALUE );
+        }
+    }
+
+}
+
+
+
+inline void Detector::ReadThresOffset_TestBed(string filename, Settings *settings1) {    // will return gain offset (unit in voltage) for different chs
+
+    // no threshold offset (just use 1)
+    if ( settings1->TRIG_THRES_MODE == 0 ) {
+        for (int N=0; N<16; N++) {
+            ThresOffset_TB_ch.push_back(1.);
+            cout<<"ThresOffset ch"<<N<<" : "<<ThresOffset_TB_ch[N]<<endl;
+        }
+    }
+
+
+    else if ( settings1->TRIG_THRES_MODE == 1 ) {
+        ifstream ThresOffset( filename.c_str() );
+        
+        string line;
+        
+        int N=0;
+        
+        if ( ThresOffset.is_open() ) {
+            while (ThresOffset.good() ) {
+                
+                getline (ThresOffset, line);
+                
+                ThresOffset_TB_ch.push_back( atof( line.c_str() ) );
+                cout<<"ThresOffset ch"<<N<<" : "<<ThresOffset_TB_ch[N]<<endl;
+                
+                N++;
+                
+            }
+            ThresOffset.close();
+        }
+    }
+    else if ( settings1->TRIG_THRES_MODE == 2 ) {
+        for (int N=0; N<16; N++) {
+            ThresOffset_TB_ch.push_back( pow(GainOffset_TB_ch[N],2) );
+            cout<<"ThresOffset ch"<<N<<" : "<<ThresOffset_TB_ch[N]<<endl;
+        }
+    }
+
+}
+
+
+inline void Detector::ReadTemp_TestBed(string filename, Settings *settings1) {    // will return gain offset (unit in voltage) for different chs
+
+
+    ifstream Temp( filename.c_str() );
+    
+    string line;
+    
+    int N=0;
+    
+    if ( Temp.is_open() ) {
+        while (Temp.good() ) {
+            
+            getline (Temp, line);
+            
+            Temp_TB_ch.push_back( atof( line.c_str() ) );
+            cout<<"System temp ch"<<N<<" : "<<Temp_TB_ch[N]<<endl;
+            
+            N++;
+            
+        }
+        Temp.close();
+    }
+
+}
+
+
+
+inline void Detector::ReadRFCM_TestBed(string filename, Settings *settings1) {    // will return gain (dB) with same freq bin with antenna gain
+    
+    ifstream RFCM( filename.c_str() );
+    
+    string line;
+    
+    int N=-1;
+    
+    vector <double> xfreq_tmp;
+    vector <double> ygain_tmp;
+    
+    if ( RFCM.is_open() ) {
+        while (RFCM.good() ) {
+            
+            getline (RFCM, line);
+            xfreq_tmp.push_back( atof( line.substr(0, line.find_first_of(",")).c_str() )*1.e-6 ); // from Hz to MHz
+            
+            ygain_tmp.push_back( atof( line.substr(line.find_first_of(",") + 1).c_str() ) );
+            
+            N++;
+        }
+        RFCM.close();
+    }
+    
+    else cout<<"RFCM file can not opened!!"<<endl;
+    
+    double xfreq[N], ygain[N];  // need array for Tools::SimpleLinearInterpolation
+    double xfreq_databin[settings1->DATA_BIN_SIZE/2];   // array for FFT freq bin
+    double ygain_databin[settings1->DATA_BIN_SIZE/2];   // array for gain in FFT bin
+    double df_fft;
+    
+    df_fft = 1./ ( (double)(settings1->DATA_BIN_SIZE) * settings1->TIMESTEP );
+    
+    for (int i=0;i<N;i++) { // copy values
+        xfreq[i] = xfreq_tmp[i];
+        ygain[i] = ygain_tmp[i];
+    }
+    for (int i=0;i<settings1->DATA_BIN_SIZE/2;i++) {    // this one is for DATA_BIN_SIZE
+        xfreq_databin[i] = (double)i * df_fft / (1.E6); // from Hz to MHz
+    }
+    
+
+    // check if there's pre assigned chs
+    int ch_no = RFCM_TB_databin_ch.size();
+    
+    // Tools::SimpleLinearInterpolation will return RFCM array (in dB)
+    Tools::SimpleLinearInterpolation( N, xfreq, ygain, freq_step, Freq, RFCM_TB_ch[ch_no] );
+    
+    Tools::SimpleLinearInterpolation( N, xfreq, ygain, settings1->DATA_BIN_SIZE/2, xfreq_databin, ygain_databin );
+
+
+    // set vector array size to number of chs
+    RFCM_TB_databin_ch.resize(ch_no+1);
+    
+    for (int i=0;i<settings1->DATA_BIN_SIZE/2;i++) {
+        RFCM_TB_databin_ch[ch_no].push_back( ygain_databin[i] );
+    }
+    
+    
+    
+    
+}
+
+
+
+double Detector::GetGainOffset( int StationID, int ch, Settings *settings1 ) { // returns voltage factor for specific channel gain off set
+
+    if ( (StationID == 0)&&(settings1->DETECTOR==3) ) { // if TestBed, we have offset values
+        return GainOffset_TB_ch[ch];
+    }
+    else {
+        return 1.;// other stations, just return 1.
+    }
+}
+
+
+double Detector::GetThresOffset( int StationID, int ch, Settings *settings1 ) { // returns voltage factor for specific channel gain off set
+
+    if ( (StationID == 0)&&(settings1->DETECTOR==3) ) { // if TestBed, we have offset values
+        return ThresOffset_TB_ch[ch];
+    }
+    else {
+        return 1.;// other stations, just return 1.
+    }
+}
+
+
+        
+double Detector::GetTemp( int StationID, int ch, Settings *settings1 ) {  // returns system temp for specific channel
+
+    if ( (StationID == 0)&&(settings1->DETECTOR==3) ) { // if TestBed, we have offset values
+        return Temp_TB_ch[ch];
+    }
+    else {
+        return settings1->NOISE_TEMP;// other stations, just return setup NOISE_TEMP
+    }
+}
 
 
 
@@ -2373,25 +2620,36 @@ void Detector::SetupInstalledStations(){
     
     if (InstalledStations.size() > 1){ // Station 1
         
-        Antennas.push_back(5);Antennas.push_back(9);Antennas.push_back(1);Antennas.push_back(17);
+      //        Antennas.push_back(5);Antennas.push_back(9);Antennas.push_back(1);Antennas.push_back(17);
+        Antennas.push_back(5);Antennas.push_back(9);Antennas.push_back(1);Antennas.push_back(13);
         InstalledStations[1].VHChannel.push_back(Antennas); // Make string 0
         Antennas.clear();
-        Antennas.push_back(6);Antennas.push_back(10);Antennas.push_back(2);Antennas.push_back(18);
+	//        Antennas.push_back(6);Antennas.push_back(10);Antennas.push_back(2);Antennas.push_back(18);
+        Antennas.push_back(6);Antennas.push_back(10);Antennas.push_back(2);Antennas.push_back(14);
         InstalledStations[1].VHChannel.push_back(Antennas); // Make string 1
         Antennas.clear();
-        Antennas.push_back(7);Antennas.push_back(11);Antennas.push_back(3);Antennas.push_back(19);
+	//        Antennas.push_back(7);Antennas.push_back(11);Antennas.push_back(3);Antennas.push_back(19);
+        Antennas.push_back(7);Antennas.push_back(11);Antennas.push_back(3);Antennas.push_back(15);
         InstalledStations[1].VHChannel.push_back(Antennas); // Make string 2
         Antennas.clear();
-        Antennas.push_back(8);Antennas.push_back(12);Antennas.push_back(4);Antennas.push_back(20);
+	//        Antennas.push_back(8);Antennas.push_back(12);Antennas.push_back(4);Antennas.push_back(20);
+        Antennas.push_back(8);Antennas.push_back(12);Antennas.push_back(4);Antennas.push_back(16);
         InstalledStations[1].VHChannel.push_back(Antennas); // Make string 3
         Antennas.clear();
         
         InstalledStations[1].nStrings = InstalledStations[1].VHChannel.size();
         
+	/*
         InstalledStations[1].surfaceChannels.push_back(13);
         InstalledStations[1].surfaceChannels.push_back(14);
         InstalledStations[1].surfaceChannels.push_back(15);
         InstalledStations[1].surfaceChannels.push_back(16);
+	*/
+
+        InstalledStations[1].surfaceChannels.push_back(17);
+        InstalledStations[1].surfaceChannels.push_back(18);
+        InstalledStations[1].surfaceChannels.push_back(19);
+        InstalledStations[1].surfaceChannels.push_back(20);
 
         InstalledStations[1].nSurfaces = InstalledStations[1].surfaceChannels.size();
         
@@ -2488,9 +2746,60 @@ int Detector::GetChannelfromStringAntenna ( int stationNum, int stringnum, int a
     }
     else {
         cerr << "Invalid request for station channel map: station number" << endl;
+        cout << stationNum << " : " <<  int(InstalledStations.size()) << endl;
         return -1;
     }
 }
+
+
+// more general used function
+int Detector::GetChannelfromStringAntenna ( int stationNum, int stringnum, int antennanum, Settings *settings1) {
+
+    int ChannelNum;
+
+    // for the cases when actual installed TestBed stations geom info is in use
+    if ( settings1->DETECTOR==3 ) {
+        if (stationNum < int(InstalledStations.size())){
+            if (stringnum < int(InstalledStations[stationNum].VHChannel.size())){
+                if (antennanum < int(InstalledStations[stationNum].VHChannel[stringnum].size())){
+                    ChannelNum = InstalledStations[stationNum].VHChannel[stringnum][antennanum];
+                    return ChannelNum;
+                }
+                else {
+                    cerr << "Invalid request for station channel map: antenna number" << endl;
+                    return -1;
+                }
+            }
+            else {
+                cerr << "Invalid request for station channel map: string number" << endl;
+                return -1;
+            }
+        }
+        else {
+            cerr << "Invalid request for station channel map: station number" << endl;
+            cout << stationNum << " : " <<  int(InstalledStations.size()) << endl;
+            return -1;
+        }
+    }
+    // if only ideal stations are in use and also installed ARA1a (use ARA1a ch mapping for now)
+    else {
+        if (stringnum < int(InstalledStations[1].VHChannel.size())){
+            if (antennanum < int(InstalledStations[1].VHChannel[stringnum].size())){
+                ChannelNum = InstalledStations[1].VHChannel[stringnum][antennanum];
+                return ChannelNum;
+            }
+            else {
+                cerr << "Invalid request for station channel map: antenna number" << endl;
+                return -1;
+            }
+        }
+    }
+    // we can add new case when mixed installed and ideal stations case later
+
+
+
+}
+
 
 
 void Detector::GetSSAfromChannel ( int stationNum, int channelNum, int * antennaNum, int * stringNum) {
@@ -2509,10 +2818,51 @@ void Detector::GetSSAfromChannel ( int stationNum, int channelNum, int * antenna
         cerr << "No string/antenna matches the channel number" << endl;
     }
     
+    return;
+}
 
+
+void Detector::GetSSAfromChannel ( int stationNum, int channelNum, int * antennaNum, int * stringNum, Settings *settings1) {
+    *stringNum = -1;
+    *antennaNum = -1;
+
+    // for the cases when actual installed TestBed stations geom info is in use
+    if ( settings1->DETECTOR==3 ) {
+
+        for (int i = 0; i < int(InstalledStations[stationNum].VHChannel.size()); i++){
+            for (int j = 0; j < int(InstalledStations[stationNum].VHChannel[i].size()); j++){
+                if (channelNum == InstalledStations[stationNum].VHChannel[i][j]){
+                    *stringNum = i;
+                    *antennaNum = j;
+                }
+            }
+        }
+    
+        if (*stringNum == -1){
+            cerr << "No string/antenna matches the channel number" << endl;
+        }
+    }
+
+    // if only ideal stations are in use and also installed ARA1a (use ARA1a ch mapping for now)
+    else {
+
+        for (int i = 0; i < int(InstalledStations[1].VHChannel.size()); i++){
+            for (int j = 0; j < int(InstalledStations[1].VHChannel[i].size()); j++){
+                if (channelNum == InstalledStations[1].VHChannel[i][j]){
+                    *stringNum = i;
+                    *antennaNum = j;
+                }
+            }
+        }
+    
+        if (*stringNum == -1){
+            cerr << "No string/antenna matches the channel number" << endl;
+        }
+    }
     
     return;
 }
+
 
 
 void Detector::UseAntennaInfo(int stationNum, Settings *settings1){
@@ -2528,11 +2878,13 @@ void Detector::UseAntennaInfo(int stationNum, Settings *settings1){
         double avgX, avgY;
         
         int antennaNum, stringNum;
-        GetSSAfromChannel(stationNum, chan, &antennaNum, &stringNum);
+        //GetSSAfromChannel(stationNum, chan, &antennaNum, &stringNum);
+        GetSSAfromChannel(stationNum, chan, &antennaNum, &stringNum, settings1);
         
         if (araGeom->fStationInfo[stationNum].fAntInfo[chan-1].polType != AraAntPol::kSurface){
             stations[stationNum].strings[stringNum].antennas[antennaNum].SetX(stations[stationNum].GetX()+araGeom->fStationInfo[stationNum].fAntInfo[chan-1].antLocation[0]);
             stations[stationNum].strings[stringNum].antennas[antennaNum].SetY(stations[stationNum].GetX()+araGeom->fStationInfo[stationNum].fAntInfo[chan-1].antLocation[1]);
+            //stations[stationNum].strings[stringNum].antennas[antennaNum].SetZ(araGeom->fStationInfo[stationNum].fAntInfo[chan-1].antLocation[2]-double(settings1->DEPTH_CHANGE));
             stations[stationNum].strings[stringNum].antennas[antennaNum].SetZ(araGeom->fStationInfo[stationNum].fAntInfo[chan-1].antLocation[2]);
             
             /*
@@ -2704,7 +3056,7 @@ void Detector::SetupIdealStations(){
         
         for (int BHAntID = 0; BHAntID < IdealStations[stationID].nChannelsVH; BHAntID++){
              for (int i = 0; i < IdealStations[stationID].VHID.size(); i++){
-                 for (int j = 0; j < IdealStations[stationID].VHID[i].size(); j++){
+                for (int j = 0; j < IdealStations[stationID].VHID[i].size(); j++){
                      if (IdealStations[stationID].VHID[i][j] == BHAntID){
                          IdealStations[stationID].IDString.push_back(i);
                          IdealStations[stationID].IDAntenna.push_back(j);

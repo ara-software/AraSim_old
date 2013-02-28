@@ -3,6 +3,7 @@
 #include <string>
 #include <cstdlib>
 #include "Settings.h"
+#include "Detector.h"
 
 ClassImp(Settings);
 
@@ -132,8 +133,9 @@ outputdir="outputs"; // directory where outputs go
     
     READGEOM=0; // default : 0 : use idealized geometry and do not read in from sqlite database
     
-    V_MIMIC_MODE = 0; // default : 0 - write out all chs where global triggered bin is center of the window (and ch delay from mean borehole delay)
-                        // 1 - same as above 0 mode but there's no ch delay
+    V_MIMIC_MODE = 0; // default : 0 - write out all chs where global triggered bin is center of the window
+                        // 1 - same as above 0 mode but apply TestBed ch delay - average BH ch delay
+                        // 2 - same as above 0 mode but apply TestBed ch delay - average BH ch delay + additional delay to match with actual TestBed data waveforms
     
     USE_INSTALLED_TRIGGER_SETTINGS = 0; // default : 0 - use idealized settings for the trigger
     
@@ -144,7 +146,27 @@ outputdir="outputs"; // directory where outputs go
     CALPUL_AMP = 100.;
 
     TRIG_ONLY_BH_ON = 0;    // default trigger will occur with all chs (1 will do trigger analysis with BH chs only)
-    
+
+    TRIG_THRES_MODE = 0;    // default trigger threshold (0) will use 1 as offset (so no offset), (1) will use data/threshold_offset.csv as threshold off set factor
+
+    NOISE_TEMP_MODE = 0;    //default noise temp setting (just same temp for all chs), 1 : all chs have different systemp, 2 : only first 8 chs have different systemp
+
+    USE_TESTBED_RFCM_ON = 0;    // use RFCM measurement for testbed or not
+
+    RFCM_OFFSET = 80.;  // if above USE_TESTBED_RFCM_ON = 1, we need RFCM attenuator factor cancel
+
+    CONST_MEANDIODE = -6.5e-15; // just from one run
+
+    CONST_RMSDIODE = 1.346e-13; // also from one run
+
+    USE_MANUAL_GAINOFFSET = 0; //if use gain offset file to read values or just use constant gain offset from setup file (default 0 : use file)
+            
+    MANUAL_GAINOFFSET_VALUE = 1.; // gain offset value
+
+    NOISE_WAVEFORM_GENERATE_MODE = 0; // mode 0 (default) will generate noise waveforms newly for each events. other values will use first generated noise waveforms for later events (huge mem usage)
+
+    USE_CH_GAINOFFSET = 0; // if use gain offset for different channels. (default 0 : not using gain offset). mode 1 is only availbale for installed TestBed so far.
+
 }
 
 void Settings::ReadFile(string setupfile) {
@@ -311,6 +333,36 @@ void Settings::ReadFile(string setupfile) {
               else if (label == "TRIG_ONLY_BH_ON") {
                   TRIG_ONLY_BH_ON = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
               }              
+              else if (label == "TRIG_THRES_MODE") {
+                  TRIG_THRES_MODE = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }              
+              else if (label == "NOISE_TEMP_MODE") {
+                  NOISE_TEMP_MODE = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "CONST_MEANDIODE") {
+                  CONST_MEANDIODE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "CONST_RMSDIODE") {
+                  CONST_RMSDIODE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "USE_TESTBED_RFCM_ON") {
+                  USE_TESTBED_RFCM_ON = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "RFCM_OFFSET") {
+                  RFCM_OFFSET = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "USE_MANUAL_GAINOFFSET") {
+                  USE_MANUAL_GAINOFFSET = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "MANUAL_GAINOFFSET_VALUE") {
+                  MANUAL_GAINOFFSET_VALUE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "NOISE_WAVEFORM_GENERATE_MODE") {
+                  NOISE_WAVEFORM_GENERATE_MODE = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "USE_CH_GAINOFFSET") {
+                  USE_CH_GAINOFFSET = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
           }
       }
       setFile.close();
@@ -321,4 +373,119 @@ void Settings::ReadFile(string setupfile) {
 
 
 
+int Settings::CheckCompatibilities(Detector *detector) {
 
+    int num_err = 0;
+
+    // if there's something not going to work, count thoes settings
+
+    if (DETECTOR==1 && READGEOM==1 && detector->params.number_of_stations>1) { // currently only ARA1a one station is possible
+        cerr<<"DETECTOR=1, READGEOM=1 is currently only availble with number_of_stations=1 in ARA_N_info.txt file!"<<endl;
+        num_err++;
+    }
+
+    if (DETECTOR==2 && READGEOM==1) { // currently READGEOM (using actual installed stations info) is not available in DETECTOR=2
+        cerr<<"DETECTOR=2 and READGEOM=1 is currently not availble! Only ideal stations are available in DETECTOR=2!"<<endl;
+        num_err++;
+    }
+
+    // check reasonable number of noise waveforms
+    if (NOISE_WAVEFORM_GENERATE_MODE == 0) { // if generating new noise waveforms for every events
+        if (NOISE_TEMP_MODE == 0) {// share all noise waveforms same with other channels
+            if (NOISE_EVENTS < detector->params.number_of_antennas) { // this is too low number of events!
+                cerr<<"NOISE_EVENTS too less! At least use "<<detector->params.number_of_antennas<<"!"<<endl;
+                num_err++;
+            }
+        }
+        else if (NOISE_TEMP_MODE == 1) {// each chs will have separate noise waveforms
+            if (NOISE_EVENTS > 1) { // this case 1 waveform is enough for each channels
+                cerr<<"NOISE_EVENTS too many! With NOISE_WAVEFORM_GENERATE_MODE==0 and NOISE_TEMP_MODE==1, just use NOISE_EVENT=1"<<endl;
+                num_err++;
+            }
+        }
+    }
+    if (NOISE_WAVEFORM_GENERATE_MODE == 1) { // if generating noise waveforms in the begining and keep use them
+        if (NOISE_TEMP_MODE == 0) {// share all noise waveforms same with other channels
+            if (NOISE_EVENTS < detector->params.number_of_antennas) { // this is too low number of events!
+                cerr<<"NOISE_EVENTS too less! At least use "<<detector->params.number_of_antennas<<"!"<<endl;
+                num_err++;
+            }
+        }
+    }
+
+    // check if there's enough system temperature values prepared for NOISE_TEMP_MODE=1
+    if (NOISE_TEMP_MODE==1) {// use different system temperature values for different chs
+        if (detector->params.number_of_antennas > (int)(detector->Temp_TB_ch.size()) ) {
+            cerr<<"System temperature values are not enough for all channels! Check number of channels you are using and numbers in data/system_temperature.csv"<<endl;
+            num_err++;
+        }
+    }
+
+
+    // check modes which will only work for actual installed TestBed case
+    //
+    if (TRIG_ONLY_BH_ON==1 && DETECTOR!=3) {
+        cerr<<"TRIG_ONLY_BH_ON=1 only works with DETECTOR=3!"<<endl;
+        num_err++;
+    }
+
+    if (NOISE_TEMP_MODE==1 && DETECTOR!=3) {
+        cerr<<"NOISE_TEMP_MODE=1 only works with DETECTOR=3!"<<endl;
+        num_err++;
+    }
+
+    if (NOISE_TEMP_MODE==2 && DETECTOR!=3) {
+        cerr<<"NOISE_TEMP_MODE=2 only works with DETECTOR=3!"<<endl;
+        num_err++;
+    }
+
+    if (DETECTOR==3 && READGEOM==0) {
+        cerr<<"DETECTOR=3 will always need READGEOM=1"<<endl;
+        num_err++;
+    }
+
+    if (USE_TESTBED_RFCM_ON==1 && DETECTOR!=3) {
+        cerr<<"USE_TESTBED_RFCM_ON=1 only works with DETECTOR=3!"<<endl;
+        num_err++;
+    }
+
+    if (USE_CH_GAINOFFSET==1 && DETECTOR!=3) {
+        cerr<<"USE_CH_GAINOFFSET=1 only works with DETECTOR=3!"<<endl;
+        num_err++;
+    }
+
+    if ((TRIG_THRES_MODE==1||TRIG_THRES_MODE==2) && DETECTOR!=3) {
+        cerr<<"TRIG_THRES_MODE=1 and 2 only works with DETECTOR=3!"<<endl;
+        num_err++;
+    }
+
+    if ((NOISE_TEMP_MODE==1||NOISE_TEMP_MODE==2) && DETECTOR!=3) {
+        cerr<<"NOISE_TEMP_MODE=1 and 2 only works with DETECTOR=3!"<<endl;
+        num_err++;
+    }
+
+    if (USE_MANUAL_GAINOFFSET==1 && DETECTOR!=3) {
+        cerr<<"USE_MANUAL_GAINOFFSET=1 only works with DETECTOR=3!"<<endl;
+        num_err++;
+    }
+
+    if (CALPULSER_ON!=0 && DETECTOR!=3) {
+        cerr<<"CALPULSER_ON=1 and above only works with DETECTOR=3!"<<endl;
+        num_err++;
+    }
+
+    if ((V_MIMIC_MODE==1||V_MIMIC_MODE==2) && DETECTOR!=3) {
+        cerr<<"V_MIMIC_MODE=1 and 2 only works with DETECTOR=3!"<<endl;
+        num_err++;
+    }
+    
+    if (USE_MANUAL_GAINOFFSET==1 && USE_CH_GAINOFFSET==1) {
+        cerr<<"Can not use USE_MANUAL_GAINOFFSET=1 and USE_CH_GAINOFFSET=1 same time!"<<endl;
+        num_err++;
+    }
+
+
+
+    return num_err;
+
+}
