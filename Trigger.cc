@@ -527,8 +527,8 @@ else if (settings1->TRIG_ANALYSIS_MODE == 1 ) {
 
         for (int m=0; m<settings1->DATA_BIN_SIZE; m++) {
 
-            v_noise_timedomain[i][m] = 0.;
-            v_noise_timedomain_diode[i][m] = 0.;
+            v_noise_timedomain[i].push_back(0.);
+            v_noise_timedomain_diode[i].push_back(0.);
         }
     }
 }
@@ -599,8 +599,8 @@ else if (settings1->TRIG_ANALYSIS_MODE == 1 ) {
 
                 for (int m=0; m<settings1->DATA_BIN_SIZE; m++) {
 
-                    v_noise_timedomain_ch[ch][i][m] = 0.;
-                    v_noise_timedomain_diode_ch[ch][i][m] = 0.;
+                    v_noise_timedomain_ch[ch][i].push_back(0.);
+                    v_noise_timedomain_diode_ch[ch][i].push_back(0.);
                 }
             }
         }
@@ -673,8 +673,8 @@ else if (settings1->TRIG_ANALYSIS_MODE == 1 ) {
 
             for (int m=0; m<settings1->DATA_BIN_SIZE; m++) {
 
-                v_noise_timedomain_ch[ch][i][m] = 0.;
-                v_noise_timedomain_diode_ch[ch][i][m] = 0.;
+                v_noise_timedomain_ch[ch][i].push_back(0.);
+                v_noise_timedomain_diode_ch[ch][i].push_back(0.);
             }
         }
     }

@@ -745,3 +745,13 @@ TRIG_THRES_MODE=2 will not read data/threshold_offset.csv file but use the gain 
 
 
 ===============================================================================
+
+
+03/01/13 E. Hong;
+
+Bug fixed.
+In previous version, with TRIG_ANALYSIS_MODE=1 (only signal, no noise mode) didn't work properly.
+It should work fine now.
+
+
+===============================================================================
