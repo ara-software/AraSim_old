@@ -246,7 +246,13 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         double R_surface = 60.;
         double z_max = 200.;
         double z_btw = 10.;
-	double z_btw_2 = 2.;
+        double z_btw_array[6]; // assume there will be less than 6 bore hole antennas at each string
+	// these z_btw array will be used when settings->BH_ANT_SEP_DIST_ON=1 case
+        for (int i=0; i<6; i++) {
+            if (i==0) z_btw_array[i] = 0.;
+            else z_btw_array[i] = z_btw;
+        }
+        double z_btw_total;
         params.stations_per_side = 4;       // total 37 stations
         params.station_spacing = 2000.;     // 2km spacing
         params.antenna_orientation = 0;     // all antenna facing x
@@ -289,6 +295,26 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
                     else if (label == "z_btw") {
                         z_btw = atof( line.substr( line.find_first_of("=") + 1).c_str() );
                         cout<<"read z_btw"<<endl;
+                    }
+                    else if (label == "z_btw01") {
+                        z_btw_array[1] = atof( line.substr( line.find_first_of("=") + 1).c_str() );
+                        cout<<"read z_btw bh ant0 and ant1"<<endl;
+                    }
+                    else if (label == "z_btw12") {
+                        z_btw_array[2] = atof( line.substr( line.find_first_of("=") + 1).c_str() );
+                        cout<<"read z_btw bh ant1 and ant2"<<endl;
+                    }
+                    else if (label == "z_btw23") {
+                        z_btw_array[3] = atof( line.substr( line.find_first_of("=") + 1).c_str() );
+                        cout<<"read z_btw bh ant2 and ant3"<<endl;
+                    }
+                    else if (label == "z_btw34") {
+                        z_btw_array[4] = atof( line.substr( line.find_first_of("=") + 1).c_str() );
+                        cout<<"read z_btw bh ant3 and ant4"<<endl;
+                    }
+                    else if (label == "z_btw45") {
+                        z_btw_array[5] = atof( line.substr( line.find_first_of("=") + 1).c_str() );
+                        cout<<"read z_btw bh ant4 and ant5"<<endl;
                     }
                     else if (label == "number_of_stations") {
                         params.number_of_stations = atof( line.substr( line.find_first_of("=") + 1).c_str() );
@@ -427,7 +453,17 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
                     
                     for (int j=0; j<params.number_of_strings_station; j++) {
                         for (int k=0; k<params.number_of_antennas_string; k++) {
+
+                            if (settings1->BH_ANT_SEP_DIST_ON==0) 
                             stations[i].strings[j].antennas[k].SetZ( -z_max + z_btw*k );
+
+                            else if (settings1->BH_ANT_SEP_DIST_ON==1) {
+                                z_btw_total = 0.;
+                                for (int l=0; l<k+1; l++) {
+                                    z_btw_total += z_btw_array[l];
+                                }
+                                stations[i].strings[j].antennas[k].SetZ( -z_max + z_btw_total );
+                            }
                             
                             if (k%2 == 0) {
                                 stations[i].strings[j].antennas[k].type = 0;   // v-pol
@@ -468,7 +504,17 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
                     
                     for (int j=0; j<params.number_of_strings_station; j++) {
                         for (int k=0; k<params.number_of_antennas_string; k++) {
+
+                            if (settings1->BH_ANT_SEP_DIST_ON==0) 
                             stations[i].strings[j].antennas[k].SetZ( -z_max + z_btw*k );
+
+                            else if (settings1->BH_ANT_SEP_DIST_ON==1) {
+                                z_btw_total = 0.;
+                                for (int l=0; l<k+1; l++) {
+                                    z_btw_total += z_btw_array[l];
+                                }
+                                stations[i].strings[j].antennas[k].SetZ( -z_max + z_btw_total );
+                            }
                             
                             if (k == 1) {   // only the second antenna is H pol
                                 stations[i].strings[j].antennas[k].type = 1;   // h-pol
@@ -510,7 +556,18 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
                     
                     for (int j=0; j<params.number_of_strings_station; j++) {
                         for (int k=0; k<params.number_of_antennas_string; k++) {
+
+                            if (settings1->BH_ANT_SEP_DIST_ON==0) 
                             stations[i].strings[j].antennas[k].SetZ( -z_max + z_btw*k );
+
+                            else if (settings1->BH_ANT_SEP_DIST_ON==1) {
+                                z_btw_total = 0.;
+                                for (int l=0; l<k+1; l++) {
+                                    z_btw_total += z_btw_array[l];
+                                }
+                                stations[i].strings[j].antennas[k].SetZ( -z_max + z_btw_total );
+                            }
+
                             
                             if (k == 0) {   // only the first antenna is V pol
                                 stations[i].strings[j].antennas[k].type = 0;   // v-pol
@@ -783,7 +840,9 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         // read threshold offset for chs file!!
         ReadThresOffset_TestBed("./data/threshold_offset.csv", settings1);// only TestBed for now
         // read system temperature for chs file!!
-        ReadTemp_TestBed("./data/system_temperature.csv", settings1);// only TestBed for now
+        if (settings1->NOISE_TEMP_MODE!=0) {
+            ReadTemp_TestBed("./data/system_temperature.csv", settings1);// only TestBed for now
+        }
         
         
     } // if mode == 1
@@ -819,6 +878,13 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         double R_surface = 60.;
         double z_max = 200.;
         double z_btw = 10.;
+        double z_btw_array[6]; // assume there will be less than 6 bore hole antennas at each string
+	// these z_btw array will be used when settings->BH_ANT_SEP_DIST_ON=1 case
+        for (int i=0; i<6; i++) {
+            if (i==0) z_btw_array[i] = 0.;
+            else z_btw_array[i] = z_btw;
+        }
+        double z_btw_total;
         params.stations_per_side = 4;       // total 37 stations
         params.station_spacing = 2000.;     // 2km spacing
         params.antenna_orientation = 0;     // all antenna facing x
@@ -862,6 +928,26 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
                     else if (label == "z_btw") {
                         z_btw = atof( line.substr( line.find_first_of("=") + 1).c_str() );
                         cout<<"read z_btw"<<endl;
+                    }
+                    else if (label == "z_btw01") {
+                        z_btw_array[1] = atof( line.substr( line.find_first_of("=") + 1).c_str() );
+                        cout<<"read z_btw bh ant0 and ant1"<<endl;
+                    }
+                    else if (label == "z_btw12") {
+                        z_btw_array[2] = atof( line.substr( line.find_first_of("=") + 1).c_str() );
+                        cout<<"read z_btw bh ant1 and ant2"<<endl;
+                    }
+                    else if (label == "z_btw23") {
+                        z_btw_array[3] = atof( line.substr( line.find_first_of("=") + 1).c_str() );
+                        cout<<"read z_btw bh ant2 and ant3"<<endl;
+                    }
+                    else if (label == "z_btw34") {
+                        z_btw_array[4] = atof( line.substr( line.find_first_of("=") + 1).c_str() );
+                        cout<<"read z_btw bh ant3 and ant4"<<endl;
+                    }
+                    else if (label == "z_btw45") {
+                        z_btw_array[5] = atof( line.substr( line.find_first_of("=") + 1).c_str() );
+                        cout<<"read z_btw bh ant4 and ant5"<<endl;
                     }
                     else if (label == "stations_per_side") {
                         params.stations_per_side = atof( line.substr( line.find_first_of("=") + 1).c_str() );
@@ -1005,7 +1091,17 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
             if ( params.bore_hole_antenna_layout == 0 || params.bore_hole_antenna_layout == 1) {
                 for (int j=0; j<params.number_of_strings_station; j++) {
                     for (int k=0; k<params.number_of_antennas_string; k++) {
+
+                        if (settings1->BH_ANT_SEP_DIST_ON==0) 
                         stations[i].strings[j].antennas[k].SetZ( -z_max + z_btw*k );
+
+                        else if (settings1->BH_ANT_SEP_DIST_ON==1) {
+                            z_btw_total = 0.;
+                            for (int l=0; l<k+1; l++) {
+                                z_btw_total += z_btw_array[l];
+                            }
+                            stations[i].strings[j].antennas[k].SetZ( -z_max + z_btw_total );
+                        }
                         
                         if (k%2 == 0) {
                             stations[i].strings[j].antennas[k].type = 0;   // v-pol
@@ -1044,7 +1140,17 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
             else if ( params.bore_hole_antenna_layout == 2) {   // it's V-H-V-V
                 for (int j=0; j<params.number_of_strings_station; j++) {
                     for (int k=0; k<params.number_of_antennas_string; k++) {
+
+                        if (settings1->BH_ANT_SEP_DIST_ON==0) 
                         stations[i].strings[j].antennas[k].SetZ( -z_max + z_btw*k );
+
+                        else if (settings1->BH_ANT_SEP_DIST_ON==1) {
+                            z_btw_total = 0.;
+                            for (int l=0; l<k+1; l++) {
+                                z_btw_total += z_btw_array[l];
+                            }
+                            stations[i].strings[j].antennas[k].SetZ( -z_max + z_btw_total );
+                        }
                         
                         if (k == 1) {   // only the second antenna is H pol
                             stations[i].strings[j].antennas[k].type = 1;   // h-pol
@@ -1084,7 +1190,17 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
             else if ( params.bore_hole_antenna_layout == 3 || params.bore_hole_antenna_layout == 4 ) {   // it's V-H-H-H or V-H-H
                 for (int j=0; j<params.number_of_strings_station; j++) {
                     for (int k=0; k<params.number_of_antennas_string; k++) {
+
+                        if (settings1->BH_ANT_SEP_DIST_ON==0) 
                         stations[i].strings[j].antennas[k].SetZ( -z_max + z_btw*k );
+
+                        else if (settings1->BH_ANT_SEP_DIST_ON==1) {
+                            z_btw_total = 0.;
+                            for (int l=0; l<k+1; l++) {
+                                z_btw_total += z_btw_array[l];
+                            }
+                            stations[i].strings[j].antennas[k].SetZ( -z_max + z_btw_total );
+                        }
                         
                         if (k == 0) {   // only the first antenna is V pol
                             stations[i].strings[j].antennas[k].type = 0;   // v-pol
@@ -1161,7 +1277,9 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         // read threshold offset for chs file!!
         ReadThresOffset_TestBed("./data/threshold_offset.csv", settings1);// only TestBed for now
         // read system temperature for chs file!!
-        ReadTemp_TestBed("./data/system_temperature.csv", settings1);// only TestBed for now
+        if (settings1->NOISE_TEMP_MODE!=0) {
+            ReadTemp_TestBed("./data/system_temperature.csv", settings1);// only TestBed for now
+        }
         
         
     }
@@ -1406,7 +1524,9 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
             // read threshold offset for chs file!!
             ReadThresOffset_TestBed("./data/threshold_offset.csv", settings1);// only TestBed for now
             // read system temperature for chs file!!
-            ReadTemp_TestBed("./data/system_temperature.csv", settings1);// only TestBed for now
+            if (settings1->NOISE_TEMP_MODE!=0) {
+                ReadTemp_TestBed("./data/system_temperature.csv", settings1);// only TestBed for now
+            }
 
     }// if mode == 3
 

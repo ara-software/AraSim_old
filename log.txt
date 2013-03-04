@@ -779,3 +779,22 @@ event->Nu_Interaction[0].nnu
 
 ===============================================================================
 
+03/04/13_2 E. Hong;
+
+Added new borehole antenna depth setting
+
+In Settings class (setup.txt file), if you use BH_ANT_SEP_DIST_ON=1 AraSim will try to use different depth for different bore hole antennas.
+By default if you don't set any value for BH_ANT_SEP_DIST_ON AraSim will use BH_ANT_SEP_DIST_ON=0 which just use constant depth difference between bore hole antennas.
+
+Now if you set BH_ANT_SEP_DIST_ON=1 in setup.txt file, AraSim will read ARA_N_info.txt or ARA37_info.txt file to find borehole depth information in it.
+z_btw01 will set the distance between borehole antenna[0] and antenna[1]
+z_btw12 will set the distance between borehole antenna[1] and antenna[2]
+z_btw23 will set the distance between borehole antenna[2] and antenna[3]
+
+if you don't set any values for z_btw01, z_btw12, ... AraSim will just use z_btw value (the constant depth difference between borehole antenna value) for all borehole antennas.
+Also if you don't set any value for z_btw, AraSim will use the default value 10m.
+
+
+===============================================================================
+
+

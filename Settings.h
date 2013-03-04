@@ -159,6 +159,8 @@ class Settings
 
         int taumodes; // taumodes 1 : tau created in the rock
 
+        int BH_ANT_SEP_DIST_ON; // if we are going to use separate bore hole antenna distance or not. By default it's 0 (don't use separate dist)
+
 
     // below : values from icemc
     

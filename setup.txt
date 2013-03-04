@@ -45,8 +45,8 @@ INTERACTION_MODE=1
 ///////////////////
 
 
-EXPONENT=20
-NNU=10 // number of neutrino events
+EXPONENT=19
+NNU=100 // number of neutrino events
 NOISE_WAVEFORM_GENERATE_MODE=0 // generate new noise waveforms for each events
 NOISE_EVENTS=16 // number of pure noise waveforms
 TRIG_ANALYSIS_MODE=0 // 0 = signal + noise, 1 = signal only, 2 = noise only
@@ -77,6 +77,8 @@ READGEOM=0 // reads geometry information from the sqlite file or not (0 : don't 
 //INTERACTION_MODE=0 // pickunbiased mode!
 //GETCHORD_MODE=1 // use new icemc Getchord function
 //taumode=1
+
+//BH_ANT_SEP_DIST_ON=1 // default 0 : use constant borehole antenna distance. 1 : use separate antenna distance. use z_btw01, z_btw12, ... in ARA_N_info.txt or ARA37_info.txt
 
 
 ///////////////////

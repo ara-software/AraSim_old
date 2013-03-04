@@ -171,6 +171,9 @@ outputdir="outputs"; // directory where outputs go
 
     taumodes = 1; // tau created in the rock
 
+    BH_ANT_SEP_DIST_ON = 0; // default 0 : use constant borehole antenna distance. 1 : use separate antenna distance. use z_btw01, z_btw12, ... in ARA_N_info.txt or ARA37_info.txt
+
+
 }
 
 void Settings::ReadFile(string setupfile) {
@@ -373,6 +376,9 @@ void Settings::ReadFile(string setupfile) {
               else if (label == "taumodes") {
                   taumodes = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
               }
+              else if (label == "BH_ANT_SEP_DIST_ON") {
+                  BH_ANT_SEP_DIST_ON = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
           }
       }
       setFile.close();
@@ -443,6 +449,12 @@ int Settings::CheckCompatibilities(Detector *detector) {
             cerr<<"In INTERACTION_MODE=1, you have to use GETCHORD_MODE=0"<<endl; 
             num_err++;
         }
+    }
+
+    // if BH_ANT_SEP_DIST_ON=1, we can't use READGEOM=1 (actual installed geom)
+    if (BH_ANT_SEP_DIST_ON==1 && READGEOM==1) {
+        cerr<<"BH_ANT_SEP_DIST_ON=1 is only available in ideal station geom (READGEOM=0)!"<<endl; 
+        num_err++;
     }
 
 
