@@ -167,6 +167,10 @@ outputdir="outputs"; // directory where outputs go
 
     USE_CH_GAINOFFSET = 0; // if use gain offset for different channels. (default 0 : not using gain offset). mode 1 is only availbale for installed TestBed so far.
 
+    GETCHORD_MODE = 0; // which Getchord function to use. default 0 : old Getchord function (not correct tau weight, weight don't have ice inside interaction probability in it). 1 : new Getchord from icemc. This has new tau weight calculation and ice interaction probability applied to weight factor.
+
+    taumodes = 1; // tau created in the rock
+
 }
 
 void Settings::ReadFile(string setupfile) {
@@ -363,6 +367,12 @@ void Settings::ReadFile(string setupfile) {
               else if (label == "USE_CH_GAINOFFSET") {
                   USE_CH_GAINOFFSET = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
               }
+              else if (label == "GETCHORD_MODE") {
+                  GETCHORD_MODE = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "taumodes") {
+                  taumodes = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
           }
       }
       setFile.close();
@@ -420,6 +430,21 @@ int Settings::CheckCompatibilities(Detector *detector) {
             num_err++;
         }
     }
+
+    // if INTERACTION_MODE is PickUnbiased (entire Antarctica surface), make sure using GETCHORD_MODE=1
+    if (INTERACTION_MODE==0) { // pickunbiased mode
+        if (GETCHORD_MODE==0) { // but use old getchord mode (not working!)
+            cerr<<"In INTERACTION_MODE=0, you have to use GETCHORD_MODE=1"<<endl; 
+            num_err++;
+        }
+    }
+    else if (INTERACTION_MODE==1) { // picknear mode
+        if (GETCHORD_MODE==1) { // but use new getchord mode (not working!)
+            cerr<<"In INTERACTION_MODE=1, you have to use GETCHORD_MODE=0"<<endl; 
+            num_err++;
+        }
+    }
+
 
 
     // check modes which will only work for actual installed TestBed case

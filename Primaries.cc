@@ -610,12 +610,22 @@ Interaction::Interaction(string inttype,Primaries *primary1,Settings *settings1,
 
 */
 
-Interaction::Interaction (double pnu, Vector &nnu_org, string nuflavor, int &n_interactions, IceModel *antarctica, Detector *detector, Settings *settings1, Primaries *primary1, Signal *signal, Secondaries *sec1 ) {
+Interaction::Interaction (double pnu, string nuflavor, int &n_interactions, IceModel *antarctica, Detector *detector, Settings *settings1, Primaries *primary1, Signal *signal, Secondaries *sec1 ) {
 
     Initialize ();
 
-    cone_axis = nnu_org;
-    nnu = nnu_org;
+
+    if (settings1->NNU_THIS_THETA==1) {    // set specific theta angle for nnu
+        nnu = primary1->GetThatDirection(settings1->NNU_THETA, settings1->NNU_D_THETA);
+    }
+    else { // nnu angle random
+        nnu = primary1->GetAnyDirection();
+    }
+        
+    cone_axis = nnu;
+
+
+
     setCurrent(primary1);   // set current of interaction (cc or nc) ! (this should be change if this is secondary interaction. if first interaction was cc, then there is no secondary cc)
     //cout<<"currentint : "<<currentint<<endl;
 
@@ -657,7 +667,13 @@ Interaction::Interaction (double pnu, Vector &nnu_org, string nuflavor, int &n_i
         primary1->IsCalpulser = 0;
     if (settings1->INTERACTION_MODE == 0) {    // for pickunbiased. posnu will be all around antarctica
         //Interaction::PickUnbiased( antarctica );
-        PickUnbiased( antarctica );
+        
+        pickposnu = 0;
+        //  try PickUnbiased until it founds usable posnu
+        while (pickposnu==0) {
+            PickUnbiased( antarctica );
+        }
+
     }
     else if (settings1->INTERACTION_MODE == 1) {   // for picknear. posnu will be only near by ARA core
         
@@ -693,19 +709,58 @@ Interaction::Interaction (double pnu, Vector &nnu_org, string nuflavor, int &n_i
 
     //cout<<"test EarthModel, radii[0] : "<<antarctica->radii[0]<<endl;
 
-    //antarctica->Getchord(primary1, settings1, antarctica, sec1, len_int_kgm2, r_in, r_enterice, nuexitice, posnu, 0, chord, weight, nearthlayers, myair, total_kgm2, crust_entered, mantle_entered, core_entered);
-    //antarctica->Getchord(len_int_kgm2, r_in, posnu, 0, chord, weight, nearthlayers, myair, total_kgm2, crust_entered, mantle_entered, core_entered );
-    antarctica->Getchord(len_int_kgm2_total, r_in, posnu, 0, chord, weight, nearthlayers, myair, total_kgm2, crust_entered, mantle_entered, core_entered );
+
+    // check tau mode
+    int taumodes1 = 0.;
+
+    if (settings1->taumodes ==1){
+            double xrndm = gRandom->Rndm();
+            if(xrndm <.5)
+                    taumodes1 = 0;
+            else
+                    taumodes1= 1;
+    }
+    int trip =0;
+    double lptau =0;
+    double ptauf = 0.;
+    
+    if (settings1->taumodes ==1){
+            ptauf =0;
+            double Emin = 1E19*exp(-7.5);
+            // while (ptauf <  1E19*exp(-7.5)){
+            double ptaurndm= gRandom->Rndm();
+            
+            lptau =log10(Emin)+ptaurndm*(log10(pnu)-log10(Emin));
+            ptauf = pow(10,lptau);
+            
+            if (ptauf < 1E16){
+                    trip =1;
+            }
+    }
+
+
+   
+    elast_y = primary1->Gety(settings1, pnu, nu_nubar, currentint);  // set inelasticity
+    //cout<<"set inelasticity : "<<elast_y<<endl;
+
+   
+    //sec1->GetEMFrac( settings1, nuflavor, current, taudecay, elast_y, pnu, emfrac, hadfrac, n_interactions);   // set em, had frac values.
+    //cout<<"set emfrac : "<<emfrac<<" hadfrac : "<<hadfrac<<endl;
+    sec1->GetEMFrac(settings1, nuflavor, current, taudecay, elast_y, pnu, emfrac, hadfrac, n_interactions, taumodes1, ptauf); // set em, had frac values
+
+
+    if (settings1->GETCHORD_MODE==0) {
+        antarctica->Getchord(len_int_kgm2_total, r_in, posnu, 0, chord, weight, nearthlayers, myair, total_kgm2, crust_entered, mantle_entered, core_entered );
+    }
+    else if (settings1->GETCHORD_MODE==1) {
+        //antarctica->Getchord(len_int_kgm2_total, r_in, posnu, 0, chord, weight, nearthlayers, myair, total_kgm2, crust_entered, mantle_entered, core_entered );
+        antarctica->Getchord(primary1, settings1, antarctica, sec1, len_int_kgm2_total, r_in, r_enterice, nuexitice, posnu, 0, chord, probability, weight, nearthlayers, myair, total_kgm2, crust_entered, mantle_entered, core_entered, nuflavor, pnu, ptauf, nu_nubar, currentint, taumodes1 );
+    }
 
 
     //cout<<" Finished Getchord!!"<<endl;
 
 
-       elast_y = primary1->Gety(settings1, pnu, nu_nubar, currentint);  // set inelasticity
-       //cout<<"set inelasticity : "<<elast_y<<endl;
-
-       sec1->GetEMFrac( settings1, nuflavor, current, taudecay, elast_y, pnu, emfrac, hadfrac, n_interactions);   // set em, had frac values.
-       //cout<<"set emfrac : "<<emfrac<<" hadfrac : "<<hadfrac<<endl;
 
 
        if (settings1->SIMULATION_MODE == 0) { // freq domain simulation (old mode)
@@ -960,7 +1015,6 @@ Position thisr_enterice_tmp;
 
     thisr_in.SetXYZ(antarctica->R_EARTH*thissin*cos(thisphi),antarctica->R_EARTH*thissin*sin(thisphi),antarctica->R_EARTH*thiscos);
 
-    r_in = thisr_in;    // position where nu enter the earth
 
 
     if (thisr_in.Dot(nnu)>0)
@@ -1160,6 +1214,10 @@ Position thisr_enterice_tmp;
       pickposnu = 0;
       return 0;
     }    
+        
+    // in case the code reachs here, (finally pick the usable location), now we can find r_in as posnu is selected
+    r_in = antarctica->WhereDoesItEnter(posnu, nnu);
+
     pickposnu = 1;
     return 1;
 

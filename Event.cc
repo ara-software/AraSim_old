@@ -46,12 +46,14 @@ Event::Event (Settings *settings1, Spectra *spectra1, Primaries *primary1, IceMo
 */
         nuflavor = primary1->GetNuFlavor();
 
+        /*
         if (settings1->NNU_THIS_THETA==1) {    // set specific theta angle for nnu
             nnu = primary1->GetThatDirection(settings1->NNU_THETA, settings1->NNU_D_THETA);
         }
         else { // nnu angle random
             nnu = primary1->GetAnyDirection();
         }
+        */
         
         if (nuflavor=="nue")
             nuflavorint=1;
@@ -63,7 +65,7 @@ Event::Event (Settings *settings1, Spectra *spectra1, Primaries *primary1, IceMo
         Interaction *Nu_temp;
         //Report *report_tmp;
 
-        Nu_temp = new Interaction (pnu, nnu, nuflavor, n_interactions, icemodel, detector, settings1, primary1, signal, sec1 );
+        Nu_temp = new Interaction (pnu, nuflavor, n_interactions, icemodel, detector, settings1, primary1, signal, sec1 );
         //report_tmp = new Report(detector ,settings1);
         
         Nu_Interaction.push_back(*Nu_temp);  // for the first interaction

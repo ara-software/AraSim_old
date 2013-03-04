@@ -16,6 +16,9 @@ class Settings;
 class TRandom3;
 class Primaries;
 
+class Position;
+class IceModel;
+
 using std::vector;
 using std::ifstream;
 using std::string;
@@ -164,18 +167,18 @@ public:
   //void GetFirstBang(const Position &r_in, const Vector &nnu, Position &posnu, double len_int_kgm2, double d1, double &nuentrancelength);
   double NFBWeight(double ptau, double taulength);
 
-  int GetEMFrac(Settings *settings1,
-		string nuflavor,
-		string current,
-		string taudecay,
-		double y,
-		TH1F *hy,
-		double pnu,
-		int inu,
 
-		double& emfrac,
-		double& hadfrac,
-		int& n_interactions);
+// from icemc with tau mode (just removed hy and inu)
+ int GetEMFrac(Settings *settings1,string nuflavor,
+		     string current,
+		     string taudecay,	      
+		     double y,
+		     //TH1F *hy,
+                     double pnu,				  
+                     //int inu,
+		     double& emfrac,
+		     double& hadfrac,
+                     int& n_interactions, int taumodes1,double ptauf);
 
 
   // Eugene added version
@@ -197,9 +200,35 @@ public:
 string flavors[3]; // the gps path of the anita-lite flight  
 
 	double GetTauWeight(Primaries*primary1,Settings*settings1,double pnu,int nu_nubar,int currentint,double ptau_final,double Distance);
+
+
+        // icemc org version
+        double GetTauWeight(Primaries *primary1, Settings *settings1,IceModel*antarctica1, double pnu, int nu_nubar, int currentint, double Etau_final, const Position posnu, const Position earth_in,
+				 int& crust_entered, // 1 or 0
+				 int& mantle_entered, // 1 or 0
+				 int& core_entered, double *myxarray, double *myEarray, 
+				 double *myyweightarray, double *mytausurvarray, double& tauchord, double *avgdensityarray, 
+				 double *densityarray,int inu,double& TauWeight, double& weight_prob);
+
+
+
+        // icemc modified version
+        double GetTauWeight(Primaries *primary1, Settings *settings1,IceModel*antarctica1, double pnu, int nu_nubar, int currentint, double Etau_final, const Position posnu, const Position earth_in,
+				 int& crust_entered, // 1 or 0
+				 int& mantle_entered, // 1 or 0
+				 int& core_entered, 
+				 double& TauWeight, double& weight_prob);
+
+
 	double d_dzPsurvNu(Primaries*primary1,Settings*settings1,double pnu,int nu_nubar,int currentint,double z_distance);
 	double probabilityTauSurv(double ptaui, double ptau_final);
+
+        double probabilityTauSurv(double ptaui, double ptau_final,double density);
+
 	double TauEnergyInitial(double ptau_final,double Distance,double z_distance);
+
+        double TauEnergyInitial(double ptau_final, double Distance, double z_distance, double density);
+
 	double interactionLengthNu(Primaries*primary1,Settings*settings1,double pnu,int nu_nubar,int currentint);
   
 }; //class Secondaries

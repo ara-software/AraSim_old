@@ -45,7 +45,7 @@ INTERACTION_MODE=1
 ///////////////////
 
 
-EXPONENT=18
+EXPONENT=20
 NNU=10 // number of neutrino events
 NOISE_WAVEFORM_GENERATE_MODE=0 // generate new noise waveforms for each events
 NOISE_EVENTS=16 // number of pure noise waveforms
@@ -73,6 +73,10 @@ NOISE_TEMP_MODE=0
 TRIG_THRES_MODE=0
 READGEOM=0 // reads geometry information from the sqlite file or not (0 : don't read)
 
+// new variables
+//INTERACTION_MODE=0 // pickunbiased mode!
+//GETCHORD_MODE=1 // use new icemc Getchord function
+//taumode=1
 
 
 ///////////////////

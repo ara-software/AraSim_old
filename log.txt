@@ -755,3 +755,27 @@ It should work fine now.
 
 
 ===============================================================================
+
+03/04/13 E. Hong;
+
+Added new interaction mode (PickUnbiased from icemc)
+
+In INTERACTION_MODE=0 AraSim will use entire Antarctica surface as neutrino Earth entrance location.
+In this INTERACTION_MODE=0 case, you have to also get GETCHORD_MODE=1 which will calculate the probability value (instead of weight) for neutrino to survive upto the ice interaction location and the probability to interact inside the ice.
+Also at the end, AraSim will calculate the effective area (while in INTERACTION_MODE=1, it will return effective volume) from the run.
+
+Currently INTERACTION_MODE=1 is a default value (if you don't set the value in setup.txt file, AraSim will automatically use INTERACTION_MODE=1).
+To remind you, INTERACTION_MODE=1 will use the nearby ice volume and force neutrinos to interact inside the nearby ice (cylinder-like volume).
+
+Settings class will check if there's compatibility problem in INTERACTION_MODE and GETCHORD_MODE and let you know what you should use.
+
+Also as in INTERACTION_MODE=0 neutrino direction (nnu) can be changed later, nnu have been moved from Event class to Interaction.
+So if you have been reading nnu through
+event->nnu
+
+now you have to read by
+event->Nu_Interaction[0].nnu
+
+
+===============================================================================
+

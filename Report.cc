@@ -312,7 +312,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                   viewangle = ray_output[1][ray_sol_cnt];
                                   GetParameters ( event->Nu_Interaction[0].posnu,   // posnu
                                                 detector->stations[i].strings[j].antennas[k],   // trg antenna
-                                                event->nnu,                         // nnu
+                                                event->Nu_Interaction[0].nnu,                         // nnu
                                                 viewangle,         // inputs launch_angle, returns viewangle
                                                 ray_output[2][ray_sol_cnt],         // receive_angle
                                                 launch_vector, receive_vector,
@@ -351,7 +351,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                    //stations[i].strings[j].antennas[k].time.resize(ray_sol_cnt+1);
 
                                    // calculate the polarization vector at the source
-                                   Pol_vector = GetPolarization (event->nnu, launch_vector);
+                                   Pol_vector = GetPolarization (event->Nu_Interaction[0].nnu, launch_vector);
 
                                    icemodel->GetFresnel( ray_output[1][ray_sol_cnt],    // launch_angle
                                                         ray_output[2][ray_sol_cnt],     // rec_angle
@@ -1123,7 +1123,6 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                                //cout << "True station number: " << detector->InstalledStations[0].VHChannel[string_i][antenna_i] << endl;
                                //cout << event->Nu_Interaction[0].posnu[0] << " : " <<  event->Nu_Interaction[0].posnu[1] << " : " << event->Nu_Interaction[0].posnu[2] << endl;
-                               //cout << event->nnu[0] << " : " << event->nnu[1] << " : " << event->nnu[2] << endl;
                                check_ch++;
 
                                // now save the voltage waveform to V_mimic

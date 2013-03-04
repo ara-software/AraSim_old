@@ -276,6 +276,8 @@ double max_dt = 0.; // max arrival time difference
 
 int Total_Global_Pass = 0;  // total global trigger passed number 
 double Total_Weight = 0.;
+double Total_Probability = 0.;
+
 
 /*
 
@@ -503,9 +505,15 @@ double cur_posnu_z;
 
                Total_Global_Pass ++;
                Total_Weight += event->Nu_Interaction[0].weight;
+               Total_Probability += event->Nu_Interaction[0].probability;
 
                // test increment weight
-               count1->incrementEventsFound( event->Nu_Interaction[0].weight, event );
+               if (settings1->INTERACTION_MODE==1) {
+                   count1->incrementEventsFound( event->Nu_Interaction[0].weight, event );
+               }
+               else if (settings1->INTERACTION_MODE==0) {
+                   count1->incrementEventsFound( event->Nu_Interaction[0].probability, event );
+               }
 
 
                }
@@ -643,7 +651,14 @@ double cur_posnu_z;
    cout<<" end loop"<<endl;
    cout<<"Total_Global_Pass : "<<Total_Global_Pass<<endl;
    cout<<"Total_Weight : "<<Total_Weight<<endl;
-   weight_file << "Total_Weight="<<Total_Weight<<endl;
+   cout<<"Total_Probability : "<<Total_Probability<<endl;
+               
+   if (settings1->INTERACTION_MODE==1) {
+       weight_file << "Total_Weight="<<Total_Weight<<endl;
+   }
+   else if (settings1->INTERACTION_MODE==0) {
+       weight_file << "Total_Probability="<<Total_Probability<<endl;
+   }
 
    cout<<"weight bin values : ";
    for (int i=0; i<count1->NBINS-1; i++) {
@@ -655,25 +670,56 @@ double cur_posnu_z;
        weight_file.close();
    cout<<"\n\n";
 
-   double IceVolume;
-   IceVolume = PI * (settings1->POSNU_RADIUS) * (settings1->POSNU_RADIUS) * icemodel->IceThickness( detector->stations[0] );
-   cout<<"IceVolume : "<<IceVolume<<endl;
 
-   double Veff_test;
+   // if using picknear method
+   if (settings1->INTERACTION_MODE==1) {
+       double IceVolume;
+       IceVolume = PI * (settings1->POSNU_RADIUS) * (settings1->POSNU_RADIUS) * icemodel->IceThickness( detector->stations[0] );
+       cout<<"IceVolume : "<<IceVolume<<endl;
 
-   // error bar for weight
-   double error_plus = 0;
-   double error_minus = 0;
-   Counting::findErrorOnSumWeights( count1->eventsfound_binned, error_plus, error_minus );
+       double Veff_test;
 
-   Veff_test = IceVolume * 4. * PI * signal->RHOICE / signal->RHOH20 * Total_Weight / (double)(settings1->NNU);
+       // error bar for weight
+       double error_plus = 0;
+       double error_minus = 0;
+       Counting::findErrorOnSumWeights( count1->eventsfound_binned, error_plus, error_minus );
 
-   // account all factors to error
-   error_plus = IceVolume * 4. * PI * signal->RHOICE / signal->RHOH20 * error_plus / (double)(settings1->NNU);
-   error_minus = IceVolume * 4. * PI * signal->RHOICE / signal->RHOH20 * error_minus / (double)(settings1->NNU);
+       Veff_test = IceVolume * 4. * PI * signal->RHOICE / signal->RHOH20 * Total_Weight / (double)(settings1->NNU);
 
-   cout<<"test Veff : "<<Veff_test<<" m3sr, "<<Veff_test*1.E-9<<" km3sr"<<endl;
-   cout<<"And Veff error plus : "<<error_plus*1.E-9<<" and error minus : "<<error_minus*1.E-9<<endl;
+       // account all factors to error
+       error_plus = IceVolume * 4. * PI * signal->RHOICE / signal->RHOH20 * error_plus / (double)(settings1->NNU);
+       error_minus = IceVolume * 4. * PI * signal->RHOICE / signal->RHOH20 * error_minus / (double)(settings1->NNU);
+
+       cout<<"test Veff : "<<Veff_test<<" m3sr, "<<Veff_test*1.E-9<<" km3sr"<<endl;
+       cout<<"And Veff error plus : "<<error_plus*1.E-9<<" and error minus : "<<error_minus*1.E-9<<endl;
+   }
+
+
+   // if using pickunbiased method
+   //
+   else if (settings1->INTERACTION_MODE==0) {
+       double IceSurf;
+       IceSurf = 2. * PI * icemodel->R_EARTH * (1. - cos(icemodel->GetCOASTLINE()*RADDEG) );
+       cout<<"total IceSurf : "<<IceSurf<<endl;
+
+       double Aeff_test;
+
+       // error bar for weight
+       double error_plus = 0;
+       double error_minus = 0;
+       Counting::findErrorOnSumWeights( count1->eventsfound_binned, error_plus, error_minus );
+
+       Aeff_test = IceSurf * PI * Total_Probability / (double)(settings1->NNU);
+
+       // account all factors to error
+       error_plus = IceSurf * PI * error_plus / (double)(settings1->NNU);
+       error_minus = IceSurf * PI * error_minus / (double)(settings1->NNU);
+
+       cout<<"test Aeff : "<<Aeff_test<<" m3sr, "<<Aeff_test*1.E-9<<" km3sr"<<endl;
+       cout<<"And Aeff error plus : "<<error_plus*1.E-9<<" and error minus : "<<error_minus*1.E-9<<endl;
+   }
+
+
 //--------------------------------------------------
 //   cout<<"Total NNU : "<<settings1->NNU<<", PickUnbiased passed NNU : "<<nnu_pass<<endl;
 //-------------------------------------------------- 

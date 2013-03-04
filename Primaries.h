@@ -223,7 +223,7 @@ class Interaction  {
  Interaction(); // default constructor
  //Interaction(string inttype,Primaries *primary1,Settings *settings1,int whichray,Counting *count1);
 
- Interaction (double pnu, Vector &nnu_org, string nuflavor, int &n_interactions, IceModel *antarctica, Detector *detector, Settings *settings1, Primaries *primary1, Signal *signal, Secondaries *sec1 ); // constructor for setting posnu, y, emfrac, hadfrac, vmmhz1m at cherenkov angle, etc
+ Interaction (double pnu, string nuflavor, int &n_interactions, IceModel *antarctica, Detector *detector, Settings *settings1, Primaries *primary1, Signal *signal, Secondaries *sec1 ); // constructor for setting posnu, y, emfrac, hadfrac, vmmhz1m at cherenkov angle, etc
 
  ~Interaction();
 
@@ -292,6 +292,7 @@ Position nuexitice; // place where neutrino would have left the ice
   double len_int_kgm2;
   double len_int_kgm2_total;
   double weight;
+  double probability; // weight * probability to interact inside the ice
   double nearthlayers;
   double myair;
   double total_kgm2;

@@ -155,6 +155,9 @@ class Settings
 
         int USE_CH_GAINOFFSET; // default 0 : don't apply any individul channels' gain offset. 1 : apply ch gain offset by using data/preamp_gain_offset.csv file (only installed TestBed mode available)
 
+        int GETCHORD_MODE; // which Getchord function to use. default 0 : old Getchord function (not correct tau weight, weight don't have ice inside interaction probability in it). 1 : new Getchord from icemc. This has new tau weight calculation and ice interaction probability applied to weight factor.
+
+        int taumodes; // taumodes 1 : tau created in the rock
 
 
     // below : values from icemc

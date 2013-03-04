@@ -28,7 +28,7 @@ class Event {
       int Event_type;   // 0 : neutrino event,  1 : blackhole event,  2 : monopole event,... etc
 
       double pnu;   // energy of neutrino
-      Vector nnu;   // direction of neutrino
+      //Vector nnu;   // direction of neutrino
       string nuflavor;  // flavor of neutrino
       int nuflavorint;  // 1 : nue,  2 : numu,  3 : nutau
       int n_interactions;    // number of interaction inside the ice

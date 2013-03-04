@@ -10,6 +10,8 @@
 #include <fstream>
 #include <cmath>
 
+#include "IceModel.h"
+
 #include "TH1F.h"
 #include "Constants.h"
 #include "Settings.h"
@@ -884,20 +886,17 @@ Secondaries::~Secondaries() {
 
 
 
+// from icemc with tau mode (just removed hy and inu)
  int Secondaries::GetEMFrac(Settings *settings1,string nuflavor,
 		     string current,
 		     string taudecay,	      
 		     double y,
-		     TH1F *hy,
-				  double pnu,				  
-				  int inu,
-
-
+		     //TH1F *hy,
+                     double pnu,				  
+                     //int inu,
 		     double& emfrac,
 		     double& hadfrac,
-		     int& n_interactions) {
-
-
+                     int& n_interactions, int taumodes1,double ptauf) {
 
 
   if (current=="cc")
@@ -915,11 +914,18 @@ Secondaries::~Secondaries() {
   }
   else if(nuflavor=="nutau" && current=="cc") {
     // behaves like a muon
-    
-
+    if(taumodes1 ==1){//taumodes==1; tau created somewhere in rock and decays at posnu.
+      emfrac = ptauf/(3.*pnu); //Neutrino creates tau (1-y), tau decays into electron, which has ~1/3 the energy.
+      //cout<<"\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ \n";
+      //cout <<"pnu is "<<pnu<<"\n";
+      //cout <<"ptauf inside get frac is "<<ptauf<<"\n";
+      //cout <<"emfrac inside getfrac is "<<emfrac<<"\n";
+      hadfrac = 1E-10;
+    }
+    else if (taumodes1 == 0){
     emfrac=1.E-10;
-    hadfrac=y;
-
+        hadfrac=y;
+    }
     
 
 
@@ -939,7 +945,7 @@ Secondaries::~Secondaries() {
 
     while (1) {
 
-      GetSecondaries(settings1,nuflavor,plepton,em_secondaries_max,had_secondaries_max,n_interactions,hy); // find how much em and hadronic energies comes from secondary interactions.  keep picking until you get a bunch of secondary interactions that conserve energy
+      GetSecondaries(settings1,nuflavor,plepton,em_secondaries_max,had_secondaries_max,n_interactions); // find how much em and hadronic energies comes from secondary interactions.  keep picking until you get a bunch of secondary interactions that conserve energy
 
       if (em_secondaries_max+had_secondaries_max<=plepton*(1.+1.E-5)) // if conserves energy, break.
 	break;
@@ -961,8 +967,10 @@ Secondaries::~Secondaries() {
     } //if
   } //if (charged current, secondaries on)
 
-  if (nuflavor=="numu" && current=="cc" && n_interactions==0)
-    cout << "Look at this one.  inu is " << inu << "\n";
+//--------------------------------------------------
+//   if (nuflavor=="numu" && current=="cc" && n_interactions==0)
+//     cout << "Look at this one.  inu is " << inu << "\n";
+//-------------------------------------------------- 
   
 
 
@@ -977,6 +985,8 @@ Secondaries::~Secondaries() {
   return 1;
 
 } //GetEMFrac
+
+
 
 
 
@@ -1150,6 +1160,11 @@ void Secondaries::GetTauDecay(string nuflavor,string current,string& taudecay,do
   return;
 }//GetEMFracDB
 
+
+
+
+
+
 //------------------------------------------------------
 //GetDBViewAngle()
 //Gets the viewangle of the second bang
@@ -1262,6 +1277,329 @@ double Secondaries::GetTauWeight(Primaries*primary1, Settings*settings1, double 
 	return TauWeight;//the total tau weight for a given Ev, Etau_f, and D.
 } //GetTauWeight
 
+
+
+
+// icemc new version (org version)
+double Secondaries::GetTauWeight(Primaries *primary1, Settings *settings1,IceModel*antarctica1, double pnu, int nu_nubar, int currentint, double Etau_final, const Position posnu, const Position earth_in,
+				 int& crust_entered, // 1 or 0
+				 int& mantle_entered, // 1 or 0
+				 int& core_entered, double *myxarray, double *myEarray, 
+				 double *myyweightarray, double *mytausurvarray, double& tauchord, double *avgdensityarray, 
+				 double *densityarray,int inu,double& TauWeight, double& weight_prob){
+	
+  // Settings *settings1=new Settings();
+  //Primaries *primary1=new Primaries();
+  Vector chord3;
+  Vector nchord;
+  
+  int  N=1E3;
+ 
+
+ //Find the chord, its length and its unit vector.
+    chord3 = posnu - earth_in;
+    double Distance=chord3.Mag();
+    nchord = chord3 / Distance;
+    tauchord=Distance;
+    
+   
+   double Etaui_GeV,dEtau,Etau_finalGeV;
+   double y, yweight;//d_dzPnu_surv;
+   double yweight1=0;
+   double  zdistance; //m
+   
+   zdistance=0.;	
+   // double TauWeight=0;//total tau survival probability.
+   double prob_at_z; //this will be used to get weight1
+   double prob_at_z1;//this will be used for weight_prob
+   double pnu_GeV;
+   double Prob_Nu_Surv;
+   double l;
+   double tau_surv;
+   double sigma = 0;
+   double len_int_kgm2 =0;
+
+   primary1->GetSigma(pnu,sigma,len_int_kgm2,settings1,nu_nubar,currentint);
+	
+	
+   l = len_int_kgm2;
+   double step=Tools::dMin(l/densities[1]/10,500.); //how big is the step size
+  
+   double dz=Distance/step;
+   double avgdensity =0;//initilize average density.
+   double avgdensity1=0;
+   prob_at_z = 0;
+   Position posnunow;
+   double lat;
+   double lon;
+   cout <<"inu is "<<inu<<"\n";
+   for(zdistance = 0; zdistance<Distance; zdistance +=step){
+      //for loop integrates over all z's from 0 to Distance D.
+     int i =(int)zdistance/step;
+     double z = zdistance/step;
+     Vector nchord1 =  zdistance*nchord;
+     posnunow = earth_in + nchord1; //vector pointing to the step we are currently on.
+     lat = posnunow.Lat();
+     lon = posnunow.Lon();
+     
+     double geoid=antarctica1->Geoid(lat);
+     double altitude=posnunow.Mag()-geoid; // what is the altitude of the point. 
+     double surface_elevation = antarctica1->SurfaceAboveGeoid(lon,lat);
+     double abovesurface=0;  
+     
+     if (zdistance ==0){
+       avgdensity = antarctica1->GetDensity1(altitude,posnunow,posnu, crust_entered, mantle_entered, core_entered,abovesurface);
+       if (abovesurface==1)
+	 cout <<"altitude (tau) is "<<altitude<<"\n";
+     }
+     else{
+        avgdensity1 = antarctica1->GetDensity1(altitude, posnunow,posnu, crust_entered, mantle_entered, core_entered,abovesurface);
+      
+	// if (avgdensity1 <920&&zdistance>0){
+	
+	// cout <<"////////////////////////////////////////////////// \n";
+	// cout <<"inu is "<<inu<<"\n";
+	// cout <<"avgdensity1 = "<<avgdensity1<<"\n";
+	// cout <<"////////////////////////////////////////////////// \n";
+	//  }
+       avgdensity = avgdensity*z;
+       avgdensity +=avgdensity1;  //add the new density to the old
+       avgdensity  = avgdensity/(z+1); //divide by two to get the average
+     }
+      
+     tau_surv =0;
+     yweight =0;
+     pnu_GeV = pnu/1.E9; //Convert E_nu to GeV.   
+     Etau_finalGeV=Etau_final/1E9;//Convert Etau_final to GeV.
+       
+     Etaui_GeV=TauEnergyInitial(Etau_finalGeV, Distance, zdistance, avgdensity);//use Deltafunction to get initial tau energy from the final.
+     if (Etaui_GeV>pnu_GeV){
+       prob_at_z =0;
+       yweight1=0;
+     }
+     else{
+	Prob_Nu_Surv = avgdensity/l*exp(-zdistance*avgdensity*1./l);
+	
+	y=1.-Etaui_GeV/pnu_GeV;
+
+	yweight=primary1->Getyweight(pnu,y,nu_nubar,currentint);
+	
+	yweight1 = yweight/.000967912;
+	
+	tau_surv = probabilityTauSurv(Etaui_GeV,Etau_finalGeV,avgdensity);
+	
+	double dEtauidEtauf = exp(B1*avgdensity*(Distance-zdistance))*Etaui_GeV/Etau_finalGeV;
+	//cout <<"detauideTauf is "<<dEtauidEtauf<<"\n";
+        dEtau = log(10)*Etaui_GeV*.1; //changing dEtau to log10 steps.
+	
+	//prob_at_z=Prob_Nu_Surv*tau_surv*yweight1*(1./pnu_GeV)*dz*dEtau; //old way
+	prob_at_z=Prob_Nu_Surv*tau_surv*yweight1*dEtauidEtauf*dz;
+
+	if (prob_at_z>1)
+	  cout <<"detauideTauf is "<<dEtauidEtauf<<"\n";
+	if(prob_at_z !=prob_at_z)
+	  prob_at_z =0;
+	
+	if(Etaui_GeV < Etau_finalGeV){//THIS SHOULD NEVER HAPPEN. large z limit seems to make it do funky things.
+	  
+	  cout <<"NOT AGAIN! SOMETHING IS WRONG \n";
+	  prob_at_z = 0;
+	  }
+
+	if (tau_surv == 0){
+	  prob_at_z = 0;
+	}
+     }//Etaui>pnu
+     
+       if(i < N&&Etaui_GeV<=pnu_GeV){
+	 
+       	   myEarray[i]=Etaui_GeV;
+	   myxarray[i]=zdistance;      
+	   myyweightarray[i]= yweight1;
+	   mytausurvarray[i]=tau_surv;
+	   avgdensityarray[i]=avgdensity;
+	   densityarray[i]=avgdensity1;
+       }
+       else if (i<N){
+       	   myEarray[i]=0;
+       	   myxarray[i]=zdistance;      
+       	   myyweightarray[i]= 0;
+       	   mytausurvarray[i]=0;
+          avgdensityarray[i]=avgdensity;
+          densityarray[i]=avgdensity1;
+        }
+       // cout <<"prob_at_z is "<<prob_at_z<<"\n";
+	TauWeight+=prob_at_z;//sums all the steps together. units are dP/dE
+	
+
+   }//i loop
+   
+   return TauWeight;
+} //GetTauWeight
+
+
+
+
+// icemc new version (modified version)
+double Secondaries::GetTauWeight(Primaries *primary1, Settings *settings1,IceModel*antarctica1, double pnu, int nu_nubar, int currentint, double Etau_final, const Position posnu, const Position earth_in,
+				 int& crust_entered, // 1 or 0
+				 int& mantle_entered, // 1 or 0
+				 int& core_entered, 
+				 double& TauWeight, double& weight_prob){
+	
+  // Settings *settings1=new Settings();
+  //Primaries *primary1=new Primaries();
+  Vector chord3;
+  Vector nchord;
+  
+  int  N=1E3;
+ 
+
+ //Find the chord, its length and its unit vector.
+    chord3 = posnu - earth_in;
+    double Distance=chord3.Mag();
+    nchord = chord3 / Distance;
+    //tauchord=Distance;
+    
+   
+   double Etaui_GeV,dEtau,Etau_finalGeV;
+   double y, yweight;//d_dzPnu_surv;
+   double yweight1=0;
+   double  zdistance; //m
+   
+   zdistance=0.;	
+   // double TauWeight=0;//total tau survival probability.
+   double prob_at_z; //this will be used to get weight1
+   double prob_at_z1;//this will be used for weight_prob
+   double pnu_GeV;
+   double Prob_Nu_Surv;
+   double l;
+   double tau_surv;
+   double sigma = 0;
+   double len_int_kgm2 =0;
+
+   primary1->GetSigma(pnu,sigma,len_int_kgm2,settings1,nu_nubar,currentint);
+	
+	
+   l = len_int_kgm2;
+   double step=Tools::dMin(l/densities[1]/10,500.); //how big is the step size
+  
+   double dz=Distance/step;
+   double avgdensity =0;//initilize average density.
+   double avgdensity1=0;
+   prob_at_z = 0;
+   Position posnunow;
+   double lat;
+   double lon;
+   for(zdistance = 0; zdistance<Distance; zdistance +=step){
+      //for loop integrates over all z's from 0 to Distance D.
+     int i =(int)zdistance/step;
+     double z = zdistance/step;
+     Vector nchord1 =  zdistance*nchord;
+     posnunow = earth_in + nchord1; //vector pointing to the step we are currently on.
+     lat = posnunow.Lat();
+     lon = posnunow.Lon();
+     
+     double geoid=antarctica1->Geoid(lat);
+     double altitude=posnunow.Mag()-geoid; // what is the altitude of the point. 
+     double surface_elevation = antarctica1->SurfaceAboveGeoid(lon,lat);
+     double abovesurface=0;  
+     
+     if (zdistance ==0){
+       avgdensity = antarctica1->GetDensity1(altitude,posnunow,posnu, crust_entered, mantle_entered, core_entered,abovesurface);
+       if (abovesurface==1)
+	 cout <<"altitude (tau) is "<<altitude<<"\n";
+     }
+     else{
+        avgdensity1 = antarctica1->GetDensity1(altitude, posnunow,posnu, crust_entered, mantle_entered, core_entered,abovesurface);
+      
+	// if (avgdensity1 <920&&zdistance>0){
+	
+	// cout <<"////////////////////////////////////////////////// \n";
+	// cout <<"inu is "<<inu<<"\n";
+	// cout <<"avgdensity1 = "<<avgdensity1<<"\n";
+	// cout <<"////////////////////////////////////////////////// \n";
+	//  }
+       avgdensity = avgdensity*z;
+       avgdensity +=avgdensity1;  //add the new density to the old
+       avgdensity  = avgdensity/(z+1); //divide by two to get the average
+     }
+      
+     tau_surv =0;
+     yweight =0;
+     pnu_GeV = pnu/1.E9; //Convert E_nu to GeV.   
+     Etau_finalGeV=Etau_final/1E9;//Convert Etau_final to GeV.
+       
+     Etaui_GeV=TauEnergyInitial(Etau_finalGeV, Distance, zdistance, avgdensity);//use Deltafunction to get initial tau energy from the final.
+     if (Etaui_GeV>pnu_GeV){
+       prob_at_z =0;
+       yweight1=0;
+     }
+     else{
+	Prob_Nu_Surv = avgdensity/l*exp(-zdistance*avgdensity*1./l);
+	
+	y=1.-Etaui_GeV/pnu_GeV;
+
+	yweight=primary1->Getyweight(pnu,y,nu_nubar,currentint);
+	
+	yweight1 = yweight/.000967912;
+	
+	tau_surv = probabilityTauSurv(Etaui_GeV,Etau_finalGeV,avgdensity);
+	
+	double dEtauidEtauf = exp(B1*avgdensity*(Distance-zdistance))*Etaui_GeV/Etau_finalGeV;
+	//cout <<"detauideTauf is "<<dEtauidEtauf<<"\n";
+        dEtau = log(10)*Etaui_GeV*.1; //changing dEtau to log10 steps.
+	
+	//prob_at_z=Prob_Nu_Surv*tau_surv*yweight1*(1./pnu_GeV)*dz*dEtau; //old way
+	prob_at_z=Prob_Nu_Surv*tau_surv*yweight1*dEtauidEtauf*dz;
+
+	if (prob_at_z>1)
+	  cout <<"detauideTauf is "<<dEtauidEtauf<<"\n";
+	if(prob_at_z !=prob_at_z)
+	  prob_at_z =0;
+	
+	if(Etaui_GeV < Etau_finalGeV){//THIS SHOULD NEVER HAPPEN. large z limit seems to make it do funky things.
+	  
+	  cout <<"NOT AGAIN! SOMETHING IS WRONG \n";
+	  prob_at_z = 0;
+	  }
+
+	if (tau_surv == 0){
+	  prob_at_z = 0;
+	}
+     }//Etaui>pnu
+     
+     /*
+       if(i < N&&Etaui_GeV<=pnu_GeV){
+	 
+       	   myEarray[i]=Etaui_GeV;
+	   myxarray[i]=zdistance;      
+	   myyweightarray[i]= yweight1;
+	   mytausurvarray[i]=tau_surv;
+	   avgdensityarray[i]=avgdensity;
+	   densityarray[i]=avgdensity1;
+       }
+       else if (i<N){
+       	   myEarray[i]=0;
+       	   myxarray[i]=zdistance;      
+       	   myyweightarray[i]= 0;
+       	   mytausurvarray[i]=0;
+          avgdensityarray[i]=avgdensity;
+          densityarray[i]=avgdensity1;
+        }
+    */
+       // cout <<"prob_at_z is "<<prob_at_z<<"\n";
+	TauWeight+=prob_at_z;//sums all the steps together. units are dP/dE
+	
+
+   }//i loop
+   
+   return TauWeight;
+} //GetTauWeight
+
+
+
+
 double Secondaries::d_dzPsurvNu(Primaries*primary1, Settings*settings1,double pnu, int nu_nubar, int currentint, double z_distance){//derivative with respect to z of Equation 28. -Connolly Calc 2011.
 	//double A=1.;//constant that sets the total probability to unity
 	double L=interactionLengthNu(primary1,settings1,pnu,nu_nubar,currentint);//meters
@@ -1287,6 +1625,34 @@ double Secondaries::probabilityTauSurv(double ptaui, double ptau_final){
 	return probSurv;
 }
 
+
+
+double Secondaries::probabilityTauSurv(double ptaui, double ptau_final,double density){
+	//from Tau neutrino propagaiton and tau energy loss 2005 Dutta, Huang, & Reno. 
+	//Equation 16  & Equation 30.
+ 
+/*	double B0,B1,E0;//parameterization using a logarithmic dependence on energy 
+	//for B, the tau elecromagnetic energy loss parameter. 
+	ouble mT;//mass of the Tau in Gev
+	double cT;//Tau Decay length in cm
+*/	double p = density;
+        double probSurv1;
+	double mT = 1.77684; //mass of Tau in GeV
+	double cT = 0.00008693; // m
+	double A = mT*B1/(cT*p*pow(B0,2));//GeV
+	double B = mT/(cT*B0*p);//GeV
+	double C = (1/ptau_final)*(1+log(ptau_final/E0));//1/GeV
+	double D = (1/ptaui)*(1+log(ptaui/E0));//1/GeV
+	double F = (1/ptau_final)-(1/ptaui);//1/GeV
+	//	cout<< "A,B,C are "<<A<<","<<B<<","<<C<<"\n";
+	//	cout<< "D,F are "<<D<<","<<F<<"\n";
+	probSurv1 = exp(A*(C-D)-(B*F));
+	
+	
+	return probSurv1;//Correct
+}
+
+
 double Secondaries::TauEnergyInitial(double ptau_final, double Distance, double z_distance){
 	//equation found using Equation 13 Case (III),
 	//from Tau neutrino propagaiton and tau energy loss 2005 Dutta, Huang, & Reno. 
@@ -1311,6 +1677,28 @@ double Secondaries::TauEnergyInitial(double ptau_final, double Distance, double 
 	ptaui=E0*pow(base,power);
 	return ptaui;
 }
+
+
+
+double Secondaries::TauEnergyInitial(double ptau_final, double Distance, double z_distance, double density){
+	//equation found using Equation 13 Case (III),
+	//from Tau neutrino propagaiton and tau energy loss 2005 Dutta, Huang, & Reno. 
+        double p = density;
+        double ptaui;
+	double zprime=(Distance-z_distance);
+	
+	//double base=ptau_finalGeV/E0*exp(B0/B1*(1-exp(-B1*p*zprime)));
+	
+	
+	//double power=exp(B1*p*zprime);
+	
+	//ptaui=E0*pow(base,power); // Correct. Returns E tau initial in GeV.
+	ptaui = E0*exp((log(ptau_final/E0)+B0/B1*(1-exp(-B1*p*zprime)))*exp(B1*p*zprime));
+	
+	return ptaui;
+}
+
+
 
 double Secondaries::interactionLengthNu(Primaries*primary1,Settings*settings1,double pnu,int nu_nubar,int currentint){
 	//Equation 28 from Connolly Calc 2011.
