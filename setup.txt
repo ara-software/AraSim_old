@@ -80,6 +80,10 @@ READGEOM=0 // reads geometry information from the sqlite file or not (0 : don't 
 
 //BH_ANT_SEP_DIST_ON=1 // default 0 : use constant borehole antenna distance. 1 : use separate antenna distance. use z_btw01, z_btw12, ... in ARA_N_info.txt or ARA37_info.txt
 
+TRIG_MODE=1 // use vpol, hpol separated trigger mode. by default N_TRIG_V=3, N_TRIG_H=3. You can change this values
+//N_TRIG_V=4
+//N_TRIG_H=4
+
 
 ///////////////////
 

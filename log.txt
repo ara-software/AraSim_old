@@ -797,4 +797,29 @@ Also if you don't set any value for z_btw, AraSim will use the default value 10m
 
 ===============================================================================
 
+03/05/13 E. Hong;
+
+Added new trigger mode
+
+In Settings class (setup.txt file), now you can use TRIG_MODE=1 which will make AraSim work as current installed ARA stations' trigger method.
+In TRIG_MODE=1 AraSim will do trigger separately in Vpol and Hpol. AraSim will count trigger passed channels in Vpol and Hpol separately and if any one of the channel meets the condition, the station will global trigger.
+You can also set the number of trigger for Vpol and Hpol separately by N_TRIG_V and N_TRIG_H.
+By default those two values are 3 (N_TRIG_V=3, N_TRIG_H=3, that means either Vpol or Hpol passed 3 or more).
+
+Settings class will also check if TRIG_MODE=1 is in use with DETECTOR=3 mode (installed TestBed mode) as those two modes are not compatible.
+
+By default TRIG_MODE=0 (only trigger method, Vpol and Hpol combined, see if passed channels is same or more then N_TRIG).
+
+And one more thing.
+I added new AraOut.root (AraSim output file at /outputs/AraOut.root) readout code.
+It's readGeom.cc and M.readGeom.
+After you compile and run AraSim, you can compile readGeom.cc by
+make -f M.readGeom
+
+And then you can run ./readGeom
+(this will read ./outputs/AraOut.root file. If you generated difference named output root file, you can do "./readGeom /file_location" )
+This will generate ARA-37_station_layout.pdf file. And here, you can see installed stations layout and posnu (neutrino in ice interaction location), etc.
+
+===============================================================================
+
 

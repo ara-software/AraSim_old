@@ -259,6 +259,8 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
     
     
     int N_pass; // number of trigger passed channels (antennas)
+    int N_pass_V; // number of trigger passed channels (Vpol antennas)
+    int N_pass_H; // number of trigger passed channels (Hpol antennas)
 
            for (int i = 0; i< detector->params.number_of_stations; i++) {
                
@@ -613,6 +615,9 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
 
            N_pass = 0;
+           N_pass_V = 0;
+           N_pass_H = 0;
+
             stations[i].Global_Pass = 0;
 
 //            int nfour_station = settings1->NFOUR;
@@ -956,6 +961,10 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                //
                //
 
+               int trig_mode = settings1->TRIG_MODE;
+               // global trigger mode
+               // 0 for orginal N_TRIG out of 16 channels
+               // 1 for new stations, N_TRIG_V out of Vpol channels or N_TRIG_H out of Hpol channels
                
                int check_ch;
                
@@ -970,6 +979,8 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                while (trig_i < max_total_bin - trig_window_bin ) {
 
                    N_pass = 0;
+                   N_pass_V = 0;
+                   N_pass_H = 0;
                    last_trig_bin = 0;
                    Passed_chs.clear();
 
@@ -1001,6 +1012,12 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                            //stations[i].strings[(int)((trig_j)/4)].antennas[(int)((trig_j)%4)].Trig_Pass = trig_i+trig_bin;
                                            stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
                                            N_pass++;
+                                           if (detector->stations[i].strings[string_i].antennas[antenna_i].type == 0) { // Vpol
+                                               N_pass_V++;
+                                           }
+                                           if (detector->stations[i].strings[string_i].antennas[antenna_i].type == 1) { // Hpol
+                                               N_pass_H++;
+                                           }
                                            if (last_trig_bin < trig_i+trig_bin) last_trig_bin = trig_i+trig_bin;    // added for fixed V_mimic
                                            trig_bin = trig_window_bin;  // if confirmed this channel passed the trigger, no need to do rest of bins
                                            Passed_chs.push_back(trig_j);
@@ -1013,6 +1030,12 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                            //stations[i].strings[(int)((trig_j)/4)].antennas[(int)((trig_j)%4)].Trig_Pass = trig_i+trig_bin;
                                            stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
                                            N_pass++;
+                                           if (detector->stations[i].strings[string_i].antennas[antenna_i].type == 0) { // Vpol
+                                               N_pass_V++;
+                                           }
+                                           if (detector->stations[i].strings[string_i].antennas[antenna_i].type == 1) { // Hpol
+                                               N_pass_H++;
+                                           }
                                            if (last_trig_bin < trig_i+trig_bin) last_trig_bin = trig_i+trig_bin;    // added for fixed V_mimic
                                            trig_bin = trig_window_bin;  // if confirmed this channel passed the trigger, no need to do rest of bins
                                            Passed_chs.push_back(trig_j);
@@ -1026,6 +1049,12 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                            //stations[i].strings[(int)((trig_j)/4)].antennas[(int)((trig_j)%4)].Trig_Pass = trig_i+trig_bin;
                                            stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
                                            N_pass++;
+                                           if (detector->stations[i].strings[string_i].antennas[antenna_i].type == 0) { // Vpol
+                                               N_pass_V++;
+                                           }
+                                           if (detector->stations[i].strings[string_i].antennas[antenna_i].type == 1) { // Hpol
+                                               N_pass_H++;
+                                           }
                                            if (last_trig_bin < trig_i+trig_bin) last_trig_bin = trig_i+trig_bin;    // added for fixed V_mimic
                                            trig_bin = trig_window_bin;  // if confirmed this channel passed the trigger, no need to do rest of bins
                                            Passed_chs.push_back(trig_j);
@@ -1053,6 +1082,12 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                        //stations[i].strings[(int)((trig_j)/4)].antennas[(int)((trig_j)%4)].Trig_Pass = trig_i+trig_bin;
                                        stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
                                        N_pass++;
+                                       if (detector->stations[i].strings[string_i].antennas[antenna_i].type == 0) { // Vpol
+                                           N_pass_V++;
+                                       }
+                                       if (detector->stations[i].strings[string_i].antennas[antenna_i].type == 1) { // Hpol
+                                           N_pass_H++;
+                                       }
                                        if (last_trig_bin < trig_i+trig_bin) last_trig_bin = trig_i+trig_bin;    // added for fixed V_mimic
                                        trig_bin = trig_window_bin;  // if confirmed this channel passed the trigger, no need to do rest of bins
                                        Passed_chs.push_back(trig_j);
@@ -1063,6 +1098,12 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                    if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode_ch[channel_num-1] * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
                                        stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
                                        N_pass++;
+                                       if (detector->stations[i].strings[string_i].antennas[antenna_i].type == 0) { // Vpol
+                                           N_pass_V++;
+                                       }
+                                       if (detector->stations[i].strings[string_i].antennas[antenna_i].type == 1) { // Hpol
+                                           N_pass_H++;
+                                       }
                                        if (last_trig_bin < trig_i+trig_bin) last_trig_bin = trig_i+trig_bin;    // added for fixed V_mimic
                                        trig_bin = trig_window_bin;  // if confirmed this channel passed the trigger, no need to do rest of bins
                                        Passed_chs.push_back(trig_j);
@@ -1075,6 +1116,12 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                        if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode_ch[channel_num-1] * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
                                            stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
                                            N_pass++;
+                                           if (detector->stations[i].strings[string_i].antennas[antenna_i].type == 0) { // Vpol
+                                               N_pass_V++;
+                                           }
+                                           if (detector->stations[i].strings[string_i].antennas[antenna_i].type == 1) { // Hpol
+                                               N_pass_H++;
+                                           }
                                            if (last_trig_bin < trig_i+trig_bin) last_trig_bin = trig_i+trig_bin;    // added for fixed V_mimic
                                            trig_bin = trig_window_bin;  // if confirmed this channel passed the trigger, no need to do rest of bins
                                            Passed_chs.push_back(trig_j);
@@ -1084,6 +1131,12 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                        if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode_ch[8] * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
                                            stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
                                            N_pass++;
+                                           if (detector->stations[i].strings[string_i].antennas[antenna_i].type == 0) { // Vpol
+                                               N_pass_V++;
+                                           }
+                                           if (detector->stations[i].strings[string_i].antennas[antenna_i].type == 1) { // Hpol
+                                               N_pass_H++;
+                                           }
                                            if (last_trig_bin < trig_i+trig_bin) last_trig_bin = trig_i+trig_bin;    // added for fixed V_mimic
                                            trig_bin = trig_window_bin;  // if confirmed this channel passed the trigger, no need to do rest of bins
                                            Passed_chs.push_back(trig_j);
@@ -1103,8 +1156,12 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                    }    // while trig_j < ch_ID
 
-                   //if ( N_pass > 2 ) {  // now as global trigged!! = more or eq to 3 triggered
-                   if ( N_pass > settings1->N_TRIG-1 ) {  // now as global trigged!! = more or eq to N_TRIG triggered
+                   //if ( N_pass > settings1->N_TRIG-1 ) {  // now as global trigged!! = more or eq to N_TRIG triggered
+                   if ( ( (trig_mode==0)&&(N_pass>settings1->N_TRIG-1) ) // trig_mode = 0 case!
+                           || // or
+                        ( (trig_mode==1)&&( (N_pass_V>settings1->N_TRIG_V-1)||(N_pass_H>settings1->N_TRIG_H-1) ) ) // trig_mode = 1 case!
+                    ) {
+
                        check_ch = 0;
                        //stations[i].Global_Pass = trig_i;
                        stations[i].Global_Pass = last_trig_bin; // where actually global trigger occured
@@ -1119,7 +1176,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                
                                //skip this passed ch as it already has bin info
                                //cout<<"trigger passed at bin "<<stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].Trig_Pass<<"  passed ch : "<<ch_loop<<" Direct dist btw posnu : "<<event->Nu_Interaction[0].posnu.Distance( detector->stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)] )<<endl;
-                               cout<<endl<<"trigger passed at bin "<<stations[i].strings[string_i].antennas[antenna_i].Trig_Pass<<"  passed ch : "<<ch_loop<<" Direct dist btw posnu : "<<event->Nu_Interaction[0].posnu.Distance( detector->stations[i].strings[string_i].antennas[antenna_i] );
+                               cout<<endl<<"trigger passed at bin "<<stations[i].strings[string_i].antennas[antenna_i].Trig_Pass<<"  passed ch : "<<ch_loop<<" ("<<detector->stations[i].strings[string_i].antennas[antenna_i].type<<"type) Direct dist btw posnu : "<<event->Nu_Interaction[0].posnu.Distance( detector->stations[i].strings[string_i].antennas[antenna_i] );
 
                                //cout << "True station number: " << detector->InstalledStations[0].VHChannel[string_i][antenna_i] << endl;
                                //cout << event->Nu_Interaction[0].posnu[0] << " : " <<  event->Nu_Interaction[0].posnu[1] << " : " << event->Nu_Interaction[0].posnu[2] << endl;
@@ -1224,7 +1281,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                        //cout<<"Global trigger passed!!, N_pass : "<<N_pass<<endl;
                        Passed_chs.clear();
 
-                   } // if N_Pass > 2
+                   } // if global trig!
                    else {
                        trig_i++;   // also if station not passed the trigger, just go to next bin
                        for (int ch_loop=0; ch_loop<ch_ID; ch_loop++) {

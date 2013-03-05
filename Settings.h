@@ -161,6 +161,13 @@ class Settings
 
         int BH_ANT_SEP_DIST_ON; // if we are going to use separate bore hole antenna distance or not. By default it's 0 (don't use separate dist)
 
+        int TRIG_MODE; // default 0 : if any antennas got passed N_TRIG or more, global trig. 1 : either Vpol or Hpol antennas got passed N_TRIG_V or N_TRIG_H respectively, global trig.
+
+        int N_TRIG_V; // default : 3 (3 out of Vpolchannels in a station)
+    
+        int N_TRIG_H; // default : 3 (3 out of Hpol channels in a station)
+
+
 
     // below : values from icemc
     

@@ -173,6 +173,12 @@ outputdir="outputs"; // directory where outputs go
 
     BH_ANT_SEP_DIST_ON = 0; // default 0 : use constant borehole antenna distance. 1 : use separate antenna distance. use z_btw01, z_btw12, ... in ARA_N_info.txt or ARA37_info.txt
 
+    TRIG_MODE = 0; // default 0 : if any antennas got passed N_TRIG or more, global trig. 1 : either Vpol or Hpol antennas got passed N_TRIG_V or N_TRIG_H respectively, global trig.
+
+    N_TRIG_V=3;                 // default : 3 (3 out of Vpolchannels in a station)
+
+    N_TRIG_H=3;                 // default : 3 (3 out of Hpol channels in a station)
+
 
 }
 
@@ -379,6 +385,15 @@ void Settings::ReadFile(string setupfile) {
               else if (label == "BH_ANT_SEP_DIST_ON") {
                   BH_ANT_SEP_DIST_ON = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
               }
+              else if (label == "TRIG_MODE") {
+                  TRIG_MODE = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "N_TRIG_V") {
+                  N_TRIG_V = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "N_TRIG_H") {
+                  N_TRIG_H = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
           }
       }
       setFile.close();
@@ -454,6 +469,12 @@ int Settings::CheckCompatibilities(Detector *detector) {
     // if BH_ANT_SEP_DIST_ON=1, we can't use READGEOM=1 (actual installed geom)
     if (BH_ANT_SEP_DIST_ON==1 && READGEOM==1) {
         cerr<<"BH_ANT_SEP_DIST_ON=1 is only available in ideal station geom (READGEOM=0)!"<<endl; 
+        num_err++;
+    }
+
+    // TRIG_MODE=1 (Vpol, Hpol separated) will not work with testbed station mode
+    if (TRIG_MODE==1 && DETECTOR==3) {
+        cerr<<"TRIG_MODE=1 is not available in TestBed mode (DETECTOR=3)!"<<endl; 
         num_err++;
     }
 
