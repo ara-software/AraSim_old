@@ -50,16 +50,32 @@ Report::~Report() {
     Vfft_noise_before.clear();
     //V_noise_timedomain.clear();
 
-
 }
 
+void Report::delete_all() {
 
+    stations.clear();
+    strings.clear();
+
+    Passed_chs.clear();
+    Vfft_noise_after.clear();
+    Vfft_noise_before.clear();
+
+    noise_phase.clear();    // random noise phase generated in GetNoisePhase()
+    signal_bin.clear();      // the center of bin where signal should locate
+    signal_dbin.clear();     // the bin difference between signal bins
+    connect_signals.clear();    // if ray_sol time delay is small enough to connect each other
+    Passed_chs.clear();
+
+
+}
 
 void Report::Initialize(Detector *detector, Settings *settings1) {
     
     // clear information stored in (but there shouldn't be. just to make sure)
     //
-    stations.clear();
+    //stations.clear();
+    delete_all();
 
 
     // tmp for push_back vector structure
@@ -132,6 +148,8 @@ void Antenna_r::clear() {   // if any vector variable added in Antenna_r, need t
     TooMuch_Tdelay.clear();
 
     Trig_Pass = 0;
+
+
 }
 
 
@@ -160,11 +178,12 @@ void Antenna_r::clear_useless(Settings *settings1) {   // to reduce the size of 
     TooMuch_Tdelay.clear();
 
     // need or not?
-    Pol_vector.clear();
+    //Pol_vector.clear();
     vmmhz.clear();
-    Mag.clear();
-    Fresnel.clear();
-    Pol_factor.clear();
+    //Mag.clear();
+    //Fresnel.clear();
+    //Pol_factor.clear();
+    //
     }
     else if (settings1->DATA_SAVE_MODE == 2) {
     Heff.clear();
@@ -197,6 +216,9 @@ void Antenna_r::clear_useless(Settings *settings1) {   // to reduce the size of 
     time.clear();
     time_mimic.clear();
     V_mimic.clear();
+
+
+
     }
 
 
@@ -221,12 +243,14 @@ void Report::clear_useless(Settings *settings1) {   // to reduce the size of out
         Vfft_noise_before.clear();
         //V_noise_timedomain.clear();
         // done clear vector info in report head
-
+        //
+    
     }
 
 }
 
-void Report::Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1, Trigger *trigger) {
+//void Report::Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1, Trigger *trigger) {
+void Report::Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1, Trigger *trigger, UsefulIcrrStationEvent *theUsefulEvent) {
 
     int ray_sol_cnt;
     double viewangle;
@@ -636,9 +660,43 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
            //if (stations[i].Total_ray_sol && settings1->TRIG_ANALYSIS_MODE != 2) { // if there is any ray_sol (don't check trigger if there is no ray_sol at all) and TRIG_ANALYSIS_MODE is 0 (signal + noise mode)
 
 
+
+
+
                // calculate total number of bins we need to do trigger check
                //max_total_bin = (stations[i].max_arrival_time - stations[i].min_arrival_time)/settings1->TIMESTEP + settings1->NFOUR/2 + trigger->maxt_diode_bin;
                max_total_bin = (stations[i].max_arrival_time - stations[i].min_arrival_time)/settings1->TIMESTEP + settings1->NFOUR*2 + trigger->maxt_diode_bin; // make more time
+
+
+               // test generating new noise waveform for only stations if there's any ray trace solutions
+               if (settings1->NOISE_WAVEFORM_GENERATE_MODE == 0) {// noise waveforms will be generated for each evts
+
+                   // redefine DATA_BIN_SIZE
+                   int DATA_BIN_SIZE_tmp;
+                   for (int DBS=10; DBS<15; DBS++) {
+                       DATA_BIN_SIZE_tmp = (int)pow(2., (double)DBS);
+                       if (DATA_BIN_SIZE_tmp > max_total_bin) DBS = 15; // come out
+                       //if (DATA_BIN_SIZE_tmp > max_total_bin+settings1->NFOUR/2) DBS = 15; // come out
+                   }
+                   settings1->DATA_BIN_SIZE = DATA_BIN_SIZE_tmp;
+                   //cout<<"new DATA_BIN_SIZE : "<<DATA_BIN_SIZE_tmp<<endl;
+                   //cout<<"max_total_bin : "<<max_total_bin<<endl;
+
+                   // reset all filter values in Detector class
+                   detector->get_NewDiodeModel(settings1);
+                   detector->ReadFilter_New(settings1);
+                   detector->ReadPreamp_New(settings1);
+                   detector->ReadFOAM_New(settings1);
+                   detector->ReadRFCM_New(settings1);
+
+                   // reset Trigger class noise temp values
+                   trigger->Reset_V_noise_freqbin(settings1, detector);
+
+                   // now call new noise waveforms with new DATA_BIN_SIZE
+                   trigger->GetNewNoiseWaveforms(settings1, detector, this);
+               }
+
+
 
 
                // now, check if DATA_BIN_SIZE is enough for total time delay between antennas
@@ -670,15 +728,23 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                while ( noise_pass_nogo ) {
                                    noise_ID[l] = (int)(settings1->NOISE_EVENTS * gRandom->Rndm() );
                                    noise_pass_nogo = 0;
-                                   for (int j_sub=0; j_sub<j; j_sub++) {
-                                       for (int k_sub=0; k_sub<k; k_sub++) {
-                                           if (noise_ID[l] == stations[i].strings[j_sub].antennas[k_sub].noise_ID[0]) { // check only first one;;;
-                                               //cout<<"\nget noise_ID again as there's same noise_ID in different ch : str["<<j_sub<<"].ant["<<k_sub<<"] ID:"<<noise_ID[l]<<" current str:"<<j<<" ant:"<<k<<endl;
-                                               noise_pass_nogo = 1;
+                                   for (int j_sub=0; j_sub<j+1; j_sub++) {
+                                       for (int k_sub=0; k_sub<detector->stations[i].strings[j].antennas.size(); k_sub++) {
+                                           if (j_sub==j) { // if we are checking current string
+                                               if (k_sub<k) { // check antennas before current antenna
+                                                   if (noise_ID[l]==stations[i].strings[j_sub].antennas[k_sub].noise_ID[0]) { // check only first one for now;;;
+                                                       noise_pass_nogo = 1;
+                                                   }
+                                               }
+                                           }
+                                           else { // if we are checking previous string, check upto entire antennas
+                                               if (noise_ID[l]==stations[i].strings[j_sub].antennas[k_sub].noise_ID[0]) { // check only first one for now;;;
+                                                   noise_pass_nogo = 1;
+                                               }
                                            }
                                        }
                                    }
-                               }
+                               }// while noise_pass_nogo
                            }// if NOISE_TEMP_MODE = 0
 
 
@@ -809,12 +875,14 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                        signal_dbin.clear();
                        connect_signals.clear();
 
+
                        //cout<<"ch_ID : "<<ch_ID;
 
                        for (int m=0; m<stations[i].strings[j].antennas[k].ray_sol_cnt; m++) {   // loop over raysol numbers
                            //signal_bin.push_back( (stations[i].strings[j].antennas[k].arrival_time[m] - stations[i].min_arrival_time)/(settings1->TIMESTEP) + settings1->NFOUR/4 );
                            //signal_bin.push_back( (stations[i].strings[j].antennas[k].arrival_time[m] - stations[i].min_arrival_time)/(settings1->TIMESTEP) + settings1->NFOUR/2 + trigger->maxt_diode_bin );
-                           signal_bin.push_back( (stations[i].strings[j].antennas[k].arrival_time[m] - stations[i].min_arrival_time)/(settings1->TIMESTEP) + settings1->NFOUR*2 + trigger->maxt_diode_bin );
+                           //signal_bin.push_back( (stations[i].strings[j].antennas[k].arrival_time[m] - stations[i].min_arrival_time)/(settings1->TIMESTEP) + settings1->NFOUR*2 + trigger->maxt_diode_bin );
+                           signal_bin.push_back( (stations[i].strings[j].antennas[k].arrival_time[m] - stations[i].min_arrival_time)/(settings1->TIMESTEP) + settings1->NFOUR + trigger->maxt_diode_bin );
 
                            if (m>0) {
                                signal_dbin.push_back( signal_bin[m] - signal_bin[m-1] );
@@ -1176,7 +1244,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                
                                //skip this passed ch as it already has bin info
                                //cout<<"trigger passed at bin "<<stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].Trig_Pass<<"  passed ch : "<<ch_loop<<" Direct dist btw posnu : "<<event->Nu_Interaction[0].posnu.Distance( detector->stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)] )<<endl;
-                               cout<<endl<<"trigger passed at bin "<<stations[i].strings[string_i].antennas[antenna_i].Trig_Pass<<"  passed ch : "<<ch_loop<<" ("<<detector->stations[i].strings[string_i].antennas[antenna_i].type<<"type) Direct dist btw posnu : "<<event->Nu_Interaction[0].posnu.Distance( detector->stations[i].strings[string_i].antennas[antenna_i] );
+                               cout<<endl<<"trigger passed at bin "<<stations[i].strings[string_i].antennas[antenna_i].Trig_Pass<<"  passed ch : "<<ch_loop<<" ("<<detector->stations[i].strings[string_i].antennas[antenna_i].type<<"type) Direct dist btw posnu : "<<event->Nu_Interaction[0].posnu.Distance( detector->stations[i].strings[string_i].antennas[antenna_i] )<<" noiseID : "<<stations[i].strings[string_i].antennas[antenna_i].noise_ID[0];
 
                                //cout << "True station number: " << detector->InstalledStations[0].VHChannel[string_i][antenna_i] << endl;
                                //cout << event->Nu_Interaction[0].posnu[0] << " : " <<  event->Nu_Interaction[0].posnu[1] << " : " << event->Nu_Interaction[0].posnu[2] << endl;
@@ -1267,13 +1335,13 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                  
                              AraRootChannel = detector->GetChannelfromStringAntenna (i, string_i, antenna_i, settings1);
 
-                               theUsefulEvent.fVoltsRF[AraRootChannel-1][mimicbin] = stations[i].strings[string_i].antennas[antenna_i].V_mimic[mimicbin];
-                               //theUsefulEvent.fTimesRF[AraRootChannel-1][mimicbin] = double(stations[i].strings[string_i].antennas[antenna_i].time[mimicbin])*settings1->TIMESTEP*1.0E9;
-                               theUsefulEvent.fTimesRF[AraRootChannel-1][mimicbin] = stations[i].strings[string_i].antennas[antenna_i].time_mimic[mimicbin];
+                               theUsefulEvent->fVoltsRF[AraRootChannel-1][mimicbin] = stations[i].strings[string_i].antennas[antenna_i].V_mimic[mimicbin];
+                               //theUsefulEvent->fTimesRF[AraRootChannel-1][mimicbin] = double(stations[i].strings[string_i].antennas[antenna_i].time[mimicbin])*settings1->TIMESTEP*1.0E9;
+                               theUsefulEvent->fTimesRF[AraRootChannel-1][mimicbin] = stations[i].strings[string_i].antennas[antenna_i].time_mimic[mimicbin];
                                //cout << theUsefulEvent->fVoltsRF[ch_loop][mimicbin] << endl;
                                //cout << theUsefulEvent->fTimesRF[ch_loop][mimicbin] <<endl;
                            }
-                           theUsefulEvent.fNumPointsRF[ch_loop] = EFFECTIVE_SAMPLES * 2;
+                           theUsefulEvent->fNumPointsRF[ch_loop] = EFFECTIVE_SAMPLES * 2;
                            //cout << " : " << theUsefulEvent->fNumPointsRF[ch_loop] << endl;
 
                        }
@@ -1292,12 +1360,12 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
 			       AraRootChannel = detector->GetChannelfromStringAntenna (i, string_i, antenna_i, settings1);
 
-                               theUsefulEvent.fVoltsRF[AraRootChannel-1][mimicbin] = 0;
-                               theUsefulEvent.fTimesRF[AraRootChannel-1][mimicbin] = 0;
+                               theUsefulEvent->fVoltsRF[AraRootChannel-1][mimicbin] = 0;
+                               theUsefulEvent->fTimesRF[AraRootChannel-1][mimicbin] = 0;
                                //cout << theUsefulEvent->fVoltsRF[ch_loop][mimicbin] << endl;
                                //cout << theUsefulEvent->fTimesRF[ch_loop][mimicbin] <<endl;
                            }
-                           theUsefulEvent.fNumPointsRF[ch_loop] = EFFECTIVE_SAMPLES * 2;
+                           theUsefulEvent->fNumPointsRF[ch_loop] = EFFECTIVE_SAMPLES * 2;
                        }
                    }
                }    // while trig_i
@@ -1305,6 +1373,14 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
 
                //Full_window.clear();
+
+
+                   // delete noise waveforms 
+       if (settings1->NOISE_WAVEFORM_GENERATE_MODE == 0) {// noise waveforms will be generated for each evts
+           // remove noise waveforms for next evt
+           trigger->ClearNoiseWaveforms();
+       }
+
 
 
            }// if there is any ray_sol in the station
@@ -1325,6 +1401,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                    }
                }
                // clear useless done
+
 
         } // for stations
 

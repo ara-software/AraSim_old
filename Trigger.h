@@ -71,6 +71,9 @@ class Trigger {
      void ClearNoiseWaveforms();
 
 
+     void Reset_V_noise_freqbin(Settings *settings1, Detector *detector);
+
+
      void SetMeanRmsDiode(Settings *settings1, Detector *detector, Report *report);
 
      void GetNewNoiseWaveforms(Settings *settings1, Detector *detector, Report *report);

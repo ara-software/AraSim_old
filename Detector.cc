@@ -620,8 +620,15 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
                 stations[i].surfaces[3].SetX( stations[i].GetX() );
                 stations[i].surfaces[3].SetY( stations[i].GetY() );
                 
+
+                stations[i].number_of_antennas = params.number_of_strings_station * params.number_of_antennas_string;
+
+
             }// loop over stations i
 
+
+            // for idealized geometry, number of antennas in a station is constant
+            max_number_of_antennas_station = params.number_of_strings_station * params.number_of_antennas_string;
 
 
 
@@ -820,6 +827,23 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
 
             //}// end loop over stations i
             
+
+            int antenna_count = 0;
+            max_number_of_antennas_station = 0;
+            // for non-idealized geometry, it's better to actually count number of stations
+            for (int i=0; i<(int)(stations.size()); i++) {
+            
+                antenna_count = 0;
+                for (int j=0; j<(int)(stations[i].strings.size()); j++) {
+                    for (int k=0; k<(int)(stations[i].strings[j].antennas.size()); k++) {
+                        antenna_count++;
+                    }
+                }
+                stations[i].number_of_antennas = antenna_count;
+
+                if (max_number_of_antennas_station < antenna_count) max_number_of_antennas_station = antenna_count;
+            }
+
             
         }// if non-idealized geom
         
@@ -1255,11 +1279,17 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
             
             stations[i].surfaces[3].SetX( stations[i].GetX() );
             stations[i].surfaces[3].SetY( stations[i].GetY() );
+
+
+            stations[i].number_of_antennas = params.number_of_strings_station * params.number_of_antennas_string;
             
         }// loop over stations i
         
         
+        // for idealized geometry, number of antennas in a station is constant
+        max_number_of_antennas_station = params.number_of_strings_station * params.number_of_antennas_string;
         
+
         
         
         // test read V-pol gain file!!
@@ -1487,7 +1517,25 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         }
     }
 
+
+
+            int antenna_count = 0;
+            max_number_of_antennas_station = 0;
+            // for non-idealized geometry, it's better to actually count number of stations
+            for (int i=0; i<(int)(stations.size()); i++) {
             
+                antenna_count = 0;
+                for (int j=0; j<(int)(stations[i].strings.size()); j++) {
+                    for (int k=0; k<(int)(stations[i].strings[j].antennas.size()); k++) {
+                        antenna_count++;
+                    }
+                }
+                stations[i].number_of_antennas = antenna_count;
+
+                if (max_number_of_antennas_station < antenna_count) max_number_of_antennas_station = antenna_count;
+            }
+
+
             
             
             // test read V-pol gain file!!
@@ -2126,6 +2174,31 @@ inline void Detector::ReadFilter(string filename, Settings *settings1) {    // w
 }
 
 
+void Detector::ReadFilter_New(Settings *settings1) {    // will return gain (dB) with same freq bin with antenna gain
+
+    // We can use FilterGain array as a original array
+
+    double xfreq_databin[settings1->DATA_BIN_SIZE/2];   // array for FFT freq bin
+    double ygain_databin[settings1->DATA_BIN_SIZE/2];   // array for gain in FFT bin
+    double df_fft;
+    
+    df_fft = 1./ ( (double)(settings1->DATA_BIN_SIZE) * settings1->TIMESTEP );
+
+    for (int i=0;i<settings1->DATA_BIN_SIZE/2;i++) {    // this one is for DATA_BIN_SIZE
+        xfreq_databin[i] = (double)i * df_fft / (1.E6); // from Hz to MHz
+    }
+
+    Tools::SimpleLinearInterpolation( freq_step, Freq, FilterGain, settings1->DATA_BIN_SIZE/2, xfreq_databin, ygain_databin );
+        
+    FilterGain_databin.clear();
+    
+    for (int i=0;i<settings1->DATA_BIN_SIZE/2;i++) {
+        FilterGain_databin.push_back( ygain_databin[i] );
+    }
+
+}
+
+
 inline void Detector::ReadPreamp(string filename, Settings *settings1) {    // will return gain (dB) with same freq bin with antenna gain
     
     ifstream Preampgain( filename.c_str() );
@@ -2189,6 +2262,32 @@ inline void Detector::ReadPreamp(string filename, Settings *settings1) {    // w
     
     
     
+}
+
+
+
+void Detector::ReadPreamp_New(Settings *settings1) {    // will return gain (dB) with same freq bin with antenna gain
+
+    // We can use FilterGain array as a original array
+
+    double xfreq_databin[settings1->DATA_BIN_SIZE/2];   // array for FFT freq bin
+    double ygain_databin[settings1->DATA_BIN_SIZE/2];   // array for gain in FFT bin
+    double df_fft;
+    
+    df_fft = 1./ ( (double)(settings1->DATA_BIN_SIZE) * settings1->TIMESTEP );
+
+    for (int i=0;i<settings1->DATA_BIN_SIZE/2;i++) {    // this one is for DATA_BIN_SIZE
+        xfreq_databin[i] = (double)i * df_fft / (1.E6); // from Hz to MHz
+    }
+
+    Tools::SimpleLinearInterpolation( freq_step, Freq, PreampGain, settings1->DATA_BIN_SIZE/2, xfreq_databin, ygain_databin );
+        
+    PreampGain_databin.clear();
+    
+    for (int i=0;i<settings1->DATA_BIN_SIZE/2;i++) {
+        PreampGain_databin.push_back( ygain_databin[i] );
+    }
+
 }
 
 
@@ -2258,6 +2357,31 @@ inline void Detector::ReadFOAM(string filename, Settings *settings1) {    // wil
     
 }
 
+
+
+void Detector::ReadFOAM_New(Settings *settings1) {    // will return gain (dB) with same freq bin with antenna gain
+
+    // We can use FilterGain array as a original array
+
+    double xfreq_databin[settings1->DATA_BIN_SIZE/2];   // array for FFT freq bin
+    double ygain_databin[settings1->DATA_BIN_SIZE/2];   // array for gain in FFT bin
+    double df_fft;
+    
+    df_fft = 1./ ( (double)(settings1->DATA_BIN_SIZE) * settings1->TIMESTEP );
+
+    for (int i=0;i<settings1->DATA_BIN_SIZE/2;i++) {    // this one is for DATA_BIN_SIZE
+        xfreq_databin[i] = (double)i * df_fft / (1.E6); // from Hz to MHz
+    }
+
+    Tools::SimpleLinearInterpolation( freq_step, Freq, FOAMGain, settings1->DATA_BIN_SIZE/2, xfreq_databin, ygain_databin );
+        
+    FOAMGain_databin.clear();
+    
+    for (int i=0;i<settings1->DATA_BIN_SIZE/2;i++) {
+        FOAMGain_databin.push_back( ygain_databin[i] );
+    }
+
+}
 
 
 
@@ -2436,6 +2560,36 @@ inline void Detector::ReadRFCM_TestBed(string filename, Settings *settings1) {  
     
     
     
+}
+
+
+
+void Detector::ReadRFCM_New(Settings *settings1) {    // will return gain (dB) with same freq bin with antenna gain
+
+    // We can use FilterGain array as a original array
+
+    double xfreq_databin[settings1->DATA_BIN_SIZE/2];   // array for FFT freq bin
+    double ygain_databin[settings1->DATA_BIN_SIZE/2];   // array for gain in FFT bin
+    double df_fft;
+    
+    df_fft = 1./ ( (double)(settings1->DATA_BIN_SIZE) * settings1->TIMESTEP );
+
+    for (int i=0;i<settings1->DATA_BIN_SIZE/2;i++) {    // this one is for DATA_BIN_SIZE
+        xfreq_databin[i] = (double)i * df_fft / (1.E6); // from Hz to MHz
+    }
+
+    int RFCM_ch = RFCM_TB_databin_ch.size();
+
+    for (int ch=0; ch<RFCM_ch; ch++) {
+        Tools::SimpleLinearInterpolation( freq_step, Freq, RFCM_TB_ch[ch], settings1->DATA_BIN_SIZE/2, xfreq_databin, ygain_databin );
+            
+        RFCM_TB_databin_ch[ch].clear();
+        
+        for (int i=0;i<settings1->DATA_BIN_SIZE/2;i++) {
+            RFCM_TB_databin_ch[ch].push_back( ygain_databin[i] );
+        }
+    }
+
 }
 
 
@@ -2661,6 +2815,39 @@ void Detector::getDiodeModel(Settings *settings1) {
     
     
 }
+
+
+
+// this is a test version for getting new noise waveforms for each event
+// for a best performance, we can just set a new reasonable DATA_BIN_SIZE and make new values for those
+void Detector::get_NewDiodeModel(Settings *settings1) {
+
+    double diode_real_fft[settings1->DATA_BIN_SIZE*2];  // double sized array for myconvlv
+
+    for (int i=0; i<settings1->DATA_BIN_SIZE*2; i++) {  // 512 bin added for zero padding
+        if ( i<(int)(maxt_diode/TIMESTEP) ) {
+            diode_real_fft[i] = diode_real[i];
+        }
+        else {
+            diode_real_fft[i] = 0.;
+        }
+        
+    }
+
+    // forward FFT
+    Tools::realft(diode_real_fft,1,settings1->DATA_BIN_SIZE*2);
+
+    // clear previous data as we need new diode response array for new DATA_BIN_SIZE
+    fdiode_real_databin.clear();
+
+    // save f domain diode response in fdiode_real
+    //for (int i=0; i<settings1->DATA_BIN_SIZE+512; i++) {
+    for (int i=0; i<settings1->DATA_BIN_SIZE*2; i++) {
+        fdiode_real_databin.push_back( diode_real_fft[i] );
+    }
+
+}
+
 
 
 void Detector::PrepareVectorsInstalled(){

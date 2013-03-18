@@ -822,4 +822,11 @@ This will generate ARA-37_station_layout.pdf file. And here, you can see install
 
 ===============================================================================
 
+03/18/13 E. Hong;
 
+Modified the way to make new noise waveforms in NOISE_WAVEFORM_GENERATE_MODE=0 mode.
+Now in NOISE_WAVEFORM_GENERATE_MODE=0 mode, AraSim will make new noise waveforms with reasonable amount of bin size (after ray trace, we know what's the total time difference between 1st arrived signal and last arrived signal).
+With this modification, the run time of AraSim reduced ~15%.
+
+
+===============================================================================

@@ -25,9 +25,12 @@ void Event::Initialize () {
 }
 
 
-Event::Event (Settings *settings1, Spectra *spectra1, Primaries *primary1, IceModel *icemodel, Detector *detector, Signal *signal, Secondaries *sec1 ) {
+//Event::Event (Settings *settings1, Spectra *spectra1, Primaries *primary1, IceModel *icemodel, Detector *detector, Signal *signal, Secondaries *sec1 ) {
+Event::Event (Settings *settings1, Spectra *spectra1, Primaries *primary1, IceModel *icemodel, Detector *detector, Signal *signal, Secondaries *sec1, int event_num ) {
 
     Initialize ();
+
+    inu = event_num;
 
     Choose_Evt_Type (settings1);
 
@@ -99,6 +102,11 @@ Event::~Event() {
     Nu_Interaction.clear();
 }
 
+
+void Event::delete_all() {
+
+    Nu_Interaction.clear();
+}
 
 
 void Event::Choose_Evt_Type (Settings *settings1) {

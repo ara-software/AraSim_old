@@ -167,6 +167,9 @@ class Settings
     
         int N_TRIG_H; // default : 3 (3 out of Hpol channels in a station)
 
+        int FILL_TREE_MODE; // default 0 : fill tree for all events, 1 : fill tree only usable posnu events, 2 : fill tree only trigger passed events
+
+
 
 
     // below : values from icemc

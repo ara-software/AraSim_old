@@ -163,6 +163,8 @@ class ARA_station : public Position {
     int NFOUR; // 2 X nbins for readout waveform - for fourier tranform
     double TIMESTEP; // trigger and readout timestep
     double DATA_BIN_SIZE;
+
+    int number_of_antennas; // total number of antennas for each stations
     
     ClassDef(ARA_station,1);
 };
@@ -201,6 +203,9 @@ class Detector {
         void ReadFilter(string filename, Settings *settings1);
         double FilterGain[freq_step_max];   // Filter gain (dB) for Detector freq bin array
         vector <double> FilterGain_databin;   // Filter gain (dB) for DATA_BIN_SIZE bin array
+
+
+
 
         void ReadPreamp(string filename, Settings *settings1);
         double PreampGain[freq_step_max];   // Filter gain (dB) for Detector freq bin array
@@ -292,7 +297,24 @@ class Detector {
         int iwindow;
         int ibinshift;
 
+        int max_number_of_antennas_station; // maximum number of antennas in a station
+
         void getDiodeModel(Settings *settings1);   // similar with icemc -> anita -> getDiodeModel().  set diode_real and fdiode_real values.
+
+
+        // this is a test version for getting new noise waveforms for each event
+        // for a best performance, we can just set a new reasonable DATA_BIN_SIZE and make new values for those
+        void get_NewDiodeModel(Settings *settings1);
+
+        void ReadFilter_New(Settings *settings1);    // get filter vector array with new DATA_BIN_SIZE 
+
+        void ReadPreamp_New(Settings *settings1);    // get filter vector array with new DATA_BIN_SIZE 
+
+        void ReadFOAM_New(Settings *settings1);    // get filter vector array with new DATA_BIN_SIZE 
+
+        void ReadRFCM_New(Settings *settings1);    // get filter vector array with new DATA_BIN_SIZE 
+
+
     
 //    vector < vector < vector < int > > > ChannelfromStringAntenna;
 //    void SetChannelStringAntennaMap();

@@ -179,6 +179,8 @@ outputdir="outputs"; // directory where outputs go
 
     N_TRIG_H=3;                 // default : 3 (3 out of Hpol channels in a station)
 
+    FILL_TREE_MODE = 0; // default 0 : fill tree for all events, 1 : fill tree only usable posnu events, 2 : fill tree only trigger passed events
+
 
 }
 
@@ -394,6 +396,9 @@ void Settings::ReadFile(string setupfile) {
               else if (label == "N_TRIG_H") {
                   N_TRIG_H = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
               }
+              else if (label == "FILL_TREE_MODE") {
+                  FILL_TREE_MODE = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
           }
       }
       setFile.close();
@@ -423,8 +428,9 @@ int Settings::CheckCompatibilities(Detector *detector) {
     // check reasonable number of noise waveforms
     if (NOISE_WAVEFORM_GENERATE_MODE == 0) { // if generating new noise waveforms for every events
         if (NOISE_TEMP_MODE == 0) {// share all noise waveforms same with other channels
-            if (NOISE_EVENTS < detector->params.number_of_antennas) { // this is too low number of events!
-                cerr<<"NOISE_EVENTS too less! At least use "<<detector->params.number_of_antennas<<"!"<<endl;
+            //if (NOISE_EVENTS < detector->params.number_of_antennas) { // this is too low number of events!
+            if (NOISE_EVENTS < detector->max_number_of_antennas_station) { // this is too low number of events!
+                cerr<<"NOISE_EVENTS too less! At least use "<<detector->max_number_of_antennas_station<<"!"<<endl;
                 num_err++;
             }
         }
@@ -437,8 +443,9 @@ int Settings::CheckCompatibilities(Detector *detector) {
     }
     if (NOISE_WAVEFORM_GENERATE_MODE == 1) { // if generating noise waveforms in the begining and keep use them
         if (NOISE_TEMP_MODE == 0) {// share all noise waveforms same with other channels
-            if (NOISE_EVENTS < detector->params.number_of_antennas) { // this is too low number of events!
-                cerr<<"NOISE_EVENTS too less! At least use "<<detector->params.number_of_antennas<<"!"<<endl;
+            //if (NOISE_EVENTS < detector->params.number_of_antennas) { // this is too low number of events!
+            if (NOISE_EVENTS < detector->max_number_of_antennas_station) { // this is too low number of events!
+                cerr<<"NOISE_EVENTS too less! At least use "<<detector->max_number_of_antennas_station<<"!"<<endl;
                 num_err++;
             }
         }

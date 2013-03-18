@@ -88,6 +88,41 @@ Trigger::Trigger(Detector *detector, Settings *settings1) {
 
 
 
+void Trigger::Reset_V_noise_freqbin(Settings *settings1, Detector *detector) {
+
+
+    V_noise_freqbin_ch.clear();
+
+
+    if (settings1->NOISE_TEMP_MODE == 0) {
+    
+        V_noise_freqbin = sqrt( (double)(settings1->DATA_BIN_SIZE) * 50. * KBOLTZ * settings1->NOISE_TEMP / (settings1->TIMESTEP * 2.) );
+    }
+
+    else if (settings1->NOISE_TEMP_MODE == 1) {
+    
+        for (int ch=0; ch<detector->params.number_of_antennas; ch++) {
+            //V_noise_freqbin_ch.push_back( sqrt( (double)(settings1->DATA_BIN_SIZE) * 50. * KBOLTZ * settings1->NOISE_TEMP / (settings1->TIMESTEP * 2.) ) );
+            V_noise_freqbin_ch.push_back( sqrt( (double)(settings1->DATA_BIN_SIZE) * 50. * KBOLTZ * detector->GetTemp(0, ch, settings1) / (settings1->TIMESTEP * 2.) ) );
+        }
+    }
+
+    // mode 2 : make separate noise waveforms for just first 8 chs
+    else if (settings1->NOISE_TEMP_MODE == 2) {
+    
+        for (int ch=0; ch<8; ch++) {
+            V_noise_freqbin_ch.push_back( sqrt( (double)(settings1->DATA_BIN_SIZE) * 50. * KBOLTZ * detector->GetTemp(0, ch, settings1) / (settings1->TIMESTEP * 2.) ) );
+        }
+        
+        // total 9 array, last array for shared systemp
+        V_noise_freqbin_ch.push_back( sqrt( (double)(settings1->DATA_BIN_SIZE) * 50. * KBOLTZ * settings1->NOISE_TEMP / (settings1->TIMESTEP * 2.) ) );
+
+    }
+
+}
+
+
+
 
 void Trigger::SetMeanRmsDiode(Settings *settings1, Detector *detector, Report *report) {
 //void Trigger::SetMeanRmsDiode(Detector *detector, vector <double> &v_noise_timedomain, vector <double> &v_noise_timedomain_diode) {

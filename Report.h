@@ -160,12 +160,13 @@ class Report {
         Report (Detector *detector, Settings *settings1);
         ~Report ();
     //make the UsefulIcrrStationEvent for use with AraRoot
-    UsefulIcrrStationEvent theUsefulEvent;
+    //UsefulIcrrStationEvent theUsefulEvent;
 
     
         void Initialize (Detector *detector, Settings *settings1);
 
-        void Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1, Trigger *trigger);
+        //void Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1, Trigger *trigger);
+        void Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1, Trigger *trigger, UsefulIcrrStationEvent *theUsefulEvent);
 
         void Select_Wave_Convlv_Exchange(Settings *settings1, Trigger *trigger, Detector *detector, int signalbin, vector <double> &V, int *noise_ID, int ID, int StationIndex);   // literally get noise waveform from trigger class and add signal voltage "V" and do convlv. convlv result will replace the value in Full_window array
         
@@ -229,6 +230,8 @@ class Report {
 
 
         void clear_useless(Settings *settings1);   // to reduce the size of output AraOut.root, remove some information
+
+        void delete_all(); // delete all informations test
 
         vector <Station_r> stations;
         vector <String_r> strings;

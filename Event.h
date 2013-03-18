@@ -27,6 +27,8 @@ class Event {
 
       int Event_type;   // 0 : neutrino event,  1 : blackhole event,  2 : monopole event,... etc
 
+      int inu; // event number. in case we save triggered events only, this event number could be useful
+
       double pnu;   // energy of neutrino
       //Vector nnu;   // direction of neutrino
       string nuflavor;  // flavor of neutrino
@@ -43,11 +45,13 @@ class Event {
       //vector <Report> test_report;  
 
       Event (); // default constructor
-      Event (Settings *settings1, Spectra *spectra1, Primaries *primary1, IceModel *icemodel, Detector *detector, Signal *signal, Secondaries *sec1 );
+      //Event (Settings *settings1, Spectra *spectra1, Primaries *primary1, IceModel *icemodel, Detector *detector, Signal *signal, Secondaries *sec1 );
+      Event (Settings *settings1, Spectra *spectra1, Primaries *primary1, IceModel *icemodel, Detector *detector, Signal *signal, Secondaries *sec1, int event_num );
 
       ~Event(); // destructor
 
 
+      void delete_all(); // delete all vectors
 
 
 
