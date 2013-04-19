@@ -665,7 +665,8 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                // calculate total number of bins we need to do trigger check
                //max_total_bin = (stations[i].max_arrival_time - stations[i].min_arrival_time)/settings1->TIMESTEP + settings1->NFOUR/2 + trigger->maxt_diode_bin;
-               max_total_bin = (stations[i].max_arrival_time - stations[i].min_arrival_time)/settings1->TIMESTEP + settings1->NFOUR*2 + trigger->maxt_diode_bin; // make more time
+               //max_total_bin = (stations[i].max_arrival_time - stations[i].min_arrival_time)/settings1->TIMESTEP + settings1->NFOUR*2 + trigger->maxt_diode_bin; // make more time
+               max_total_bin = (stations[i].max_arrival_time - stations[i].min_arrival_time)/settings1->TIMESTEP + settings1->NFOUR*3 + trigger->maxt_diode_bin; // make more time
 
 
                // test generating new noise waveform for only stations if there's any ray trace solutions
@@ -687,7 +688,12 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                    detector->ReadFilter_New(settings1);
                    detector->ReadPreamp_New(settings1);
                    detector->ReadFOAM_New(settings1);
-                   detector->ReadRFCM_New(settings1);
+                   if ( settings1->USE_TESTBED_RFCM_ON==1) {
+                       detector->ReadRFCM_New(settings1);
+                   }
+                   if ( settings1->NOISE==1) {
+                       detector->ReadRayleigh_New(settings1);
+                   }
 
                    // reset Trigger class noise temp values
                    trigger->Reset_V_noise_freqbin(settings1, detector);
@@ -881,8 +887,8 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                        for (int m=0; m<stations[i].strings[j].antennas[k].ray_sol_cnt; m++) {   // loop over raysol numbers
                            //signal_bin.push_back( (stations[i].strings[j].antennas[k].arrival_time[m] - stations[i].min_arrival_time)/(settings1->TIMESTEP) + settings1->NFOUR/4 );
                            //signal_bin.push_back( (stations[i].strings[j].antennas[k].arrival_time[m] - stations[i].min_arrival_time)/(settings1->TIMESTEP) + settings1->NFOUR/2 + trigger->maxt_diode_bin );
-                           //signal_bin.push_back( (stations[i].strings[j].antennas[k].arrival_time[m] - stations[i].min_arrival_time)/(settings1->TIMESTEP) + settings1->NFOUR*2 + trigger->maxt_diode_bin );
-                           signal_bin.push_back( (stations[i].strings[j].antennas[k].arrival_time[m] - stations[i].min_arrival_time)/(settings1->TIMESTEP) + settings1->NFOUR + trigger->maxt_diode_bin );
+                           signal_bin.push_back( (stations[i].strings[j].antennas[k].arrival_time[m] - stations[i].min_arrival_time)/(settings1->TIMESTEP) + settings1->NFOUR*2 + trigger->maxt_diode_bin );
+                           //signal_bin.push_back( (stations[i].strings[j].antennas[k].arrival_time[m] - stations[i].min_arrival_time)/(settings1->TIMESTEP) + settings1->NFOUR + trigger->maxt_diode_bin );
 
                            if (m>0) {
                                signal_dbin.push_back( signal_bin[m] - signal_bin[m-1] );
@@ -1253,10 +1259,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                // now save the voltage waveform to V_mimic
                                
                                for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
-                                   //stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].V_mimic.push_back( trigger->Full_window_V[ch_loop][ stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].Trig_Pass - settings1->NFOUR/4 + mimicbin ] );
-                                   //
-                                   //stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( trigger->Full_window_V[ch_loop][ stations[i].strings[string_i].antennas[antenna_i].Trig_Pass - settings1->NFOUR/4 + mimicbin ] );
-                                   //stations[i].strings[string_i].antennas[antenna_i].time.push_back( stations[i].strings[string_i].antennas[antenna_i].Trig_Pass - settings1->NFOUR/4 + mimicbin );
+
                                    // new DAQ waveform writing mechanism test
                                    if (V_mimic_mode == 0) { // Global passed bin is the center of the window
                                        stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( ( trigger->Full_window_V[ch_loop][ last_trig_bin - settings1->NFOUR/4 + mimicbin ] )*1.e3 );// save in mV
@@ -1275,33 +1278,25 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                    }
                                }
 
+
+                               // set global_trig_bin values
+                               if (V_mimic_mode == 0) { // Global passed bin is the center of the window
+                                   stations[i].strings[string_i].antennas[antenna_i].global_trig_bin = settings1->NFOUR/4;
+                               }
+                               else if (V_mimic_mode == 1) { // Global passed bin is the center of the window + delay to each chs from araGeom
+                                   stations[i].strings[string_i].antennas[antenna_i].global_trig_bin = (detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin) + settings1->NFOUR/4;
+                               }
+                               else if (V_mimic_mode == 2) { // Global passed bin is the center of the window + delay to each chs from araGeom + fitted by eye
+                                   stations[i].strings[string_i].antennas[antenna_i].global_trig_bin = (detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin + detector->stations[i].strings[string_i].antennas[antenna_i].manual_delay_bin) + settings1->NFOUR/4;
+                               }
+
+
                            }
                            else {
                                //stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].Trig_Pass = stations[i].Global_Pass + settings1->NFOUR/4;   // so that global trig is 
                                //stations[i].strings[(int)((ch_loop)/4)].antennas[(int)((ch_loop)%4)].Trig_Pass = 0.;
                                stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = 0.;
 
-                               /*
-                               // now save the voltage waveform to V_mimic
-                               if (V_mimic_mode == 1) { // store V_mimic starting from last_trig_bin
-                               for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
-                                   stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( trigger->Full_window_V[ch_loop][ last_trig_bin + mimicbin ] );
-                                   stations[i].strings[string_i].antennas[antenna_i].time.push_back( last_trig_bin + mimicbin );
-                               }
-                               }
-                               else if (V_mimic_mode == 2) { // store V_mimic where last_trig_bin located at the middle
-                                   for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
-                                       stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( trigger->Full_window_V[ch_loop][ last_trig_bin - settings1->NFOUR/4 + mimicbin ] );
-                                       stations[i].strings[string_i].antennas[antenna_i].time.push_back( last_trig_bin - settings1->NFOUR/4 + mimicbin );
-                                   }
-                               }
-                               else { // if V_mimic_mode is not 1 or 2 do as old way
-                                   for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
-                                       stations[i].strings[string_i].antennas[antenna_i].V_mimic.push_back( trigger->Full_window_V[ch_loop][ stations[i].Global_Pass + trig_window_bin/2 - settings1->NFOUR/4 + mimicbin ] );
-                                       stations[i].strings[string_i].antennas[antenna_i].time.push_back( stations[i].Global_Pass + trig_window_bin/2 - settings1->NFOUR/4 + mimicbin );
-                                   }
-                               }
-                               */
 
                                // new DAQ waveform writing mechanism test
                                for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
@@ -1322,6 +1317,20 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                        stations[i].strings[string_i].antennas[antenna_i].time_mimic.push_back( ( -(detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin + detector->stations[i].strings[string_i].antennas[antenna_i].manual_delay_bin) - settings1->NFOUR/4 + mimicbin) * settings1->TIMESTEP*1.e9 + detector->params.TestBed_WFtime_offset_ns );// save in ns
                                    }
                                }
+
+
+                               // set global_trig_bin values
+                               if (V_mimic_mode == 0) { // Global passed bin is the center of the window
+                                   stations[i].strings[string_i].antennas[antenna_i].global_trig_bin = settings1->NFOUR/4;
+                               }
+                               else if (V_mimic_mode == 1) { // Global passed bin is the center of the window + delay to each chs from araGeom
+                                   stations[i].strings[string_i].antennas[antenna_i].global_trig_bin = (detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin) + settings1->NFOUR/4;
+                               }
+                               else if (V_mimic_mode == 2) { // Global passed bin is the center of the window + delay to each chs from araGeom + fitted by eye
+                                   stations[i].strings[string_i].antennas[antenna_i].global_trig_bin = (detector->params.TestBed_Ch_delay_bin[ch_loop] - detector->params.TestBed_BH_Mean_delay_bin + detector->stations[i].strings[string_i].antennas[antenna_i].manual_delay_bin) + settings1->NFOUR/4;
+                               }
+
+
 
                                // done V_mimic for non-triggered chs ( done fixed V_mimic )
                            }
@@ -1927,14 +1936,10 @@ void Report::GetNoiseWaveforms(Settings *settings1, Detector *detector, double v
 void Report::GetNoiseWaveforms_ch(Settings *settings1, Detector *detector, double v_noise, double *vnoise, int ch) {
 
     if (settings1->NOISE == 0) {    // NOISE == 0 : flat thermal noise with Johnson-Nyquist noise
-        //V_noise_fft_bin = sqrt( (double)(NFOUR/2) * 50. * KBOLTZ * T_noise / (2. * TIMESTEP) ); 
-        //
-
 
         Vfft_noise_after.clear();  // remove previous Vfft_noise values
         Vfft_noise_before.clear();  // remove previous Vfft_noise values
         //V_noise_timedomain.clear(); // remove previous V_noise_timedomain values
-
 
 
         double V_tmp; // copy original flat H_n [V] value
@@ -1942,11 +1947,7 @@ void Report::GetNoiseWaveforms_ch(Settings *settings1, Detector *detector, doubl
 
         GetNoisePhase(settings1); // get random phase for noise
 
-        //MakeArraysforFFT_noise(settings1, detector, vhz_noise_tmp , vnoise);
-        // returned array vnoise currently have real value = imag value as no phase term applied
 
-
-        //for (int k=0; k<settings1->NFOUR/4; k++) {
         for (int k=0; k<settings1->DATA_BIN_SIZE/2; k++) {
 
             V_tmp = v_noise / sqrt(2.) ; // copy original flat H_n [V] value, and apply 1/sqrt2 for SURF/TURF divide same as signal
@@ -1976,10 +1977,91 @@ void Report::GetNoiseWaveforms_ch(Settings *settings1, Detector *detector, doubl
            vnoise[2 * k + 1] = (current_amplitude) * sin(noise_phase[k]);
 
 
+            Vfft_noise_after.push_back( vnoise[2*k] );
+            Vfft_noise_after.push_back( vnoise[2*k+1] );
 
-           //vnoise[2 * k] = (V_tmp) * cos(noise_phase[k]);
-           //vnoise[2 * k + 1] = (V_tmp) * sin(noise_phase[k]);
-           
+            // inverse FFT normalization factor!
+            vnoise[2 * k] *= 2./((double)settings1->DATA_BIN_SIZE);
+            vnoise[2 * k + 1] *= 2./((double)settings1->DATA_BIN_SIZE);
+
+
+        }
+
+
+
+        // now vnoise is time domain waveform
+        Tools::realft( vnoise, -1, settings1->DATA_BIN_SIZE);
+
+        
+        // save timedomain noise to Report class
+        /*
+        for (int k=0; k<settings1->DATA_BIN_SIZE; k++) {
+            V_noise_timedomain.push_back( vnoise[k] );
+        }
+        */
+
+    }
+
+    else if (settings1->NOISE == 1) {    // NOISE == 1 : use Rayleigh dist. fit from TestBed data
+
+        Vfft_noise_after.clear();  // remove previous Vfft_noise values
+        Vfft_noise_before.clear();  // remove previous Vfft_noise values
+        //V_noise_timedomain.clear(); // remove previous V_noise_timedomain values
+
+
+        double V_tmp; // copy original flat H_n [V] value
+        double current_amplitude, current_phase;
+
+        GetNoisePhase(settings1); // get random phase for noise
+
+
+        for (int k=0; k<settings1->DATA_BIN_SIZE/2; k++) {
+
+            if ( ch < detector->RayleighFit_ch ) {
+
+                Vfft_noise_before.push_back( detector->GetRayleighFit_databin(ch, k) );
+
+                current_phase = noise_phase[k];
+
+                V_tmp = detector->GetRayleighFit_databin(ch, k) * sqrt( (double)settings1->DATA_BIN_SIZE / (double)(settings1->NFOUR/2.) );
+
+                //Tools::get_random_rician( 0., 0., sqrt(2./ M_PI) * V_tmp, current_amplitude, current_phase);    // use real value array value
+                //Tools::get_random_rician( 0., 0., sqrt(2./M_PI)/1.177 * V_tmp, current_amplitude, current_phase);    // use real value array value, extra 1/1.177 to make total power same with "before random_rician".
+                Tools::get_random_rician( 0., 0., V_tmp, current_amplitude, current_phase);    // use real value array value, extra 1/1.177 to make total power same with "before random_rician".
+
+            }
+
+            else {
+
+                V_tmp = v_noise / sqrt(2.) ; // copy original flat H_n [V] value, and apply 1/sqrt2 for SURF/TURF divide same as signal
+
+                if (settings1->USE_TESTBED_RFCM_ON == 0) {
+                    ApplyFilter_databin(k, detector, V_tmp);
+                    ApplyPreamp_databin(k, detector, V_tmp);
+                    ApplyFOAM_databin(k, detector, V_tmp);
+                }
+                else if (settings1->USE_TESTBED_RFCM_ON == 1) {
+                    // apply RFCM gain
+                    ApplyRFCM_databin(ch, k, detector, V_tmp, settings1->RFCM_OFFSET);
+                }
+
+                Vfft_noise_before.push_back( V_tmp );
+
+
+                current_phase = noise_phase[k];
+
+                //Tools::get_random_rician( 0., 0., sqrt(2./ M_PI) * V_tmp, current_amplitude, current_phase);    // use real value array value
+                Tools::get_random_rician( 0., 0., sqrt(2./M_PI)/1.177 * V_tmp, current_amplitude, current_phase);    // use real value array value, extra 1/1.177 to make total power same with "before random_rician".
+
+            }
+
+
+            // vnoise is currently noise spectrum (before fft, unit : V)
+           //vnoise[2 * k] = sqrt(current_amplitude) * cos(noise_phase[k]);
+           //vnoise[2 * k + 1] = sqrt(current_amplitude) * sin(noise_phase[k]);
+           vnoise[2 * k] = (current_amplitude) * cos(noise_phase[k]);
+           vnoise[2 * k + 1] = (current_amplitude) * sin(noise_phase[k]);
+
 
             Vfft_noise_after.push_back( vnoise[2*k] );
             Vfft_noise_after.push_back( vnoise[2*k+1] );
@@ -2005,6 +2087,7 @@ void Report::GetNoiseWaveforms_ch(Settings *settings1, Detector *detector, doubl
         */
 
     }
+
     else {  // currently there are no more options!
         cout<<"no noise option for NOISE = "<<settings1->NOISE<<endl;
     }

@@ -830,3 +830,19 @@ With this modification, the run time of AraSim reduced ~15%.
 
 
 ===============================================================================
+
+04/02/13 E. Hong;
+
+Added new NOISE mode. After obtaining the Rayleigh distribution fit from force triggered TestBed data, I added new NOISE mode which is NOISE=1.
+NOISE=0 uses just flat thermal noise spectrum from constant temperature and apply preamp, filter gains to them.
+NOISE=1 uses Rayleigh distribution bit value from TestBed data (distribution at different freq values) so don't use any preamp filter gain for noise waveforms.
+
+Currently NOISE=1 mode is available with 
+DETECTOR=3
+READGEOM=1
+NOISE_TEMP_MODE=1 or 2
+
+After we get new Rayleigh dist. fit from ARA1, 2, 3 stations, we will added those functionalities to those DETECTOR modes.
+
+
+===============================================================================

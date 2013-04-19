@@ -514,7 +514,8 @@ void Tools::SimpleLinearInterpolation(int n1, double *x1, double *y1, int n2, do
         else {
             cnt=-1;
             for (int j=0; j<n1; j++) {
-                if (x2[i] < x1[j] && cnt==-1) {
+                //if (x2[i] < x1[j] && cnt==-1) {
+                if (x2[i] <= x1[j] && cnt==-1) {
                     cnt = j;
                 }
             }

@@ -80,7 +80,7 @@ outputdir="outputs"; // directory where outputs go
 
   NFOUR=1024;           // default : 1024, same as in icemc
     
-  NOISE=0;              // degault : 0, flat thermal noise
+  NOISE=0;              // degault : 0, flat thermal noise, 1 : for TestBed (DETECTOR=3), use Rayleigh distribution fitted for borehole channels
 
   ATMOSPHERE=1;         // default : 1, include atmosphere
 
@@ -549,6 +549,20 @@ int Settings::CheckCompatibilities(Detector *detector) {
         num_err++;
     }
 
+    if (NOISE==1 && DETECTOR!=3) {
+        cerr<<"NOISE=1 only works with DETECTOR=3!"<<endl;
+        num_err++;
+    }
+
+    if (NOISE==1 && USE_TESTBED_RFCM_ON==1) {
+        cerr<<"NOISE=1 only works with USE_TESTBED_RFCM_ON=0!"<<endl;
+        num_err++;
+    }
+
+    if (NOISE==1 && NOISE_TEMP_MODE==0) {
+        cerr<<"NOISE=1 don't work with NOISE_TEMP_MODE=0!"<<endl;
+        num_err++;
+    }
 
 
     return num_err;

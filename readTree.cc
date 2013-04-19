@@ -68,7 +68,21 @@ int getPeakBin(TGraph *gr);
 double getPeak(TGraph *gr);
 
 
-int main() {
+//int main() {
+int main(int argc, char **argv) {    // this is for manual power threshold value
+
+
+    string readfile;
+  if (argc<2) { // no setup file input, use default
+      readfile = "outputs/AraOut.root";
+  }
+  else if (argc == 2) { // read file!!
+      readfile = string( argv[1] );
+  }
+  else { // no mode for argc > 2!
+      cout<<"too many info! just use default AraOut.root file!"<<endl;
+      readfile = "outputs/AraOut.root";
+  }
 
 
 //  Settings *settings = new Settings();
@@ -85,7 +99,8 @@ int main() {
   cout<<"construct detector"<<endl;
 
   
-  TFile *AraFile=new TFile((outputdir+"/AraOut.root").c_str());
+  TFile *AraFile=new TFile(( readfile ).c_str());
+  //TFile *AraFile=new TFile((outputdir+"/AraOut.root").c_str());
   cout<<"AraFile"<<endl;
   TTree *AraTree=(TTree*)AraFile->Get("AraTree");
   TTree *AraTree2=(TTree*)AraFile->Get("AraTree2");
@@ -130,9 +145,9 @@ cout<<"Detector -> freq_forfft[100] : "<<detector->freq_forfft[100]<<endl;
 cout<<"icemodel surface : "<<icemodel->Surface(0.,0.)<<endl;
 
 AraTree2->GetEvent(0);
-cout<<"nnu x : "<<event->nnu.GetX()<<endl;
+cout<<"nnu x : "<<event->Nu_Interaction[0].nnu.GetX()<<endl;
 AraTree2->GetEvent(1);
-cout<<"nnu x : "<<event->nnu.GetX()<<endl;
+cout<<"nnu x : "<<event->Nu_Interaction[0].nnu.GetX()<<endl;
 
   int nnu_pass = 0; // number of nu events which passed PickUnbiased.
   double posnuX[settings->NNU];
@@ -236,7 +251,8 @@ cout<<"nnu x : "<<event->nnu.GetX()<<endl;
 */
       //}
 
-      if ( report->stations[0].Global_Pass ) {
+      //if ( report->stations[0].Global_Pass ) {
+      if ( report->stations[0].Global_Pass > 0) {
 
           pass_evts++;
           //cout<<"passed evt : "<<pass_evts<<endl;
@@ -261,9 +277,7 @@ cout<<"nnu x : "<<event->nnu.GetX()<<endl;
                   double getx[bin];
                   double gety[bin];
                   for (int l=0; l<bin; l++) {
-                      //getx[l] = report->stations[0].strings[string].antennas[ant].time[l];
-                      //getx[l] = report->stations[0].strings[string].antennas[ant].time[l] * settings->TIMESTEP*1.e9;// in ns
-                      //getx[l] = report->stations[0].strings[string].antennas[ant].time[l] * settings->TIMESTEP*1.e9 + wf_time_offset;// in ns
+
                       getx[l] = report->stations[0].strings[string].antennas[ant].time_mimic[l];// in ns
                       gety[l] = report->stations[0].strings[string].antennas[ant].V_mimic[l];
                       //cout<<"getx["<<l<<"] : "<<getx[l]<<"\tgety["<<l<<"] : "<<gety[l]<<endl;

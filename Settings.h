@@ -64,7 +64,7 @@ class Settings
 
         int NFOUR;              // number of total bins for FFT. has to be power of 2 values
 
-        int NOISE;              // noise condition settings degault 0 ( : thermal flat noise)
+        int NOISE;              // noise condition settings degault 0 ( : thermal flat noise), 1 : Rayleigh dist. fit for installed TestBed geom
 
         int ATMOSPHERE;         // include atmosphere 1, no 0
 

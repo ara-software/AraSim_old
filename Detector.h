@@ -232,6 +232,12 @@ class Detector {
         vector < vector <double> > RFCM_TB_databin_ch;   // RFCM gain measured value for the TestBed (for each ch)
 
 
+        void ReadRayleighFit_TestBed(string filename, Settings *settings1, int ch_no); // will read Rayleigh fit result from the file
+        void ReadRayleighFit_TestBed(string filename, Settings *settings1); // will read Rayleigh fit result from the file
+        double Rayleigh_TB_ch[16][freq_step_max];   // Filter gain (dB) for Detector freq bin array
+        vector < vector <double> > Rayleigh_TB_databin_ch;   // RFCM gain measured value for the TestBed (for each ch)
+
+
         void FlattoEarth_ARA(IceModel *icesurface);
         void FlattoEarth_ARA_sharesurface(IceModel *icesurface);  // each station share the lowest surface
 
@@ -266,6 +272,10 @@ class Detector {
         double GetRFCMGain(int ch, int bin) { return RFCM_TB_ch[ch][bin]; }   // same bin with Vgain, Hgain
         double GetRFCMGain_databin(int ch, int bin) { return RFCM_TB_databin_ch[ch][bin]; }   // bin for FFT
 
+
+        double GetRayleighFit(int ch, int bin) { return Rayleigh_TB_ch[ch][bin]; }   // same bin with Vgain, Hgain
+        double GetRayleighFit_databin(int ch, int bin) { return Rayleigh_TB_databin_ch[ch][bin]; }   // bin for FFT
+
         
         double GetGainOffset( int StationID, int ch, Settings *settings1 );  // returns voltage factor for specific channel gain off set
 
@@ -297,6 +307,8 @@ class Detector {
         int iwindow;
         int ibinshift;
 
+        int RayleighFit_ch; // number of chs from RayleighFit
+
         int max_number_of_antennas_station; // maximum number of antennas in a station
 
         void getDiodeModel(Settings *settings1);   // similar with icemc -> anita -> getDiodeModel().  set diode_real and fdiode_real values.
@@ -313,6 +325,8 @@ class Detector {
         void ReadFOAM_New(Settings *settings1);    // get filter vector array with new DATA_BIN_SIZE 
 
         void ReadRFCM_New(Settings *settings1);    // get filter vector array with new DATA_BIN_SIZE 
+
+        void ReadRayleigh_New(Settings *settings1); // get Rayleigh fit array with new DATA_BIN_SIZE
 
 
     
