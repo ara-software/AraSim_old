@@ -846,3 +846,13 @@ After we get new Rayleigh dist. fit from ARA1, 2, 3 stations, we will added thos
 
 
 ===============================================================================
+
+04/24/13 E. Hong;
+
+Added total number of bins for searching trigger to Report class.
+report->stations[i].total_trig_search_bin
+
+This total_trig_search_bin value will be useful for the global trigger rate calculation.
+
+
+===============================================================================

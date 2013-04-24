@@ -669,6 +669,9 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                max_total_bin = (stations[i].max_arrival_time - stations[i].min_arrival_time)/settings1->TIMESTEP + settings1->NFOUR*3 + trigger->maxt_diode_bin; // make more time
 
 
+               //stations[i].max_total_bin = max_total_bin;
+
+
                // test generating new noise waveform for only stations if there's any ray trace solutions
                if (settings1->NOISE_WAVEFORM_GENERATE_MODE == 0) {// noise waveforms will be generated for each evts
 
@@ -1024,6 +1027,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                //
 
                int trig_i, trig_j, trig_bin;
+               int trig_search_init;
 
                // parts that are added for fixed non-trigger passed chs' V_mimic (fixed V_mimic)
                int last_trig_bin;   // stores last trigger passed bin number
@@ -1043,7 +1047,14 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                int check_ch;
                
                //trig_i = trigger->maxt_diode_bin;
-               trig_i = trigger->maxt_diode_bin + settings1->NFOUR; // give some time shift for mimicing force trig events
+               //trig_i = trigger->maxt_diode_bin + settings1->NFOUR; // give some time shift for mimicing force trig events
+               trig_search_init = trigger->maxt_diode_bin + settings1->NFOUR; // give some time shift for mimicing force trig events
+               trig_i = trig_search_init;
+
+
+               // save trig search bin info default (if no global trig, this value saved)
+               stations[i].total_trig_search_bin = max_total_bin - trig_search_init;
+
 
                // avoid really long trig_window_bin case (change trig_window to check upto max_total_bin)
                if (max_total_bin - trig_window_bin <= trig_i) trig_window_bin = max_total_bin - trig_i -1;
@@ -1357,6 +1368,11 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                        //cout<<"Global trigger passed!!, N_pass : "<<N_pass<<endl;
                        Passed_chs.clear();
+
+
+                       // save trig search bin info
+                       stations[i].total_trig_search_bin = stations[i].Global_Pass + trig_window_bin - trig_search_init;
+
 
                    } // if global trig!
                    else {

@@ -122,6 +122,8 @@ class Station_r {
         int Total_ray_sol;          // total number of ray_sols in the stations. If there is 0 Total_ray_sol, we don't need to do trigger check while there is any Total_ray_sol, we do trigger check.
         int Global_Pass;    // if global trigger passed or not: 0 = not passed, >0 passed, number indicates the first bin in the triggered window of the waveform at which the global trigger passed
 
+        int total_trig_search_bin;  // total number of bins for searching trigger. 
+
         ClassDef(Station_r,1);
 };
 
