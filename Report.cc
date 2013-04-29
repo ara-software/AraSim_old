@@ -1350,11 +1350,10 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                            double Y = detector->stations[i].strings[string_i].antennas[antenna_i].GetY();
                             double Z = detector->stations[i].strings[string_i].antennas[antenna_i].GetZ();
                            //std::cout << "Arrival time:X:Y:Z " << arrivtime << " : " << X << " : " << Y << " : " << Z << std::endl;
-                           for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
-			     int AraRootChannel = 0;
-                                 
-                             AraRootChannel = detector->GetChannelfromStringAntenna (i, string_i, antenna_i, settings1);
+                           int AraRootChannel = 0;
+                           AraRootChannel = detector->GetChannelfromStringAntenna (i, string_i, antenna_i, settings1);
 
+                           for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
                                theUsefulEvent->fVoltsRF[AraRootChannel-1][mimicbin] = stations[i].strings[string_i].antennas[antenna_i].V_mimic[mimicbin];
                                //theUsefulEvent->fTimesRF[AraRootChannel-1][mimicbin] = double(stations[i].strings[string_i].antennas[antenna_i].time[mimicbin])*settings1->TIMESTEP*1.0E9;
                                theUsefulEvent->fTimesRF[AraRootChannel-1][mimicbin] = stations[i].strings[string_i].antennas[antenna_i].time_mimic[mimicbin];
@@ -1380,11 +1379,9 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                        for (int ch_loop=0; ch_loop<ch_ID; ch_loop++) {
                            int string_i = detector->getStringfromArbAntID( i, ch_loop);
                            int antenna_i = detector->getAntennafromArbAntID( i, ch_loop);
+                           int AraRootChannel = 0;
+                           AraRootChannel = detector->GetChannelfromStringAntenna (i, string_i, antenna_i, settings1);
                            for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
-			     int AraRootChannel = 0;
-
-			       AraRootChannel = detector->GetChannelfromStringAntenna (i, string_i, antenna_i, settings1);
-
                                theUsefulEvent->fVoltsRF[AraRootChannel-1][mimicbin] = 0;
                                theUsefulEvent->fTimesRF[AraRootChannel-1][mimicbin] = 0;
                                //cout << theUsefulEvent->fVoltsRF[ch_loop][mimicbin] << endl;

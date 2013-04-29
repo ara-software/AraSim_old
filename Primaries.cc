@@ -201,7 +201,7 @@ Primaries::~Primaries(){//default deconstructor
       delete m_fsigma[i][j];
     }
   }
-
+    delete m_csigma;
 
 
 }//deconstructor
