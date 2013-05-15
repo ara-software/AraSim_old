@@ -181,7 +181,8 @@ outputdir="outputs"; // directory where outputs go
 
     FILL_TREE_MODE = 0; // default 0 : fill tree for all events, 1 : fill tree only usable posnu events, 2 : fill tree only trigger passed events
 
-
+    ONLY_PASSED_EVENTS = 0;
+    NNU_PASSED = 0;
 }
 
 void Settings::ReadFile(string setupfile) {
@@ -398,6 +399,12 @@ void Settings::ReadFile(string setupfile) {
               }
               else if (label == "FILL_TREE_MODE") {
                   FILL_TREE_MODE = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "ONLY_PASSED_EVENTS") {
+                  ONLY_PASSED_EVENTS = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "NNU_PASSED") {
+                  NNU_PASSED = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
               }
           }
       }

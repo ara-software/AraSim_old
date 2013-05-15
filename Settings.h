@@ -169,8 +169,8 @@ class Settings
 
         int FILL_TREE_MODE; // default 0 : fill tree for all events, 1 : fill tree only usable posnu events, 2 : fill tree only trigger passed events
 
-
-
+	int ONLY_PASSED_EVENTS; // 0: NNU represents the number of neutrinos total thrown in the simulation, 1: NNU represents the number of globally triggered neutrinos desired in the output file in the end
+	int NNU_PASSED; // Number of neutrinos allowed to pass the trigger - for ONLY_PASSE_EVENTS, loop until this is reached, otherwise just a storage value
 
     // below : values from icemc
     

@@ -47,10 +47,12 @@ INTERACTION_MODE=1
 
 EXPONENT=19
 NNU=100 // number of neutrino events
+NNU_PASSED=10 // number of neutrino events that are allowed to pass the trigger
+ONLY_PASSED_EVENTS=0 // 0 (default): AraSim throws NNU events whether or not they pass; 1: AraSim throws events until the number of events that pass the trigger is equal to NNU_PASSED (WARNING: may cause long run times if reasonable values are not chosen)
 NOISE_WAVEFORM_GENERATE_MODE=0 // generate new noise waveforms for each events
 NOISE_EVENTS=16 // number of pure noise waveforms
 TRIG_ANALYSIS_MODE=0 // 0 = signal + noise, 1 = signal only, 2 = noise only
-DETECTOR=3 // ARA stations 1 to 7
+DETECTOR=1 // ARA stations 1 to 7
 
 TIMESTEP=5.E-10 // value for 2GHz actual station value
 TRIG_WINDOW=1.E-7 // 100ns which is actual testbed trig window
@@ -71,7 +73,7 @@ USE_MANUAL_GAINOFFSET=0
 USE_TESTBED_RFCM_ON=0
 NOISE_TEMP_MODE=0
 TRIG_THRES_MODE=0
-READGEOM=1 // reads geometry information from the sqlite file or not (0 : don't read)
+READGEOM=0 // reads geometry information from the sqlite file or not (0 : don't read)
 
 // new variables
 //INTERACTION_MODE=0 // pickunbiased mode!
@@ -83,7 +85,6 @@ READGEOM=1 // reads geometry information from the sqlite file or not (0 : don't 
 TRIG_MODE=0 // use vpol, hpol separated trigger mode. by default N_TRIG_V=3, N_TRIG_H=3. You can change this values
 //N_TRIG_V=4
 //N_TRIG_H=4
-
 
 ///////////////////
 

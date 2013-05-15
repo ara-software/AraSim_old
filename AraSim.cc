@@ -382,9 +382,17 @@ double cur_posnu_z;
 // test autoflush
 //AraTree2->SetAutoFlush(0);
 
-
-   for (int inu=0;inu<settings1->NNU;inu++) { // loop over neutrinos
-
+    int nuLimit =0;
+    if (settings1->ONLY_PASSED_EVENTS == 1){
+      nuLimit = settings1->NNU_PASSED;
+    } else {
+      nuLimit = settings1->NNU;
+    }
+    
+    int inu = 0;
+    int Events_Thrown = 0;
+    //       for (int inu=0;inu<settings1->NNU;inu++) { // loop over neutrinos
+    while (inu < nuLimit){
        
        check_station_DC = 0;
 
@@ -575,6 +583,16 @@ double cur_posnu_z;
            }
        }
 
+       
+       if (settings1->ONLY_PASSED_EVENTS == 1){
+	 if (check_station_DC > 0){
+	   inu++;
+	 }
+       } else {
+	 inu++;
+       }
+       Events_Thrown++;
+       
 
        //theEvent = NULL;
 
@@ -597,6 +615,10 @@ double cur_posnu_z;
 
 
   } // end loop over neutrinos
+
+    settings1->NNU = Events_Thrown;
+    settings1->NNU_PASSED = Total_Global_Pass;
+
 //        TrigWind << TRIG_WINDOW_Size << "\t" << Total_Global_Pass << endl;
 //        cout << "TRIG_WINDOW_Size:Total_Global_Pass:: " << TRIG_WINDOW_Size << " : " << Total_Global_Pass << endl;
 
@@ -623,6 +645,7 @@ double cur_posnu_z;
 
 
    cout<<" end loop"<<endl;
+   cout << "Total Events Thrown: " <<     settings1->NNU << endl;
    cout<<"Total_Global_Pass : "<<Total_Global_Pass<<endl;
    cout<<"Total_Weight : "<<Total_Weight<<endl;
    cout<<"Total_Probability : "<<Total_Probability<<endl;
@@ -658,11 +681,18 @@ double cur_posnu_z;
        double error_minus = 0;
        Counting::findErrorOnSumWeights( count1->eventsfound_binned, error_plus, error_minus );
 
+       /*       
        Veff_test = IceVolume * 4. * PI * signal->RHOICE / signal->RHOH20 * Total_Weight / (double)(settings1->NNU);
 
        // account all factors to error
        error_plus = IceVolume * 4. * PI * signal->RHOICE / signal->RHOH20 * error_plus / (double)(settings1->NNU);
        error_minus = IceVolume * 4. * PI * signal->RHOICE / signal->RHOH20 * error_minus / (double)(settings1->NNU);
+       */
+
+       Veff_test = IceVolume * 4. * PI * signal->RHOICE / signal->RHOH20 * Total_Weight / (double)(settings1->NNU);
+       error_plus = IceVolume * 4. * PI * signal->RHOICE / signal->RHOH20 * error_plus / (double)(settings1->NNU);
+       error_minus = IceVolume * 4. * PI * signal->RHOICE / signal->RHOH20 * error_minus / (double)(settings1->NNU);
+
 
        cout<<"test Veff : "<<Veff_test<<" m3sr, "<<Veff_test*1.E-9<<" km3sr"<<endl;
        cout<<"And Veff error plus : "<<error_plus*1.E-9<<" and error minus : "<<error_minus*1.E-9<<endl;
@@ -683,11 +713,20 @@ double cur_posnu_z;
        double error_minus = 0;
        Counting::findErrorOnSumWeights( count1->eventsfound_binned, error_plus, error_minus );
 
+       /*
        Aeff_test = IceSurf * PI * Total_Probability / (double)(settings1->NNU);
 
        // account all factors to error
        error_plus = IceSurf * PI * error_plus / (double)(settings1->NNU);
        error_minus = IceSurf * PI * error_minus / (double)(settings1->NNU);
+       */
+
+       Aeff_test = IceSurf * PI * Total_Probability / (double)(settings1->NNU);
+
+       // account all factors to error
+       error_plus = IceSurf * PI * error_plus / (double)(settings1->NNU);
+       error_minus = IceSurf * PI * error_minus / (double)(settings1->NNU);
+
 
        cout<<"test Aeff : "<<Aeff_test<<" m3sr, "<<Aeff_test*1.E-9<<" km3sr"<<endl;
        cout<<"And Aeff error plus : "<<error_plus*1.E-9<<" and error minus : "<<error_minus*1.E-9<<endl;

@@ -6,6 +6,10 @@
 include ../StandardDefinitions.mk
 
 
+### Customize these two terms to point to system libraries and headers that are not included by default
+SYSINCLUDES = -I$(HOME)/tools/RHEL5_x86_64/include
+SYSLIBS = 
+
 LD_ARA_UTIL=-L ./
 INC_ARA_UTIL=-I ./
 
