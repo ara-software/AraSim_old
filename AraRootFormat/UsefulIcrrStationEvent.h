@@ -41,6 +41,8 @@ class UsefulIcrrStationEvent: /*public RawIcrrStationEvent, */public UsefulAraSt
    Double_t fTimesRF[RFCHANS_PER_ICRR][2*MAX_NUMBER_SAMPLES_LAB3]; ///< Array of the calibrated, interleaved times for the RF input channels
    Int_t fNumPointsRF[RFCHANS_PER_ICRR]; ///< Number of valid samples for thecalibrated, interleaved waveforms from the RF input channels
 
+   Int_t numRFChans;
+    
 /*
    Int_t getNumElecChannels() {return NUM_DIGITIZED_ICRR_CHANNELS;}
    Int_t getNumRFChannels() {return RFCHANS_PER_ICRR;}

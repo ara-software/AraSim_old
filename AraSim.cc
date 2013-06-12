@@ -244,7 +244,7 @@ cout<<"called RaySolver"<<endl;
 
     TTree *eventTree;
     eventTree = new TTree("eventTree","Tree of ARA Events");
-    eventTree->Branch("UsefulIcrrStationEvent",&theEvent);
+    eventTree->Branch("event",&theEvent);
 
 
 cout<<"will call secondaries"<<endl;
@@ -435,7 +435,7 @@ double cur_posnu_z;
            //report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1, trigger);
            report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1, trigger, theEvent);
            
-
+           
 
 
            // test if posnu is exactly same in calpulser mode
@@ -461,6 +461,9 @@ double cur_posnu_z;
 
 
            for (int i=0; i<detector->params.number_of_stations; i++) {
+               if (settings1->DETECTOR == 3 && i == 0){ theEvent->numRFChans = 14; }
+               else { theEvent->numRFChans = 16; }
+
                if (max_dt < report->stations[i].max_arrival_time - report->stations[i].min_arrival_time) max_dt = report->stations[i].max_arrival_time - report->stations[i].min_arrival_time;
                // check the total global trigger passed
                if (report->stations[i].Global_Pass) {
