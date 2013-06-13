@@ -255,7 +255,7 @@ cout<<"nnu x : "<<event->Nu_Interaction[0].nnu.GetX()<<endl;
       if ( report->stations[0].Global_Pass > 0) {
 
           pass_evts++;
-          //cout<<"passed evt : "<<pass_evts<<endl;
+          cout<<"passed evt : "<<pass_evts<<endl;
 
           //if (pass_evts == 1) {
           //if (pass_evts%50 == 0) {
@@ -267,7 +267,7 @@ cout<<"nnu x : "<<event->Nu_Interaction[0].nnu.GetX()<<endl;
 
               for ( int chID=0; chID<14; chID++) {
 
-                  detector->GetSSAfromChannel(0, chID+1, &ant, &string);
+                  detector->GetSSAfromChannel(0, chID+1, &ant, &string, settings);
 
                   //cout<<"save wf for ch "<<chID<<" ";
                   //cout<<"string:"<<string<<" ant:"<<ant<<" type:"<<detector->stations[0].strings[string].antennas[ant].type<<" ";
