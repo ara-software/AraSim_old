@@ -29,7 +29,7 @@ Detector::Detector() {
 }
 
 
-Detector::Detector(Settings *settings1, IceModel *icesurface) {
+Detector::Detector(Settings *settings1, IceModel *icesurface, string setupfile) {
     //Detector::Detector(int mode, IceModel *icesurface) {
     
     // set freq_forfft for later use
@@ -108,8 +108,12 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
     
     
     string testbed_file = "testbed_info.txt";
-    string ARA_N_file = "ARA_N_info.txt";
-    string ARA37_file = "ARA37_info.txt";
+//--------------------------------------------------
+//     string ARA_N_file = "ARA_N_info.txt";
+//     string ARA37_file = "ARA37_info.txt";
+//-------------------------------------------------- 
+    string ARA_N_file = setupfile;
+    string ARA37_file = setupfile;
     
     string line, label;
 
@@ -240,8 +244,8 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         
         //double core_x = 0.; 
         //double core_y = 0.;
-        params.core_x = 0.; 
-        params.core_y = 0.;
+        params.core_x = 10000.; 
+        params.core_y = 10000.;
         double R_string = 10.;  // all units are in meter
         double R_surface = 60.;
         double z_max = 200.;
@@ -900,8 +904,8 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         
         //double core_x = 0.;  // all units are in meter
         //double core_y = 0.;
-        params.core_x = 0.;  // all units are in meter
-        params.core_y = 0.;
+        params.core_x = 10000.;  // all units are in meter
+        params.core_y = 10000.;
         double R_string = 10.;
         double R_surface = 60.;
         double z_max = 200.;
@@ -1338,8 +1342,8 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
         
         //double core_x = 0.;
         //double core_y = 0.;
-        params.core_x = 0.;
-        params.core_y = 0.;
+        params.core_x = 10000.;
+        params.core_y = 10000.;
         double R_string = 10.;  // all units are in meter
         double R_surface = 60.;
         double z_max = 200.;

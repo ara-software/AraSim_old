@@ -166,8 +166,8 @@ int main(int argc, char **argv) {   // read setup.txt file
   cout<<"Surface at (log:0, lat:0) : "<<icemodel->Surface(0., 0.)<<endl;
   cout<<"SurfaceAboveGeoid at (log:0, lat:0) : "<<icemodel->SurfaceAboveGeoid(0., 0.)<<endl;
   
-  Detector *detector=new Detector(settings1, icemodel); // builds antenna array, 0 for testbed
-  //Detector *detector=new Detector(settings1->DETECTOR, icemodel); // builds antenna array, 0 for testbed
+  //Detector *detector=new Detector(settings1, icemodel); // builds antenna array, 0 for testbed
+  Detector *detector=new Detector(settings1, icemodel, setupfile ); // builds antenna array, 0 for testbed
   cout<<"end calling detector"<<endl;
 //  Detector *detector=new Detector(settings1->DETECTOR); // builds antenna array, 0 for testbed
 

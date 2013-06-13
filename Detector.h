@@ -250,7 +250,7 @@ class Detector {
     public:
         Parameters params;
         Detector ();    //default constructor
-        Detector (Settings *settings1, IceModel *icesurface);
+        Detector (Settings *settings1, IceModel *icesurface, string setupfile);
         //Detector (int mode, IceModel *icesurface);
         vector <ARA_station> stations;
         vector <Antenna_string> strings;
