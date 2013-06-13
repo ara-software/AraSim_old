@@ -250,6 +250,10 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
 	// these z_btw array will be used when settings->BH_ANT_SEP_DIST_ON=1 case
         for (int i=0; i<6; i++) {
             if (i==0) z_btw_array[i] = 0.;
+            //else z_btw_array[i] = z_btw;
+            else if (i==1) z_btw_array[i] = 2.;
+            else if (i==2) z_btw_array[i] = 15.;
+            else if (i==3) z_btw_array[i] = 2.;
             else z_btw_array[i] = z_btw;
         }
         double z_btw_total;
@@ -906,6 +910,10 @@ Detector::Detector(Settings *settings1, IceModel *icesurface) {
 	// these z_btw array will be used when settings->BH_ANT_SEP_DIST_ON=1 case
         for (int i=0; i<6; i++) {
             if (i==0) z_btw_array[i] = 0.;
+            //else z_btw_array[i] = z_btw;
+            else if (i==1) z_btw_array[i] = 2.;
+            else if (i==2) z_btw_array[i] = 15.;
+            else if (i==3) z_btw_array[i] = 2.;
             else z_btw_array[i] = z_btw;
         }
         double z_btw_total;
