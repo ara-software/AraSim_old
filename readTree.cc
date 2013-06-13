@@ -164,22 +164,22 @@ cout<<"nnu x : "<<event->Nu_Interaction[0].nnu.GetX()<<endl;
 
 
   // test if InstalledStations are working properly
-  cout<<"InstalledStations size : "<<detector->InstalledStations.size()<<endl;
-  cout<<"InstalledStations nStrings size : "<<detector->InstalledStations[0].nStrings<<endl;
-
-  cout<<"InstalledStations VHChannle size : "<<detector->InstalledStations[0].VHChannel.size()<<endl;
-  for (int i = 0; i < int(detector->InstalledStations[0].VHChannel.size()); i++){
-      cout<<"InstalledStations VHChannle["<<i<<"] size : "<<detector->InstalledStations[0].VHChannel[i].size()<<endl;
-  }
+//  cout<<"InstalledStations size : "<<detector->InstalledStations.size()<<endl;
+//  cout<<"InstalledStations nStrings size : "<<detector->InstalledStations[0].nStrings<<endl;
+//
+//  cout<<"InstalledStations VHChannle size : "<<detector->InstalledStations[0].VHChannel.size()<<endl;
+//  for (int i = 0; i < int(detector->InstalledStations[0].VHChannel.size()); i++){
+//      cout<<"InstalledStations VHChannel["<<i<<"] size : "<<detector->InstalledStations[0].VHChannel[i].size()<<endl;
+//  }
 
 
 
   double peak_plot_max = 1.e3;
-  TH1D *hpeak[8];
+  TH1D *hpeak[16];
 
   char title_test[100];
 
-  for (int i=0; i<8; i++) {
+  for (int i=0; i<16; i++) {
       sprintf( title_test, "hpeakV_ch%d",i);
       hpeak[i] = new TH1D(title_test, "", 100, 0., peak_plot_max);
   }
@@ -212,8 +212,8 @@ cout<<"nnu x : "<<event->Nu_Interaction[0].nnu.GetX()<<endl;
 
   //char title_test[100];
 
-  TH1D *hist_peak[8];
-  for (int i=0; i<8; i++) {
+  TH1D *hist_peak[16];
+  for (int i=0; i<16; i++) {
       sprintf( title_test, "hpeakV_ch%d",i);
       hist_peak[i] = new TH1D(title_test, "", 50, 1, bin);
   }
@@ -263,9 +263,9 @@ cout<<"nnu x : "<<event->Nu_Interaction[0].nnu.GetX()<<endl;
               TCanvas *cTest = new TCanvas ("cTest","", 3200,3200);
               cTest->Divide(4,4);
 
-              TGraph *gTest[14];
+              TGraph *gTest[16];
 
-              for ( int chID=0; chID<14; chID++) {
+              for ( int chID=0; chID<16; chID++) {
 
                   detector->GetSSAfromChannel(0, chID+1, &ant, &string, settings);
 
@@ -291,7 +291,7 @@ cout<<"nnu x : "<<event->Nu_Interaction[0].nnu.GetX()<<endl;
 
 
                   // fill peak hist
-                  if (chID<8) { // only for BH chs
+                  if (chID<16) { // only for BH chs
                       hist_peak[chID] -> Fill(getPeakBin(gTest[chID]) );
                       hpeak[chID] -> Fill( getPeak(gTest[chID]) );
                   }
@@ -310,7 +310,7 @@ cout<<"nnu x : "<<event->Nu_Interaction[0].nnu.GetX()<<endl;
 
 
               delete cTest;
-              for ( int chID=0; chID<14; chID++) {
+              for ( int chID=0; chID<16; chID++) {
                   delete gTest[chID];
               }
 
@@ -329,7 +329,7 @@ cout<<"nnu x : "<<event->Nu_Interaction[0].nnu.GetX()<<endl;
   // make canvas for hist peak and plot it
     TCanvas *cPeakbin = new TCanvas ("cPeakbin","", 3200,3200);
     cPeakbin->Divide(4,4);
-    for (int i=0; i<8; i++) {
+    for (int i=0; i<16; i++) {
         cPeakbin->cd(i+1);
         hist_peak[i]->Draw();
     }
@@ -339,7 +339,7 @@ cout<<"nnu x : "<<event->Nu_Interaction[0].nnu.GetX()<<endl;
 
 
     delete cPeakbin;
-    for (int i=0; i<8; i++) {
+    for (int i=0; i<16; i++) {
         delete hist_peak[i];
     }
 
@@ -450,7 +450,7 @@ cout<<"nnu x : "<<event->Nu_Interaction[0].nnu.GetX()<<endl;
     TCanvas *cPeakV = new TCanvas ("cPeakV","", 3200,3200);
     cPeakV->Divide(4,4);
 
-    for (int i=0; i<8; i++) {
+    for (int i=0; i<16; i++) {
 
         cPeakV->cd(i+1);
         cPeakV->cd(i+1)->SetLogy();
@@ -470,7 +470,7 @@ cout<<"nnu x : "<<event->Nu_Interaction[0].nnu.GetX()<<endl;
 
 
     delete cPeakV;
-    for (int i=0; i<8; i++) {
+    for (int i=0; i<16; i++) {
         delete hpeak[i];
     }
 
