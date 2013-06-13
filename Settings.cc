@@ -58,7 +58,7 @@ outputdir="outputs"; // directory where outputs go
 
   INTERACTION_MODE=1;   //PickNear mode
 
-  POSNU_RADIUS=2000;    //radius for PickNear method
+  POSNU_RADIUS=3000;    //radius for PickNear method
 
   WHICHPARAMETERIZATION=0;  //
 
@@ -74,7 +74,7 @@ outputdir="outputs"; // directory where outputs go
 
   TAUDECAY=1;           //default : let taudecay as secondary interactions
 
-  TIMESTEP=(1./2.6)*1.E-9;  // default, same with icemc (in sec)
+  TIMESTEP=(0.5)*1.E-9;  // default, in sec
 
   PHASE=90.;            // default : 90 deg phase (it means all imaginary values)
 
@@ -84,7 +84,7 @@ outputdir="outputs"; // directory where outputs go
 
   ATMOSPHERE=1;         // default : 1, include atmosphere
 
-  POWERTHRESHOLD=-4.41; // default : -4.41 (same as icemc).
+  POWERTHRESHOLD=-6.15; // default : -6.15
 
   MAXT_DIODE=70.E-9;    // default : 70 ns
 
@@ -100,9 +100,9 @@ outputdir="outputs"; // directory where outputs go
 
   TRIG_TIMEOUT=1.E-6;       // default : 1us
 
-  TRIG_WINDOW=2.5E-7;       // default : 250 ns
+  TRIG_WINDOW=1.1E-7;       // default : 110 ns
 
-  NOISE_EVENTS=1000;        // default : 1000 events
+  NOISE_EVENTS=16;        // default : 16 events
 
   DATA_SAVE_MODE=0;         // default : 0 (full mode)
 
@@ -114,7 +114,7 @@ outputdir="outputs"; // directory where outputs go
 
   WRITE_ALL_EVENTS=0; //default : 0 (writes only globally triggered events)
 
-  RAYSOL_RANGE=3000; // default : 3000 m
+  RAYSOL_RANGE=5000; // default : 5000 m
 
   PICK_POSNU_DEPTH=0;     //default : 0 pick posnu depth from 0 to ice depth
 
@@ -173,7 +173,7 @@ outputdir="outputs"; // directory where outputs go
 
     BH_ANT_SEP_DIST_ON = 0; // default 0 : use constant borehole antenna distance. 1 : use separate antenna distance. use z_btw01, z_btw12, ... in ARA_N_info.txt or ARA37_info.txt
 
-    TRIG_MODE = 0; // default 0 : if any antennas got passed N_TRIG or more, global trig. 1 : either Vpol or Hpol antennas got passed N_TRIG_V or N_TRIG_H respectively, global trig.
+    TRIG_MODE = 1; // default 1 : if any antennas got passed N_TRIG or more, global trig. 1 : either Vpol or Hpol antennas got passed N_TRIG_V or N_TRIG_H respectively, global trig.
 
     N_TRIG_V=3;                 // default : 3 (3 out of Vpolchannels in a station)
 
