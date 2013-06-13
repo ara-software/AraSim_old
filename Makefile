@@ -26,7 +26,7 @@ LDFLAGS      += -g -I$(BOOST_ROOT) $(ROOTLDFLAGS) -Llib -L. -lAraSimEvent -lAraG
 # added for Fortran to C++
 
 
-LIBS	= $(ROOTLIBS) -lMinuit $(SYSLIBS)
+LIBS	= $(ROOTLIBS) -lMinuit $(SYSLIBS) -lsqlite3
 GLIBS	= $(ROOTGLIBS) $(SYSLIBS)
 
 ARAROOT_DIR = ./AraRootFormat
@@ -53,7 +53,7 @@ $(ARAROOTLIB):
 	@cd AraRoot; make all; make install
 
 AraSim : $(OBJS)
-	$(LD) $(LDFLAGS) $(OBJS) $(ARA_ROOT_OBJS) $(LIBS) -lAraSimEvent -o $(PROGRAMS) 
+	$(LD) $(OBJS) $(ARA_ROOT_OBJS) $(LDFLAGS)  $(LIBS) -lAraSimEvent -o $(PROGRAMS) 
 	@echo "done."
 
 #The library
