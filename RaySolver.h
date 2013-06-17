@@ -56,7 +56,8 @@ class RaySolver {
         void test1();
         void Solve_Ray_org(Position &source, Position &target, std::vector < std::vector <double> > &outputs, Settings *settings1);
 
-        void Solve_Ray_org (double source_x, double source_y, double source_z, double target_x, double target_y, double target_z, double &travel_time, double &travel_dist, int &no_sol, Settings *settings1);
+        //void Solve_Ray_org (double source_x, double source_y, double source_z, double target_x, double target_y, double target_z, double &travel_time, double &travel_dist, int &no_sol, Settings *settings1);
+        void Solve_Ray_org (double source_x, double source_y, double source_z, double target_x, double target_y, double target_z, bool print_path=false );
 
         void Solve_Ray(Position &source, Position &target, IceModel *antarctica, std::vector < std::vector <double> > &outputs, Settings *settings1);
 

@@ -856,3 +856,30 @@ This total_trig_search_bin value will be useful for the global trigger rate calc
 
 
 ===============================================================================
+
+06/17/13 E. Hong;
+
+Added useRaySolver as an extra source file to get ray trace result from x, y, z coordinate.
+After you compile AraSim, you have to compile useRaySolver by
+
+make -f M.useRaySolver
+
+After thatm you have to give src, trg location (in ice flat surface at z=0 coordinate)
+for example, you can run useRaySolver with
+
+./useRaySolver 0 0 -100 100 0 -100
+
+which means
+src_x = 0
+src_y = 0
+src_z = -100
+
+trg_x = 100
+trg_y = 0
+trg_z = -100
+
+all in unit of meters
+This will return ray trace result on the screen
+
+===============================================================================
+
