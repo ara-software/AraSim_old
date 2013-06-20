@@ -883,3 +883,16 @@ This will return ray trace result on the screen
 
 ===============================================================================
 
+06/20/13 E. Hong;
+
+Added readTree, readGeom for Ubuntu machines.
+Due to the confliction in Ubuntu machine, I added readTree, readGeom for Ubuntu.
+
+To use them, plase copy readTree.cc.ubuntu to readTree.cc and readGeom.cc.ubuntu to readGeom.cc
+And then compile by
+
+make -f M.readTree
+make -f M.readGeom
+
+
+===============================================================================
