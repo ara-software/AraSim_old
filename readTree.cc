@@ -265,7 +265,8 @@ cout<<"nnu x : "<<event->Nu_Interaction[0].nnu.GetX()<<endl;
 
               TGraph *gTest[16];
 
-              for ( int chID=0; chID<16; chID++) {
+              //for ( int chID=0; chID<16; chID++) {
+              for ( int chID=0; chID<detector->stations[0].number_of_antennas; chID++) {
 
                   detector->GetSSAfromChannel(0, chID+1, &ant, &string, settings);
 
@@ -310,7 +311,8 @@ cout<<"nnu x : "<<event->Nu_Interaction[0].nnu.GetX()<<endl;
 
 
               delete cTest;
-              for ( int chID=0; chID<16; chID++) {
+              //for ( int chID=0; chID<16; chID++) {
+              for ( int chID=0; chID<detector->stations[0].number_of_antennas; chID++) {
                   delete gTest[chID];
               }
 
