@@ -10,7 +10,9 @@
 //#include "TH1.h"
 /* #include "TGraph.h" */
 /* #include "TH2F.h" */
- #include "TRandom3.h" 
+#include "TRandom3.h" 
+#include <iostream>
+#include <fstream>
 
 //using namespace std;
 using std::string;
