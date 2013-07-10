@@ -677,9 +677,11 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                    // redefine DATA_BIN_SIZE
                    int DATA_BIN_SIZE_tmp;
-                   for (int DBS=10; DBS<15; DBS++) {
+                   //for (int DBS=10; DBS<15; DBS++) {
+                   for (int DBS=10; DBS<16; DBS++) {
                        DATA_BIN_SIZE_tmp = (int)pow(2., (double)DBS);
-                       if (DATA_BIN_SIZE_tmp > max_total_bin) DBS = 15; // come out
+                       //if (DATA_BIN_SIZE_tmp > max_total_bin) DBS = 15; // come out
+                       if (DATA_BIN_SIZE_tmp > max_total_bin) DBS = 16; // come out
                        //if (DATA_BIN_SIZE_tmp > max_total_bin+settings1->NFOUR/2) DBS = 15; // come out
                    }
                    settings1->DATA_BIN_SIZE = DATA_BIN_SIZE_tmp;
@@ -712,7 +714,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                //N_noise = (stations[i].max_arrival_time - stations[i].min_arrival_time)/settings1->TIMESTEP;
                N_noise = (int)( max_total_bin / settings1->DATA_BIN_SIZE ) + 1;
                //cout<<"N_noise : "<<N_noise<<endl;
-               if (N_noise > 1) cout<<"N_noise : "<<N_noise<<" might cause error!!"<<endl;
+               if (N_noise > 1) cout<<"N_noise : "<<N_noise<<" max_total_bin : "<<max_total_bin<<" might cause error!!"<<endl;
                // mostly N_noise should be "1"
 
                // now, check the number of bins we need for portion of noise waveforms

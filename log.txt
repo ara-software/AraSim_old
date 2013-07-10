@@ -896,3 +896,13 @@ make -f M.readGeom
 
 
 ===============================================================================
+
+
+07/10/13 E. Hong;
+
+Fixed some minor parts in Report, Trigger classes.
+Changed the maximum allowed DATA_BIN_SIZE to 32768 (double as before which can handle ~ 16 us with 0.5ns TIMESTEP)
+
+
+===============================================================================
+
