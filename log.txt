@@ -906,3 +906,16 @@ Changed the maximum allowed DATA_BIN_SIZE to 32768 (double as before which can h
 
 ===============================================================================
 
+07/11/13 E. Hong;
+
+Fixed bug in case using NFOUR bigger than 1024.
+The bug occured when storing waveform in data structure (UsefulIcrrStationEvents) with bigger than 512 bin.
+
+With this version, AraSim will see if NFOUR/2 is bigger than 512 or not.
+And if NFOUR/2 is bigger than 512, only store the first 512 bins for UsefulIcrrStationEvents.
+(to keep same structure base with AraRoot)
+
+V_mimic, time_mimic arrays will just use NFOUR/2 as a size of array (not affected by 512 bin size limit)
+
+
+===============================================================================

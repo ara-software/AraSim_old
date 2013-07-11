@@ -519,6 +519,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                    MakeArraysforFFT(settings1, detector, i, stations[i].strings[j].antennas[k].VHz_filter[ray_sol_cnt], volts_forfft);
 
 
+
                                    // save freq domain array which is prepaired for realft
                                    for (int n=0; n<settings1->NFOUR/2; n++) {
                                        stations[i].strings[j].antennas[k].Vfft[ray_sol_cnt].push_back( volts_forfft[n] );
@@ -1355,14 +1356,20 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                            int AraRootChannel = 0;
                            AraRootChannel = detector->GetChannelfromStringAntenna (i, string_i, antenna_i, settings1);
 
-                           for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
+                           int UsefulEventBin;
+                           if ( settings1->NFOUR/2 < EFFECTIVE_LAB3_SAMPLES*2) UsefulEventBin = settings1->NFOUR/2;
+                           else UsefulEventBin = EFFECTIVE_LAB3_SAMPLES*2;
+
+                           //for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
+                           for (int mimicbin=0; mimicbin<UsefulEventBin; mimicbin++) {
                                theUsefulEvent->fVoltsRF[AraRootChannel-1][mimicbin] = stations[i].strings[string_i].antennas[antenna_i].V_mimic[mimicbin];
                                //theUsefulEvent->fTimesRF[AraRootChannel-1][mimicbin] = double(stations[i].strings[string_i].antennas[antenna_i].time[mimicbin])*settings1->TIMESTEP*1.0E9;
                                theUsefulEvent->fTimesRF[AraRootChannel-1][mimicbin] = stations[i].strings[string_i].antennas[antenna_i].time_mimic[mimicbin];
                                //cout << theUsefulEvent->fVoltsRF[ch_loop][mimicbin] << endl;
                                //cout << theUsefulEvent->fTimesRF[ch_loop][mimicbin] <<endl;
                            }
-                           theUsefulEvent->fNumPointsRF[ch_loop] = EFFECTIVE_SAMPLES * 2;
+                           //theUsefulEvent->fNumPointsRF[ch_loop] = EFFECTIVE_SAMPLES * 2;
+                           theUsefulEvent->fNumPointsRF[ch_loop] = UsefulEventBin;
                            //cout << " : " << theUsefulEvent->fNumPointsRF[ch_loop] << endl;
 
                        }
@@ -1383,13 +1390,20 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                            int antenna_i = detector->getAntennafromArbAntID( i, ch_loop);
                            int AraRootChannel = 0;
                            AraRootChannel = detector->GetChannelfromStringAntenna (i, string_i, antenna_i, settings1);
-                           for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
+
+                           int UsefulEventBin;
+                           if ( settings1->NFOUR/2 < EFFECTIVE_LAB3_SAMPLES*2) UsefulEventBin = settings1->NFOUR/2;
+                           else UsefulEventBin = EFFECTIVE_LAB3_SAMPLES*2;
+
+                           //for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
+                           for (int mimicbin=0; mimicbin<UsefulEventBin; mimicbin++) {
                                theUsefulEvent->fVoltsRF[AraRootChannel-1][mimicbin] = 0;
                                theUsefulEvent->fTimesRF[AraRootChannel-1][mimicbin] = 0;
                                //cout << theUsefulEvent->fVoltsRF[ch_loop][mimicbin] << endl;
                                //cout << theUsefulEvent->fTimesRF[ch_loop][mimicbin] <<endl;
                            }
-                           theUsefulEvent->fNumPointsRF[ch_loop] = EFFECTIVE_SAMPLES * 2;
+                           //theUsefulEvent->fNumPointsRF[ch_loop] = EFFECTIVE_SAMPLES * 2;
+                           theUsefulEvent->fNumPointsRF[ch_loop] = UsefulEventBin;
                        }
                    }
                }    // while trig_i
