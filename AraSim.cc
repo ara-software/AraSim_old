@@ -706,8 +706,8 @@ double cur_posnu_z;
    //
    else if (settings1->INTERACTION_MODE==0) {
        double IceSurf;
-       IceSurf = 2. * PI * icemodel->R_EARTH * (1. - cos(icemodel->GetCOASTLINE()*RADDEG) );
-       cout<<"total IceSurf : "<<IceSurf<<endl;
+       IceSurf = 2. * PI * icemodel->R_EARTH * icemodel->R_EARTH * (1. - cos(icemodel->GetCOASTLINE()*RADDEG) );
+       cout<<"total IceSurf : "<<IceSurf<<" m2"<<endl;
 
        double Aeff_test;
 
@@ -731,8 +731,8 @@ double cur_posnu_z;
        error_minus = IceSurf * PI * error_minus / (double)(settings1->NNU);
 
 
-       cout<<"test Aeff : "<<Aeff_test<<" m3sr, "<<Aeff_test*1.E-9<<" km3sr"<<endl;
-       cout<<"And Aeff error plus : "<<error_plus*1.E-9<<" and error minus : "<<error_minus*1.E-9<<endl;
+       cout<<"test Aeff : "<<Aeff_test<<" m2sr, "<<Aeff_test*1.E-6<<" km2sr"<<endl;
+       cout<<"And Aeff error plus : "<<error_plus*1.E-6<<" and error minus : "<<error_minus*1.E-6<<endl;
    }
 
 

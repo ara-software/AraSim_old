@@ -669,10 +669,14 @@ Interaction::Interaction (double pnu, string nuflavor, int &n_interactions, IceM
         //Interaction::PickUnbiased( antarctica );
         
         pickposnu = 0;
+        /*
         //  try PickUnbiased until it founds usable posnu
         while (pickposnu==0) {
             PickUnbiased( antarctica );
         }
+        */
+        //  try PickUnbiased just once, no matter pickposnu == 0 or 1
+        PickUnbiased( antarctica );
 
     }
     else if (settings1->INTERACTION_MODE == 1) {   // for picknear. posnu will be only near by ARA core

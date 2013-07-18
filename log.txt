@@ -919,3 +919,14 @@ V_mimic, time_mimic arrays will just use NFOUR/2 as a size of array (not affecte
 
 
 ===============================================================================
+
+07/17/13 E. Hong;
+
+Trying modified INTERACTION_MODE=0 (Aeff direct calculation mode) code.
+Upto previous version, AraSim searched neutrino events which actually successfully chose posnu (ex. meet the ice).
+However, to avoid the bias (or to use PI as solid angle for neutrino injection), we need to count all possible events that have been tried.
+
+We will test with this version and see if the results make sense.
+
+===============================================================================
+
