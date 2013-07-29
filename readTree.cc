@@ -301,7 +301,8 @@ cout<<"nnu x : "<<event->Nu_Interaction[0].nnu.GetX()<<endl;
 
 
           //if (pass_evts%50 == 0) {
-          if (pass_evts% (total_evt/num_plots) == 0) {
+          //if (pass_evts% (total_evt/num_plots) == 0) {
+          if (pass_evts < num_plots ) {
 
                   sstr.str("");
                   sstr<<"./outputs/plots/WF_AraOut.event"<<inu<<".pdf";
