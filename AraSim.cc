@@ -244,7 +244,8 @@ cout<<"called RaySolver"<<endl;
 
     TTree *eventTree;
     eventTree = new TTree("eventTree","Tree of ARA Events");
-    eventTree->Branch("event",&theEvent);
+    //eventTree->Branch("event",&theEvent);
+    eventTree->Branch("UsefulARAStationEvent",&theEvent);
 
 
 cout<<"will call secondaries"<<endl;
@@ -254,6 +255,7 @@ cout<<"will call signal"<<endl;
 Signal *signal = new Signal (settings1);
 signal->SetMedium(0);   // set medium as ice
 cout<<"finish calling secondaries and signal"<<endl;
+
 
 
 
@@ -396,7 +398,14 @@ double cur_posnu_z;
        
        check_station_DC = 0;
 
-       std::cerr<<"*";
+       if ( settings1->DEBUG_MODE_ON==0 ) {
+           std::cerr<<"*";
+
+           if ( Events_Thrown%1000 == 0 )
+               cout<<"Thrown "<<Events_Thrown<<endl;
+       }
+
+
 
        //event = new Event ( settings1, spectra, primary1, icemodel, detector, signal, sec1 );
        event = new Event ( settings1, spectra, primary1, icemodel, detector, signal, sec1, inu );
@@ -433,7 +442,9 @@ double cur_posnu_z;
            // connect Interaction class (nu interaction with ice) and Detector class (detector properties and layout)
            // save signal, noise at each antennas to Report class
            //report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1, trigger);
-           report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1, trigger, theEvent);
+           //report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1, trigger, theEvent);
+           //report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1, trigger, theEvent, inu);
+           report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1, trigger, theEvent, Events_Thrown);
            
            
 
@@ -481,6 +492,9 @@ double cur_posnu_z;
                        count1->incrementEventsFound( event->Nu_Interaction[0].weight, event );
                    }
                    else if (settings1->INTERACTION_MODE==0) {
+                       count1->incrementEventsFound( event->Nu_Interaction[0].probability, event );
+                   }
+                   else if (settings1->INTERACTION_MODE==3) {
                        count1->incrementEventsFound( event->Nu_Interaction[0].probability, event );
                    }
 
@@ -617,6 +631,7 @@ double cur_posnu_z;
  delete theEvent;
 
 
+
   } // end loop over neutrinos
 
     settings1->NNU = Events_Thrown;
@@ -657,6 +672,9 @@ double cur_posnu_z;
        weight_file << "Total_Weight="<<Total_Weight<<endl;
    }
    else if (settings1->INTERACTION_MODE==0) {
+       weight_file << "Total_Probability="<<Total_Probability<<endl;
+   }
+   else if (settings1->INTERACTION_MODE==3) {
        weight_file << "Total_Probability="<<Total_Probability<<endl;
    }
 
@@ -734,6 +752,41 @@ double cur_posnu_z;
        cout<<"test Aeff : "<<Aeff_test<<" m2sr, "<<Aeff_test*1.E-6<<" km2sr"<<endl;
        cout<<"And Aeff error plus : "<<error_plus*1.E-6<<" and error minus : "<<error_minus*1.E-6<<endl;
    }
+
+
+   // if using picknearunbiased method
+   //
+   else if (settings1->INTERACTION_MODE==3) {
+       double SphereSurf;
+       SphereSurf = 4. * PI * settings1->PICKNEARUNBIASED_R * settings1->PICKNEARUNBIASED_R;
+       cout<<"total SphereSurf : "<<SphereSurf<<" m2"<<endl;
+
+       double Aeff_test;
+
+       // error bar for weight
+       double error_plus = 0;
+       double error_minus = 0;
+       Counting::findErrorOnSumWeights( count1->eventsfound_binned, error_plus, error_minus );
+
+       /*
+       Aeff_test = IceSurf * PI * Total_Probability / (double)(settings1->NNU);
+
+       // account all factors to error
+       error_plus = IceSurf * PI * error_plus / (double)(settings1->NNU);
+       error_minus = IceSurf * PI * error_minus / (double)(settings1->NNU);
+       */
+
+       Aeff_test = SphereSurf * PI * Total_Probability / (double)(settings1->NNU);
+
+       // account all factors to error
+       error_plus = SphereSurf * PI * error_plus / (double)(settings1->NNU);
+       error_minus = SphereSurf * PI * error_minus / (double)(settings1->NNU);
+
+
+       cout<<"test Aeff : "<<Aeff_test<<" m2sr, "<<Aeff_test*1.E-6<<" km2sr"<<endl;
+       cout<<"And Aeff error plus : "<<error_plus*1.E-6<<" and error minus : "<<error_minus*1.E-6<<endl;
+   }
+
 
 
 //--------------------------------------------------

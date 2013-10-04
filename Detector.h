@@ -131,7 +131,8 @@ class Antenna : public Position {
 
     int manual_delay_bin;   // to fit the waveform to actual TestBed waveform, added manual delay bin
     
-    double GetG(Detector *D, double freq, double theta, double phi);    // read gain value from Detector class
+    double GetG(Detector *D, double freq, double theta, double phi);    // read gain value from Detector class, return 2-D interpolated value
+
 
     //ClassDef(Antenna,1);
     ClassDef(Antenna,3);
@@ -197,12 +198,15 @@ class Detector {
         void ReadVgain(string filename);
         void ReadHgain(string filename);
         double Vgain[freq_step_max][ang_step_max];
+        double Vphase[freq_step_max][ang_step_max];
         double Hgain[freq_step_max][ang_step_max];
+        double Hphase[freq_step_max][ang_step_max];
         double Freq[freq_step_max];
 
         void ReadFilter(string filename, Settings *settings1);
         double FilterGain[freq_step_max];   // Filter gain (dB) for Detector freq bin array
         vector <double> FilterGain_databin;   // Filter gain (dB) for DATA_BIN_SIZE bin array
+        vector <double> FilterGain_NFOUR;   // Filter gain (dB) for NFOUR bin array
 
 
 
@@ -210,11 +214,22 @@ class Detector {
         void ReadPreamp(string filename, Settings *settings1);
         double PreampGain[freq_step_max];   // Filter gain (dB) for Detector freq bin array
         vector <double> PreampGain_databin;   // Filter gain (dB) for DATA_BIN_SIZE bin array
+        vector <double> PreampGain_NFOUR;   // Filter gain (dB) for NFOUR bin array
 
 
         void ReadFOAM(string filename, Settings *settings1);
         double FOAMGain[freq_step_max];   // Filter gain (dB) for Detector freq bin array
         vector <double> FOAMGain_databin;   // Filter gain (dB) for DATA_BIN_SIZE bin array
+        vector <double> FOAMGain_NFOUR;   // Filter gain (dB) for NFOUR bin array
+
+
+        void ReadElectChain(string filename, Settings *settings1);
+        double ElectGain[freq_step_max];   // Elect chain gain (unitless) for Detector freq bin array
+        double ElectPhase[freq_step_max];   // Elect chain phase (rad) for Detector freq bin array
+        vector <double> ElectGain_databin;   // Elect gain (unitless) for DATA_BIN_SIZE bin array
+        vector <double> ElectPhase_databin;   // Elect phase (rad) for DATA_BIN_SIZE bin array
+        vector <double> ElectGain_NFOUR;   // Elect gain (unitless) for NFOUR bin array
+        vector <double> ElectPhase_NFOUR;   // Elect phase (rad) for NFOUR bin array
 
 
 
@@ -259,14 +274,38 @@ class Detector {
 
         double GetGain(double freq, double theta, double phi, int ant_m, int ant_o);    //read antenna gain at certain angle, certain type, and certain orientation
         double GetGain(double freq, double theta, double phi, int ant_m);   //read antenna gain at certain angle, certain type. (orientation : default)
+
+        double GetGain_1D(double freq, double theta, double phi, int ant_m);   //read antenna gain at certain angle, certain type. (orientation : default) and use 1-D interpolation to get gain
+
+        double GetGain_1D_OutZero(double freq, double theta, double phi, int ant_m);   //read antenna gain at certain angle, certain type. (orientation : default) and use 1-D interpolation to get gain, if freq bigger than freq range, return 0 gain
+
+        double GetAntPhase(double freq, double theta, double phi, int ant_m); // return antenna phase with 2-D interpolation
+
+        double GetAntPhase_1D(double freq, double theta, double phi, int ant_m); // return antenna phase with 1-D interpolation
+
+
         double GetFilterGain(int bin) { return FilterGain[bin]; }   // same bin with Vgain, Hgain
         double GetFilterGain_databin(int bin) { return FilterGain_databin[bin]; }   // bin for FFT
+        double GetFilterGain_NFOUR(int bin) { return FilterGain_NFOUR[bin]; }   // bin for FFT
+
+        double GetFilterGain_1D_OutZero(double freq); // interpolated output, with outside band returns zero
 
         double GetPreampGain(int bin) { return PreampGain[bin]; }   // same bin with Vgain, Hgain
         double GetPreampGain_databin(int bin) { return PreampGain_databin[bin]; }   // bin for FFT
+        double GetPreampGain_NFOUR(int bin) { return PreampGain_NFOUR[bin]; }   // bin for FFT
+        double GetPreampGain_1D_OutZero(double freq);
 
         double GetFOAMGain(int bin) { return FOAMGain[bin]; }   // same bin with Vgain, Hgain
         double GetFOAMGain_databin(int bin) { return FOAMGain_databin[bin]; }   // bin for FFT
+        double GetFOAMGain_NFOUR(int bin) { return FOAMGain_NFOUR[bin]; }   // bin for FFT
+        double GetFOAMGain_1D_OutZero(double freq);
+
+        double GetElectGain(int bin) { return ElectGain[bin]; }   // same bin with Vgain, Hgain
+        double GetElectGain_databin(int bin) { return ElectGain_databin[bin]; }   // bin for FFT
+        double GetElectGain_NFOUR(int bin) { return ElectGain_NFOUR[bin]; }   // bin for FFT
+        double GetElectGain_1D_OutZero(double freq);
+        double GetElectPhase_1D(double freq);
+
 
 
         double GetRFCMGain(int ch, int bin) { return RFCM_TB_ch[ch][bin]; }   // same bin with Vgain, Hgain
@@ -323,6 +362,8 @@ class Detector {
         void ReadPreamp_New(Settings *settings1);    // get filter vector array with new DATA_BIN_SIZE 
 
         void ReadFOAM_New(Settings *settings1);    // get filter vector array with new DATA_BIN_SIZE 
+
+        void ReadElectChain_New(Settings *settings1);    // get elect chain vector array with new DATA_BIN_SIZE 
 
         void ReadRFCM_New(Settings *settings1);    // get filter vector array with new DATA_BIN_SIZE 
 

@@ -266,6 +266,9 @@ class Interaction  {
   void PickNear(IceModel *antarctica, Detector *detector, Settings *settings1);
     void PickExact(IceModel *antarctica, Detector *detector, Settings *settings1, double R, double Theta, double Phi);
 
+    int PickNearUnbiased (IceModel *antarctica, Detector *detector, Settings *settings1);
+
+
     // end move from IceModel
   //
 
@@ -338,6 +341,25 @@ static const double banana_signal_fluct;//Turn off noise for banana plots (setti
   string  current;                    //  CC or NC?
   int currentint;                 // Ditto - Stephen
   
+
+
+
+  // values required for t-domain signal mode
+  vector <double> shower_depth_m; // shower depth array in meters
+  vector <double> shower_Q_profile; // shower charge excess array
+  double LQ; // integrated charge excess
+  //
+  //
+  vector <double> EM_shower_depth_m; // EM shower depth array in meters
+  vector <double> EM_shower_Q_profile; // EM shower charge excess array
+  double EM_LQ; // integrated charge excess
+
+  vector <double> HAD_shower_depth_m;
+  vector <double> HAD_shower_Q_profile;
+  double HAD_LQ;
+
+  int primary_shower; // 0 or EM, 1 for HAD. set by emfrac, hadfrac
+
   
   /*
 

@@ -183,6 +183,30 @@ outputdir="outputs"; // directory where outputs go
 
     ONLY_PASSED_EVENTS = 0;
     NNU_PASSED = 0;
+
+    PICKNEARUNBIASED_R = 5000.; // radius of the sphere when we use INTERACTION_MODE=3
+
+
+    SHOWER_MODE = 2; // EM (0) or HAD (1) shower in t-domain signal. or either one which is bigger (2)  default : either one which is bigger
+
+    SHOWER_STEP = 0.001; // step size in generating shower profile. default 0.001 m
+
+    SHOWER_PARAM_MODEL = 0; // choose shower profile parameters (by Jaime fit = 0, or Carl's fit = 1). default = 0
+
+    OFFCONE_LIMIT = 10.; // offcone angle (deg) limit to calculate time domain signal. Increasing this value will result in drametically increase computation time
+
+    ALL_ANT_V_ON = 0; // use Vpol antenna gain for both Vpol and Hpol = 1, use Hpol gain for Hpol model = 0
+
+
+    DEBUG_MODE_ON = 0; // 0 : off (do as usual), 1 : on (skip most of intensive computational process which don't have random generations)
+
+    DEBUG_SKIP_EVT = 0; // when DEBUG_MODE_ON = 1, skip upto this number and then do as DEBUG_MODE_ON = 0
+
+
+    V_SATURATION = 0.7; // saturated voltage +-V_SATURATION
+
+
+
 }
 
 void Settings::ReadFile(string setupfile) {
@@ -406,6 +430,33 @@ void Settings::ReadFile(string setupfile) {
               else if (label == "NNU_PASSED") {
                   NNU_PASSED = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
               }
+              else if (label == "PICKNEARUNBIASED_R") {
+                  PICKNEARUNBIASED_R = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "SHOWER_MODE") {
+                  SHOWER_MODE = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "SHOWER_STEP") {
+                  SHOWER_STEP = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "SHOWER_PARAM_MODEL") {
+                  SHOWER_PARAM_MODEL = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "ALL_ANT_V_ON") {
+                  ALL_ANT_V_ON = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "DEBUG_MODE_ON") {
+                  DEBUG_MODE_ON = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "DEBUG_SKIP_EVT") {
+                  DEBUG_SKIP_EVT = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "V_SATURATION") {
+                  V_SATURATION = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "OFFCONE_LIMIT") {
+                  OFFCONE_LIMIT = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
           }
       }
       setFile.close();
@@ -443,7 +494,7 @@ int Settings::CheckCompatibilities(Detector *detector) {
         }
         else if (NOISE_TEMP_MODE == 1) {// each chs will have separate noise waveforms
             if (NOISE_EVENTS > 1) { // this case 1 waveform is enough for each channels
-                cerr<<"NOISE_EVENTS too many! With NOISE_WAVEFORM_GENERATE_MODE==0 and NOISE_TEMP_MODE==1, just use NOISE_EVENT=1"<<endl;
+                cerr<<"NOISE_EVENTS too many! With NOISE_WAVEFORM_GENERATE_MODE==0 and NOISE_TEMP_MODE==1, just use NOISE_EVENTS=1"<<endl;
                 num_err++;
             }
         }

@@ -7,7 +7,11 @@
 //#include "position.hh"
 #include "Position.h"
 #include "Settings.h"
+#include "Event.h"
 #include <fstream>
+
+#include "TCanvas.h"
+#include "TGraph.h"
 
 
 #include "Constants.h"
@@ -655,3 +659,460 @@ double vmmhz1m_had=0; // V/m/MHz at 1m due to HAD component of shower
 
 
 } //TaperVmMHz
+
+
+
+// for t-domain signal generation,
+// first we need to generate shower profile
+//
+void Signal::GetShowerProfile(double E_shower, // energy of shower
+                            int shower_mode, // 0 : EM shower, 1 : HAD shower 
+                            double shower_step_m, // shower step in meters
+                            int param_model, // 0 : Jaime's fit, 1 : Carl's fit
+                            //int q_excess_model, // 0 : const 25% (only option now)
+
+                            std::vector <double> &depth, // shower depth array, output
+                            std::vector <double> &Q_shower, // shower charge excess profile, output
+                            double &LQ // integrated Q_shower
+        ) {
+
+
+
+    // reset all output vectors
+    depth.clear();
+    Q_shower.clear();
+
+
+
+  // fit parameters
+  double params[5];
+
+  double X_0_const = 36.08;
+  double X_max;
+  double X_max_m;
+
+  // if we use our fit parameters
+  if ( param_model == 1 ) { 
+
+      // EM shower case
+      if ( shower_mode == 0 ) {
+          params[0] = 0.168971; // S_0
+          params[1] = 37.5961; // X_0
+          params[2] = 59.9807; // lambda
+          params[3] = 0.158426; // E_c
+          //params[4] = pow(10, E_shower - 9. ); // shower energy E_0 in GeV
+          params[4] = E_shower/1.e9; // shower energy E_0 in GeV
+
+          X_max = params[1]*log(params[4]/params[3]); // in g/cm2
+          X_max_m = X_max/0.917/100.; // in m
+      }
+
+
+      // Hadronic shower case
+      else if ( shower_mode == 1 ) {
+          params[0] = 0.1261; // S_0
+          params[1] = 39.62; // X_0
+          params[2] = 73.98; // lambda
+          params[3] = 0.1691; // E_c
+          //params[4] = pow(10, E_shower - 9. ); // shower energy E_0 in GeV
+          params[4] = E_shower/1.e9; // shower energy E_0 in GeV
+
+          X_max = params[1]*log(params[4]/params[3]);
+          X_max_m = X_max/0.917/100.; // in m
+      }
+
+  }
+
+  // if we use Jaime's fit parameters
+  else if ( param_model == 0 ) { 
+
+      // EM shower case
+      if ( shower_mode == 0 ) {
+          params[0] = 0.073; // E_c
+          //params[1] = pow(10, E_shower - 9. ); // shower energy E_0 in GeV
+          params[1] = E_shower/1.e9; // shower energy E_0 in GeV
+
+          X_max = X_0_const*log(params[1]/params[0]); // not correct but just a approx.
+          X_max_m = X_max/0.917/100.; // in m
+      }
+
+
+      // Hadronic shower case
+      else if ( shower_mode == 1 ) {
+          params[0] = 0.11842; // S_0
+          params[1] = 39.562; // X_0
+          params[2] = 113.03; // lambda
+          params[3] = 0.17006; // E_c
+          //params[4] = pow(10, E_shower - 9. ); // shower energy E_0 in GeV
+          params[4] = E_shower/1.e9; // shower energy E_0 in GeV
+
+          X_max = params[1]*log(params[4]/params[3]);
+          X_max_m = X_max/0.917/100.; // in m
+      }
+
+  }
+
+
+  int downflag = 0; // after X_max
+  double currentN = 0;
+
+  int steps = 0;
+  int steps_limit = 100000;
+
+  double shower_step_gcm2 = shower_step_m * 1.e2 * 0.917; // g/cm2
+  double shower_step_gcm2_X0factor = shower_step_gcm2 / X_0_const; // in unit of radiation length
+
+  //double gcm2_tmp = 0.;
+  double gcm2_tmp = shower_step_gcm2_X0factor; // don't start with zero
+
+  LQ = 0.;
+
+
+  while (downflag==0 || currentN>100) {
+
+      //gcm2.push_back( gcm2_tmp * X_0_const ); // gcm2 is in unit of g/cm2
+
+      if ( param_model == 0 && shower_mode == 0 ) {
+          currentN = Greisen(gcm2_tmp, params); // input value gcm2_tmp is in unit of radiation length
+      }
+      else {
+          currentN = GaisserHillas(gcm2_tmp, params);
+      }
+          
+      //if (currentN < 1) currentN = 0;
+      if (currentN < 4) currentN = 0; // 4 total = 1 excess
+
+      // currently just apply 25% const factor for charge excess
+      Q_shower.push_back( currentN * 0.25 );
+      LQ += currentN * 0.25;
+
+      depth.push_back( gcm2_tmp*X_0_const/0.917/100. ); // 0.917 for ice density, 100 for cm to m
+
+
+
+      if (downflag==0 && depth[steps] > X_max_m ) downflag = 1; // now we are going down in shower profile
+
+      if (steps > steps_limit) break; // if steps go too long, come out from while loop
+      
+
+      gcm2_tmp += shower_step_gcm2_X0factor;
+      steps++;
+  }
+
+  //cout<<"E_shower : "<<E_shower<<" steps : "<<steps<<endl;
+
+
+
+}// GetShowerProfile
+
+
+
+
+double Signal::GaisserHillas(double x_in, double *par) {
+
+        double X_max = par[1]*log(par[4]/par[3]);
+        
+        double S_0 = par[0];
+        double X_0 = par[1];
+        double lambda = par[2];
+        double E_c = par[3];
+        double E_0 = par[4];
+    
+        const double X_0_const = 36.08; // factor to change input x_in (unit of raidation) to g/cm2 unit
+    
+        double value = S_0*E_0/E_c * (X_max-lambda)/X_max * exp(X_max/lambda-1) * pow(x_in * X_0_const / (X_max - lambda), X_max/lambda) * exp( -1 * x_in * X_0_const / lambda);
+    
+        return value;
+
+}
+            
+
+double Signal::Greisen(double x_in, double *par) {
+
+        double E_c = par[0];
+        double E_0 = par[1];
+
+        // fit parameter is in unit of radiation length
+        double value =  0.31/sqrt( log(E_0/E_c) )*exp( x_in-1.5*x_in*log( (3.*x_in)/(x_in+2.*log(E_0/E_c)) ) );
+    
+        return value;
+
+}
+
+
+
+//void Signal::GetVm_FarField_Tarray( Event *event, Settings *settings1, double viewangle, double atten_factor, int outbin, double *Tarray, double *Earray ) {
+void Signal::GetVm_FarField_Tarray( Event *event, Settings *settings1, double viewangle, double atten_factor, int outbin, double *Tarray, double *Earray, int &skip_bins ) {
+
+
+    //if ( fabs(viewangle - changle_ice) <= 10.*RADDEG ) {
+        //cout<<"NC";
+
+
+    double sin_view = sin(viewangle);
+    double cos_view = cos(viewangle);
+    double sin_changle = sin(changle_ice);
+
+    double offcone_factor = 1.-nice*cos_view;
+
+
+    //double c_ns = 2.998e-1; // speed of light in m/ns
+    double c_ns = CLIGHT *1.e-9; // speed of light in m/ns 
+
+    double Const;
+
+    double Integrate = 0.;
+
+    double V_s;
+    //double param_RA[6];
+    double param_RA[8];
+
+    int shower_bin;
+
+    double E_shower;
+
+    // if EM shower only 
+    //if ( settings1->SHOWER_MODE == 0 ) {
+    if ( event->Nu_Interaction[0].primary_shower == 0 ) {
+
+        V_s = -4.5e-14;
+        param_RA[0] = 0.057;
+        param_RA[1] = 2.87;
+        param_RA[2] = -3.;
+
+        param_RA[3] = -0.03;
+        param_RA[4] = -3.05;
+        param_RA[5] = -3.5;
+
+        E_shower = event->pnu*event->Nu_Interaction[0].emfrac;
+
+        Const = sin_view / sin_changle * 1./event->Nu_Interaction[0].LQ * (V_s) * E_shower / 1.e12;
+
+        shower_bin = event->Nu_Interaction[0].shower_Q_profile.size();
+
+        // do integration
+        //
+
+    }
+
+    // if HAD shower only 
+    //else if ( settings1->SHOWER_MODE == 1 ) {
+    else if ( event->Nu_Interaction[0].primary_shower == 1 ) {
+
+        V_s = -3.2e-14;
+        param_RA[0] = 0.043;
+        param_RA[1] = 2.92;
+        param_RA[2] = -3.21;
+
+        param_RA[3] = -0.065;
+        param_RA[4] = -3.00;
+        param_RA[5] = -2.65;
+
+        E_shower = event->pnu*event->Nu_Interaction[0].emfrac;
+
+        Const = sin_view / sin_changle * 1./event->Nu_Interaction[0].LQ * (V_s) * E_shower / 1.e12;
+
+        shower_bin = event->Nu_Interaction[0].shower_Q_profile.size();
+
+        // do integration
+        //
+
+    }
+
+
+    //cout<<"Const : "<<Const<<" viewangle : "<<viewangle*DEGRAD<<" E_shower : "<<E_shower<<endl;
+
+
+    // ok, let's just calculate near signal time bins
+    //
+    double shower_dt = (settings1->SHOWER_STEP * shower_bin) / c_ns; // shower time length in ns
+
+    double test_signal_window = fabs(offcone_factor) * shower_dt * 1.2 + 2.; // additional 2 ns for changle_ice case, 20% additional time
+
+    // we also have to calculate when the window should start
+    double test_signal_Tinit = offcone_factor * shower_dt/2. - test_signal_window/2.;
+
+    // now let's try with constant number of time bins
+    //int test_T_bin = 50; -> now it's outbin
+
+    // then we can decide the time step of the signal waveform
+    double test_dT = test_signal_window / (double)outbin;
+
+
+
+
+    // we need to shift random amount of time in Tinit
+    //test_signal_Tinit += gRandom->Rndm() * test_dT;
+
+
+
+    // calculate new integrate step in z (meters) depending on offcone angle set 10deg off is the maximum case and use default step in that case
+    double test_shower_step;
+    if ( offcone_factor == 0 ) test_shower_step = 1.;
+    else test_shower_step = 5.e-4 / fabs( offcone_factor );
+
+    if ( test_shower_step > 1.) test_shower_step = 1.; // maximum value is 1m step
+    //int skip_bins = (int)( test_shower_step / settings1->SHOWER_STEP );
+    skip_bins = (int)( test_shower_step / settings1->SHOWER_STEP );
+
+    // test
+    if ( skip_bins < 1 ) skip_bins = 1;
+
+    test_shower_step = skip_bins * settings1->SHOWER_STEP;
+
+    //int new_shower_bin = (int)( (settings1->SHOWER_STEP * shower_bin) / test_shower_step); // new number of bins for shower profile
+    int new_shower_bin = (int)( shower_bin / skip_bins ); // new number of bins for shower profile
+
+    int mid_old_bin;
+
+
+
+
+
+    double Tterm;
+
+    // do integration
+    //
+    for (int tbin=0; tbin<outbin; tbin++) {
+
+        Tarray[tbin] = test_signal_Tinit + (double)tbin*test_dT; // in ns
+        //cout<<" Tarray["<<tbin<<"] : "<<Tarray[tbin];
+
+        Integrate = 0.;
+
+
+        //for (int bin=0; bin<shower_bin-1; bin++) {
+        for (int bin=0; bin<new_shower_bin-2; bin++) {
+
+            mid_old_bin = bin*skip_bins;
+
+            //Tterm = Tarray[tbin] - (0.5+(double)bin)*settings1->SHOWER_STEP * ( (1.-nice*cos(angle))/c_ns );
+            //Tterm = Tarray[tbin] - event->Nu_Interaction[0].shower_depth_m[bin] * ( (1.-nice*cos(viewangle))/c_ns );
+            Tterm = Tarray[tbin] - event->Nu_Interaction[0].shower_depth_m[mid_old_bin] * ( offcone_factor/c_ns );
+
+            //if ( event->Nu_Interaction[0].shower_Q_profile[bin]<=0) {
+            if ( event->Nu_Interaction[0].shower_Q_profile[mid_old_bin]<=0) {
+                Integrate += 0.;
+            }
+            else {
+
+                //Integrate += -1.*(event->Nu_Interaction[0].shower_Q_profile[bin]) * Param_RE_Tterm(Tterm, param_RA);
+                //Integrate += -1.*(event->Nu_Interaction[0].shower_Q_profile[mid_old_bin]) * Param_RE_Tterm(Tterm, param_RA);
+                Integrate += -1.*(event->Nu_Interaction[0].shower_Q_profile[mid_old_bin]) * Param_RE_Tterm_approx(Tterm, param_RA);
+            }
+
+        }
+
+        //Earray[tbin] = Const * Integrate * atten_factor;
+        //Earray[tbin] = Const * Integrate;
+        Earray[tbin] = Const * Integrate * skip_bins * atten_factor;
+        //cout<<" Earray["<<tbin<<"] : "<<Earray[tbin];
+
+    }
+
+
+
+        /*
+   TCanvas *cEout = new TCanvas("cEout","",800,600);
+   TGraph *gEout = new TGraph (outbin, Tarray, Earray);
+   cEout->cd();
+   gEout->Draw("al");
+   cEout->Print("Eout.pdf");
+   delete cEout;
+   delete gEout;
+   */
+
+
+
+
+        /*
+    }// if near cone
+    else {
+    for (int tbin=0; tbin<outbin; tbin++) {
+        Tarray[tbin] = (double)tbin;
+        Earray[tbin] = 0.;
+    }
+    }
+    */
+
+
+}
+
+
+
+
+
+double Signal::Param_RE_Tterm(double Tterm, double *par) {
+
+    double value;
+
+    // time after Che angle peak
+    if (Tterm > 0.) {
+
+        value = ( -1./par[0]*exp(-1.*Tterm/par[0]) + par[2]*par[1]*pow( 1.+par[1]*Tterm, par[2]-1. ) ) * 1.e9; // last 1.e9 for dA/dns to dA/ds
+    }
+    
+    // time before Che angle peak
+    else {
+
+        value = ( -1./par[3]*exp(-1.*Tterm/par[3]) + par[5]*par[4]*pow( 1.+par[4]*Tterm, par[5]-1. ) ) * 1.e9; // last 1.e9 for dA/dns to dA/ds
+    }
+
+    return value;
+
+}
+
+
+
+
+
+double Signal::Param_RE_Tterm_approx(double Tterm, double *par) {
+
+    double value = 0.;
+
+    // time after Che angle peak
+    if (Tterm > 0.) {
+
+        if ( fabs(Tterm/par[0]) < 1.e-2) {
+
+            value += -1./par[0]*(1. - Tterm/par[0] + Tterm*Tterm/(par[0]*par[0]*2.) - Tterm*Tterm*Tterm/(par[0]*par[0]*par[0]*6.) );
+        }
+        else {
+            value += -1./par[0]*exp(-1.*Tterm/par[0]);
+        }
+
+        if ( fabs(Tterm*par[1]) < 1.e-2) {
+
+            value += par[2]*par[1]*( 1.+(par[2]-1.)*par[1]*Tterm + (par[2]-1.)*(par[2]-1.-1.)/2.*par[1]*par[1]*Tterm*Tterm + (par[2]-1.)*(par[2]-1.-1.)*(par[2]-1.-2.)/6.*par[1]*par[1]*par[1]*Tterm*Tterm*Tterm );
+        }
+        else {
+            value += par[2]*par[1]*pow( 1.+par[1]*Tterm, par[2]-1. );
+        }
+
+    }
+    
+    // time before Che angle peak
+    else {
+
+        if ( fabs(Tterm/par[3]) < 1.e-2 ) {
+            
+            value += -1./par[3]*(1. - Tterm/par[3] + Tterm*Tterm/(par[3]*par[3]*2.) - Tterm*Tterm*Tterm/(par[3]*par[3]*par[3]*6.) );
+        }
+        else {
+            value += -1./par[3]*exp(-1.*Tterm/par[3]);
+        }
+
+        if ( fabs(Tterm*par[4]) < 1.e-2 ) {
+
+            value += par[5]*par[4]*( 1.+(par[5]-1.)*par[4]*Tterm + (par[5]-1.)*(par[5]-1.-1.)/2.*par[4]*par[4]*Tterm*Tterm + (par[5]-1.)*(par[5]-1.-1.)*(par[5]-1.-2.)/6.*par[4]*par[4]*par[4]*Tterm*Tterm*Tterm );
+        }
+        else {
+            value += par[5]*par[4]*pow( 1.+par[4]*Tterm, par[5]-1. );
+        }
+    }
+
+    return value * 1.e9;
+
+}
+
+

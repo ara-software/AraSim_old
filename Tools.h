@@ -47,6 +47,7 @@ public:
   static void SWAP(double &a, double &b) // swaps two numbers
   {double dum=a; a=b; b=dum;}
   static void NormalTimeOrdering(const int n,double *volts);
+  static void NormalTimeOrdering_InvT(const int n,double *volts);
   static void ShiftLeft(double *x,const int n,int ishift);  
   static void ShiftRight(double *x,const int n,int ishift);  
   static double GetFWHM(TH1 *h1);
@@ -73,8 +74,23 @@ public:
 
   static void SimpleLinearInterpolation(int n1, double *x1, double *y1, int n2, double *x2, double *y2 );
 
+  static void SimpleLinearInterpolation_OutZero(int n1, double *x1, double *y1, int n2, double *x2, double *y2 );
+
+
+  static void SimpleLinearInterpolation_extend_180cut(int n1, double *x1, double *y1, int n2, double *x2, double *y2 ); 
+
+
+  static void SimpleLinearInterpolation_extend_PIcut(int n1, double *x1, double *y1, int n2, double *x2, double *y2 ); 
+
+  static void SimpleLinearInterpolation_OutZero_180cut(int n1, double *x1, double *y1, int n2, double *x2, double *y2 ); 
+
+  static void SimpleLinearInterpolation_OutZero_PIcut(int n1, double *x1, double *y1, int n2, double *x2, double *y2 ); 
+
+
   static  void get_random_rician(double signal, double signal_phase, double sigma, double& amplitude, double &phase);
   static  void get_circular_bivariate_normal_random_variable(double& rand_gauss_a, double& rand_gauss_b);
+
+  static void Exchange(double &a, double &b);
 
 protected:
 

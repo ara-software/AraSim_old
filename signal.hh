@@ -5,8 +5,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 #include <cmath>
 #include <iostream>
+#include <vector>
 
 class Settings;
+class Event;
 
 using std::cout;
 
@@ -132,6 +134,33 @@ double GetELPM();  // elpm
 		 double& deltheta_em_max,
 		 double& deltheta_had_max);
  
+
+  //
+  // functions for parameterized t-domain signal calculation
+  //
+  void GetShowerProfile(double E_shower, // energy of shower
+                            int shower_mode, // 0 : EM shower, 1 : HAD shower 
+                            double shower_step_m, // shower step in meters
+                            int param_model, // 0 : Jaime's fit, 1 : Carl's fit
+                            //int q_excess_model, // 0 : const 25% (only option now)
+                            std::vector <double> &depth, // shower depth array, output
+                            std::vector <double> &Q_shower, // shower charge excess profile, output
+                            double &LQ // integrated Q_shower
+        );
+
+  double GaisserHillas(double x_in, double *par);
+  double Greisen(double x_in, double *par);
+
+
+  //void GetVm_FarField_Tarray( Event *event, Settings *settings1, double viewangle, double atten_factor, int outbin, double *Tarray, double *Earray );
+  void GetVm_FarField_Tarray( Event *event, Settings *settings1, double viewangle, double atten_factor, int outbin, double *Tarray, double *Earray, int &skip_bins );
+
+  double Param_RE_Tterm(double Tterm, double *par);
+  double Param_RE_Tterm_approx(double Tterm, double *par); // use approx expansion if possible
+
+
+
+
 double X0MEDIUM; // radiation length of medium
 double KELVINS;  // temperature of medium + system
 static const double RHOICE;                     // density of ice (kg/m**3)

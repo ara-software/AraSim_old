@@ -146,14 +146,18 @@ class Settings
     
         double RFCM_OFFSET;  // if above USE_TESTBED_RFCM_ON = 1, we need RFCM attenuator factor cancel (default 80)
 
-        int USE_MANUAL_GAINOFFSET; //if use gain offset file to read values or just use constant gain offset from setup file (default 0 : use file)
+
+        int USE_MANUAL_GAINOFFSET; //whether use additional gain offset after all ant, elect chain. default 0 : don't apply any additional gain, 1 :  use gain offset
     
-        double MANUAL_GAINOFFSET_VALUE; // gain offset value
+        int USE_CH_GAINOFFSET; // only if USE_MANUAL_GAINOFFSET = 1, default 0 : apply constant gain to all channels which is MANUAL_GAINOFFSET_VALUE, 1 : apply ch gain offset by using data/preamp_gain_offset.csv file (only installed TestBed mode available)
+
+
+        double MANUAL_GAINOFFSET_VALUE; // gain offset value only if USE_MANUAL_GAINOFFSET = 1, and USE_CH_GAINOFFSET = 0
+
 
         int NOISE_WAVEFORM_GENERATE_MODE; // default 0 : generate new noise waveforms for each evts, if you set other values, noise waveforms will be generated once and use them for all evts
 
 
-        int USE_CH_GAINOFFSET; // default 0 : don't apply any individul channels' gain offset. 1 : apply ch gain offset by using data/preamp_gain_offset.csv file (only installed TestBed mode available)
 
         int GETCHORD_MODE; // which Getchord function to use. default 0 : old Getchord function (not correct tau weight, weight don't have ice inside interaction probability in it). 1 : new Getchord from icemc. This has new tau weight calculation and ice interaction probability applied to weight factor.
 
@@ -171,6 +175,32 @@ class Settings
 
 	int ONLY_PASSED_EVENTS; // 0: NNU represents the number of neutrinos total thrown in the simulation, 1: NNU represents the number of globally triggered neutrinos desired in the output file in the end
 	int NNU_PASSED; // Number of neutrinos allowed to pass the trigger - for ONLY_PASSE_EVENTS, loop until this is reached, otherwise just a storage value
+
+        double PICKNEARUNBIASED_R; // radius of the sphere surrounding the detector for INTERACTION_MODE=3, current default value is 5000 m
+
+
+        int SHOWER_MODE; // in time domain caes (SIMULATION_MODE=1), if we just want EM shower portion, SHOWER_MODE = 0, HAD shower only = 1, if we want summed EM and HAD = 2, default 0
+
+        double SHOWER_STEP; // step size (meter) in generating shower profile, default = 0.001
+
+        int SHOWER_PARAM_MODEL; // shower profile parameter, 0 = fit function from Jaime, 1 = fit from Carl (OSU), default 0
+
+        double OFFCONE_LIMIT; // offcone cut angel (deg) to reduce computation time 
+
+
+        int ALL_ANT_V_ON; // default 0 : use Vpol ant gain from Vpol model, Hpol ant gain from Hpol model (where Hpol ant model is not reliable). 1 : use both Vpol, Hpol ant gain from Vpol ant model but for Hpol ant case response is in Hpol, not Vpol
+
+
+        int DEBUG_MODE_ON; // default 0 : do as usual, 1 : debug mode on -> skip noise generation, signal generating, trig analysis portion upto DEBUG_SKIP_EVT
+
+        int DEBUG_SKIP_EVT; // default 0, number of events that skip noise, signal generating, and trigger analysis part
+
+
+        double V_SATURATION; // default 0.7, output voltage saturation due to amplifier limit. by default it's +-0.7 V
+
+
+
+
 
     // below : values from icemc
     

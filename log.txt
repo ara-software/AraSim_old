@@ -930,3 +930,52 @@ We will test with this version and see if the results make sense.
 
 ===============================================================================
 
+10/03/13 E. Hong;
+
+Massive update
+
+
+1) Time domain Askaryan signal mode
+
+    In settings, SIMULATION_MODE=1 will let AraSim use time domain signal mode.
+    (still default is SIMULATION_MODE=0 which is AVZ parameterized model in freq domain).
+    Below are setup parameters for SIMULATION_MODE=1
+
+    SHOWER_MODE = 0 or 1 or 2 ( 0 : only use EM shower for radiated signal, 1 : only HAD shower, 2 : use EM or HAD depending on strength of signal) default : 2
+
+    SHOWER_STEP = 0.001 (how small shower profile step will be. More small step result in more precise signal but takes more computation time. by default 1 mm which is good enought for most of case)
+
+    SHOWER_PARAM_MODEL = 0 or 1 (choose shower profile parameters. 0 : fit parameter from Jaime, 1 : fit by Carl) default = 0
+
+    OFFCONE_LIMIT = 10. (to reduce computation time to calculate waveform, we set offcone limit cut. unit is in deg. default = 10 deg)
+
+    Few updates related to time domain signal.
+
+    Now antenna response files (ARA_bicone6in_output.txt and ARA_dipoletest1_output.txt) have phase information too.
+    When AraSim uses phase information for antenna, it uses negative value of the antenna phase information due to the fact that NEC2 response is always measured as a transmitter antenna while we use those values as receiver.
+
+    For electronics chain response, there's new data file (data/ARA_Electronics_TotalGain_TwoFilters.txt) which has notch filter and clean filter's combined phase response in it. Two filters' phase response is obtained by filter simulator (QucsStudio).
+
+    This new time domain mode will increase the computation time by factor of 1.5 to 2.0 compare with previous freq domain AVZ model mode.
+    Also this mode may result in reducing sensitivity of ARA detector as now signal will be dispersed and become less likely to pass the trigger.
+
+
+2) Test mode INTERACTION_MODE = 3 (use a sphere area surrounding ARA detector to get correct effective area)
+
+    The center location of sphere is same center location of ARA stations.
+    Radius of the sphere can be set by PICKNEARUNBIASED_R value in setup.
+    By default PICKNEARUNBIASED_R = 5000. (5 km) which is big enough to test single station case.
+
+    Currently this mode is not tested fully enough.
+
+
+3) minor update : saturation in electronics chain is implemented.
+    
+    V_SATURATION in setup wil set the limit voltage in degitized waveform.
+    Degitized waveform values which have outside the range +-V_SATURATION will be forced to + or - V_SATURATION value.
+    By default V_SATURATION = 0.7 which is 0.7 V or 700 mV
+
+
+===============================================================================
+
+

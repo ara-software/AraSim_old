@@ -687,6 +687,13 @@ Interaction::Interaction (double pnu, string nuflavor, int &n_interactions, IceM
 //        PickExact(antarctica, detector, settings1, 400, 0, 0); 
           PickExact(antarctica, detector, settings1, 1000, -PI/4., -PI/3.);
     }
+    else if (settings1->INTERACTION_MODE == 3){       
+        
+        pickposnu = 0;
+        PickNearUnbiased(antarctica, detector, settings1);
+    }
+
+
     }
     //cout<<" Finished Pick posnu, r_in, r_enterice, nuexitice!!"<<endl;
 
@@ -811,8 +818,53 @@ Interaction::Interaction (double pnu, string nuflavor, int &n_interactions, IceM
 
 
        else if (settings1->SIMULATION_MODE == 1) { // time domain simulation (new mode)
-           cout<<"Currently unavailable!!"<<endl;
-           // we need to break
+
+           // here, we just get the shower profile for EM, HAD showers 
+           //
+           // after we get raytrace solutions, and obtain the view angle, we calculate the signal at 1m and propagate them
+
+           //cout<<"0";
+
+           // only EM shower
+           if ( settings1->SHOWER_MODE == 0 ) {
+  
+               //signal->GetShowerProfile( pnu*emfrac, 0, settings1->SHOWER_STEP, settings1->SHOWER_PARAM_MODEL, EM_shower_depth_m, EM_shower_Q_profile, EM_LQ );
+               signal->GetShowerProfile( pnu*emfrac, 0, settings1->SHOWER_STEP, settings1->SHOWER_PARAM_MODEL, shower_depth_m, shower_Q_profile, LQ );
+               primary_shower = 0;
+               //cout<<"LQ : "<<LQ<<endl;
+           }
+
+           // only HAD shower
+           else if ( settings1->SHOWER_MODE == 1 ) {
+
+               //signal->GetShowerProfile( pnu*hadfrac, 1, settings1->SHOWER_STEP, settings1->SHOWER_PARAM_MODEL, HAD_shower_depth_m, HAD_shower_Q_profile, HAD_LQ );
+               signal->GetShowerProfile( pnu*hadfrac, 1, settings1->SHOWER_STEP, settings1->SHOWER_PARAM_MODEL, shower_depth_m, shower_Q_profile, LQ );
+               primary_shower = 1;
+               //cout<<"LQ : "<<LQ<<endl;
+           }
+
+           // use EM or HAD depending on shower energy
+           else if ( settings1->SHOWER_MODE == 2 ) {
+
+
+               if ( pnu*emfrac > pnu*hadfrac ) {
+                   signal->GetShowerProfile( pnu*emfrac, 0, settings1->SHOWER_STEP, settings1->SHOWER_PARAM_MODEL, shower_depth_m, shower_Q_profile, LQ );
+                   primary_shower = 0;
+               }
+
+               else {
+                   signal->GetShowerProfile( pnu*hadfrac, 1, settings1->SHOWER_STEP, settings1->SHOWER_PARAM_MODEL, shower_depth_m, shower_Q_profile, LQ );
+                   primary_shower = 1;
+               }
+
+               //cout<<"LQ : "<<LQ<<endl;
+
+               //signal->GetShowerProfile( pnu*emfrac, 0, settings1->SHOWER_STEP, settings1->SHOWER_PARAM_MODEL, EM_shower_depth_m, EM_shower_Q_profile, EM_LQ );
+               //signal->GetShowerProfile( pnu*hadfrac, 1, settings1->SHOWER_STEP, settings1->SHOWER_PARAM_MODEL, HAD_shower_depth_m, HAD_shower_Q_profile, HAD_LQ );
+               //cout<<"EM_LQ : "<<EM_LQ<<", HAD_LQ : "<<HAD_LQ<<endl;
+           }
+
+
        }
 
 
@@ -1086,9 +1138,11 @@ Position thisr_enterice_tmp;
 	  thisnuexitice=thisnuexitearth;
 
 	// should also correct for undershooting
-    if (count1>10)
-      cout << "count1 is " << count1 << "\n";	  
+        if (count1>10) cout << "count1 is " << count1 << "\n";	  
+
       } // if it's an Antarctic ice bin
+
+
       else { // it leaves a rock bin so back up and find where it leaves ice
 	//cout << "inu is " << inu << " it's in rock.\n";
 	if (thisr_in.Distance(thisnuexitearth)>5.E4) {
@@ -1154,16 +1208,21 @@ Position thisr_enterice_tmp;
 	  }
 	}
 	thisnuexitice=thisr_exitice;
-	if (count2>10)
-	  cout << "count1 is " << count2 << "\n";
+	if (count2>10) cout << "count1 is " << count2 << "\n";
 	//	else return 0;  // never reaches any ice or is it because our step is too big
+
       } // if the nu leaves a rock bin
+
+
     } // end wheredoesitleave
+
+
     else {
       wheredoesitleave_err=1;
       pickposnu = 0;
       return 0;
     }
+
     // end finding where it leaves ice
 
 // 	if (thisnuexit.Mag()<Surface(thisnuexit)) { // if the exit point is below the surface
@@ -1197,6 +1256,7 @@ Position thisr_enterice_tmp;
       pickposnu = 0;
       return 0;
     }
+
     nuexitice=thisnuexitice;
     r_enterice=thisr_enterice;
     
@@ -1350,6 +1410,263 @@ void Interaction::PickNear (IceModel *antarctica, Detector *detector, Settings *
 
 
 }
+
+
+
+
+// use detector surrounding sphere area (not just in ice)
+int Interaction::PickNearUnbiased (IceModel *antarctica, Detector *detector, Settings *settings1) {
+    
+
+  
+    double mincos=-1.; // cos(180)
+    double maxcos=1.; // cos(0)
+    double minphi=0.;
+    double maxphi=2.*PI;
+    double thisphi,thiscos,thissin;
+    double theta=0.;
+    double phi=0.;
+
+ 
+    thisphi=gRandom->Rndm()*(maxphi-minphi)+minphi;
+    thiscos=gRandom->Rndm()*(maxcos-mincos)+mincos;
+    thissin=sqrt(1.-thiscos*thiscos);
+
+    Position thisr_in;// entrance point
+    Position thisr_enterice;
+    Position thisr_enterice_tmp;
+    Position thisnuexitearth;
+    Position thisnuexitice;
+    Position thisr_exitice;
+    noway=0;
+    wheredoesitleave_err=0;
+    neverseesice=0;
+    wheredoesitenterice_err=0;
+    toohigh=0;
+    toolow=0;
+
+    double sphere_R = settings1->PICKNEARUNBIASED_R;
+
+    Position enter_sphere;
+    enter_sphere.SetXYZ( sphere_R*thissin*cos(thisphi), sphere_R*thissin*sin(thisphi), sphere_R*thiscos );
+
+
+    if (enter_sphere.Dot(nnu)>0) nnu=-1.*nnu; // nnu should pointing inside the sphere
+    
+    enter_sphere = enter_sphere + detector->stations[0]; // shift sphere enter location to earth center coordinate
+
+
+    int count1=0;
+    int count2=0;
+
+
+    //
+    // get posnu
+    //
+    if ( antarctica->WhereDoesItEnter_sphere( enter_sphere, nnu, r_in ) ) { // this new function will get r_in if possible
+
+
+        thisr_in = r_in;
+
+   
+        //
+        // below same as PickUnbiased
+        //
+        if (Interaction::WhereDoesItLeave(thisr_in,nnu,antarctica,thisnuexitearth)) { // where does it leave Earth
+            nuexit = thisnuexitearth;
+          // really want to find where it leaves ice
+          int err;
+          // Does it leave in an ice bin
+          if (antarctica->IceThickness(thisnuexitearth) && thisnuexitearth.Lat()<antarctica->GetCOASTLINE()) { // if this is an ice bin in the Antarctic
+
+            thisnuexitice=thisnuexitearth;
+            thisr_exitice=thisnuexitearth;
+            if (thisnuexitice.Mag()>antarctica->Surface(thisnuexitice)) { // if the exit point is above the surface
+
+              if ((thisnuexitice.Mag()-antarctica->Surface(thisnuexitice))/cos(nnu.Theta())>5.E3) { 
+
+                WhereDoesItExitIce(thisnuexitearth,nnu,5.E3, // then back up and find it more precisely
+                                   thisr_exitice, antarctica);
+                thisnuexitice=(5000.)*nnu;
+                thisnuexitice+=thisr_exitice;
+                count1++;
+              }
+              if ((thisnuexitice.Mag()-antarctica->Surface(thisnuexitice))/cos(nnu.Theta())>5.E2) {
+                
+                WhereDoesItExitIce(thisnuexitice,nnu,5.E2, // then back up and find it more precisely
+                                   thisr_exitice, antarctica);
+                thisnuexitice=5.E2*nnu;
+                thisnuexitice+=thisr_exitice;
+                count1++;
+              }
+              if ((thisnuexitice.Mag()-antarctica->Surface(thisnuexitice))/cos(nnu.Theta())>50.) {
+
+                WhereDoesItExitIce(thisnuexitice,nnu,50., // then back up and find it more precisely
+                                 thisr_exitice, antarctica);
+                count1++;
+              } // end third wheredoesitexit
+              thisnuexitice=thisr_exitice;
+            } // if the exit point overshoots
+            else
+              thisnuexitice=thisnuexitearth;
+
+            // should also correct for undershooting
+            if (count1>10) cout << "count1 is " << count1 << "\n";	  
+
+          } // if it's an Antarctic ice bin
+
+
+          else { // it leaves a rock bin so back up and find where it leaves ice
+            //cout << "inu is " << inu << " it's in rock.\n";
+            if (thisr_in.Distance(thisnuexitearth)>5.E4) {
+              count2++;
+              if (WhereDoesItExitIce(thisnuexitearth,nnu,5.E4, // then back up and find it more precisely
+                                     thisr_exitice, antarctica)) {
+                
+                thisnuexitice=(5.E4)*nnu;
+                thisnuexitice+=thisr_exitice;
+                //cout << "inu is " << inu << " I'm here 1.\n";
+
+              }
+              else {
+                neverseesice=1;
+                pickposnu = 0;
+                return 0;
+              }
+            }
+            else
+              thisnuexitice=thisnuexitearth;
+
+            if (thisr_in.Distance(thisnuexitice)>5.E3) {
+
+              
+              if (WhereDoesItExitIce(thisnuexitice,nnu,5.E3, // then back up and find it more precisely
+                                      thisr_exitice, antarctica)) {
+                count2++;
+                //neverseesice=1;
+                thisnuexitice=5.E3*nnu;
+                thisnuexitice+=thisr_exitice;
+                //cout << "inu is " << inu << " I'm here 2\n";
+                //return 0;
+                
+              }
+            }
+            if (thisr_in.Distance(thisnuexitice)>5.E2) {
+
+
+              if (WhereDoesItExitIce(thisnuexitice,nnu,5.E2, // then back up and find it more precisely
+                                      thisr_exitice, antarctica)) {
+                count2++;
+                //interaction1->neverseesice=1;
+
+                thisnuexitice=5.E2*nnu;
+                thisnuexitice+=thisr_exitice;
+                //cout << "inu is " << inu << " I'm here 3\n";
+                //return 0;
+              }
+            
+            }
+            if (thisr_in.Distance(thisnuexitice)>50.) {
+
+
+              if (WhereDoesItExitIce(thisnuexitice,nnu,50., // then back up and find it more precisely
+                                      thisr_exitice, antarctica)) {
+                //interaction1->neverseesice=1;
+                count2++;
+                //cout << "inu is " << inu << " I'm here 4\n";
+                //return 0;
+              }
+            }
+            thisnuexitice=thisr_exitice;
+            if (count2>10) cout << "count1 is " << count2 << "\n";
+            //	else return 0;  // never reaches any ice or is it because our step is too big
+
+          } // if the nu leaves a rock bin
+
+
+        } // end wheredoesitleave
+
+
+        else {
+          wheredoesitleave_err=1;
+          pickposnu = 0;
+          return 0;
+        }
+
+        // end finding where it leaves ice
+
+
+        if (WhereDoesItEnterIce(thisnuexitearth,nnu,5.E3, // first pass with sort of course binning
+                                thisr_enterice, antarctica)) {
+          thisr_enterice_tmp=thisr_enterice+5.E3*nnu;
+          //cout << "inu is " << inu << " thisr_enterice is ";thisr_enterice.Print();
+          if (WhereDoesItEnterIce(thisr_enterice_tmp,nnu,20., // second pass with finer binning
+                                  thisr_enterice, antarctica)) {
+            //cout << "inu is " << inu << " thisr_enterice is ";thisr_enterice.Print();
+            //cout << "entersice is ";thisr_enterice.Print();
+            //cout << "thisnuexitice is ";thisnuexitice.Print();
+            pathlength_inice=thisr_enterice.Distance(thisnuexitice);
+            //cout << "distance is " << distance << "\n";
+            //cout << "inu " << inu << " thisr_enterice, thisnuexitice are ";thisr_enterice.Print();thisnuexitice.Print();
+            posnu=pathlength_inice*gRandom->Rndm()*nnu;
+            posnu=posnu+thisr_enterice;
+            //cout << "inu" << inu << " thisr_enterice, thisnuexitice are ";thisr_enterice.Print();thisnuexitice.Print();
+            //cout << "inu " << inu << " distance is " << distance << "\n";
+          }
+        }
+        else {
+          thisr_enterice=thisr_in;
+          wheredoesitenterice_err=1;
+          pickposnu = 0;
+          return 0;
+        }
+
+        nuexitice=thisnuexitice;
+        r_enterice=thisr_enterice;
+        
+        if (posnu.Mag()-antarctica->Surface(posnu)>0) {
+
+          toohigh=1;
+          //cout << "inu, toohigh is " << inu << " " << interaction1->toohigh << "\n";
+          pickposnu = 0;
+          return 0;
+        }
+        if (posnu.Mag()-antarctica->Surface(posnu)+antarctica->IceThickness(posnu)<0) {
+
+          toolow=1;
+          //cout << "inu, toolow is " << inu << " " << interaction1->toolow << "\n";
+          pickposnu = 0;
+          return 0;
+        }    
+            
+        // in case the code reachs here, (finally pick the usable location), now we can find r_in as posnu is selected
+        //r_in = antarctica->WhereDoesItEnter(posnu, nnu);
+
+        pickposnu = 1;
+        return 1;
+
+
+    } // if WhereDoesItEnter_new
+
+    else {
+        pickposnu = 0;
+        return 0;
+    }
+
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
 
 
 void Interaction::PickExact (IceModel *antarctica, Detector *detector, Settings *settings1, double thisR, double thisTheta, double thisPhi) {

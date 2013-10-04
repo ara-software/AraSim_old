@@ -6,6 +6,7 @@
 #include "TH2F.h"
 //#include <fstream.h> 
 #include <fstream> 
+#include "Constants.h"
 
 
 using std::cout;
@@ -104,7 +105,8 @@ void Tools::ShiftRight(double *x,const int n,int ishift) {
 void Tools::realft(double *data, const int isign, int nsize){
   int i, i1, i2, i3, i4;
   double c1=0.5,c2,h1r,h1i,h2r,h2i,wr,wi,wpr,wpi,wtemp,theta;
-  theta=3.141592653589793238/(nsize>>1);
+  //theta=3.141592653589793238/(nsize>>1);
+  theta=3.141592653589793238/(double)(nsize>>1);
   if (isign == 1) {
                 c2 = -0.5;
                 four1(data,1,nsize);
@@ -142,18 +144,23 @@ void Tools::realft(double *data, const int isign, int nsize){
 }
 
 void Tools::four1(double *data, const int isign,int nsize) {
-	int n,mmax,m,j,istep,i;
+	//int n,mmax,m,j,istep,i;
+	int nn,mmax,m,j,istep,i;
 	double wtemp,wr,wpr,wpi,wi,theta,tempr,tempi;
 
-	int nn=nsize/2;
-	n=nn << 1;
+	//int nn=nsize/2;
+	int n=nsize/2;
+
+	nn=n << 1;
 	j=1;
-	for (i=1;i<n;i+=2) {
+	for (i=1;i<nn;i+=2) {
 		if (j > i) {
-			SWAP(data[j-1],data[i-1]);
-			SWAP(data[j],data[i]);
+			//SWAP(data[j-1],data[i-1]);
+			//SWAP(data[j],data[i]);
+			Exchange(data[j-1],data[i-1]);
+			Exchange(data[j],data[i]);
 		}
-		m=nn;
+		m=n;
 		while (m >= 2 && j > m) {
 			j -= m;
 			m >>= 1;
@@ -161,7 +168,7 @@ void Tools::four1(double *data, const int isign,int nsize) {
 		j += m;
 	}
 	mmax=2;
-	while (n > mmax) {
+	while (nn > mmax) {
 		istep=mmax << 1;
 		theta=isign*(6.28318530717959/mmax);
 		wtemp=sin(0.5*theta);
@@ -170,7 +177,7 @@ void Tools::four1(double *data, const int isign,int nsize) {
 		wr=1.0;
 		wi=0.0;
 		for (m=1;m<mmax;m+=2) {
-			for (i=m;i<=n;i+=istep) {
+			for (i=m;i<=nn;i+=istep) {
 				j=i+mmax;
 				tempr=wr*data[j-1]-wi*data[j];
 				tempi=wr*data[j]+wi*data[j-1];
@@ -483,6 +490,21 @@ void Tools::NormalTimeOrdering(const int n,double *volts) {
 
 }
 
+
+void Tools::NormalTimeOrdering_InvT(const int n,double *volts) {
+  double volts_temp[n];
+  for (int i=0;i<n/2;i++) {
+    volts_temp[i]=volts[i+n/2];
+    volts_temp[i+n/2]=volts[i];
+  }
+  for (int i=0;i<n;i++) {
+    volts[i]=volts_temp[n-i-1]; // inverse time
+  }
+
+}
+
+
+
 void Tools::SimpleLinearInterpolation(int n1, double *x1, double *y1, int n2, double *x2, double *y2 ) {    // reads n1 array values x1, y1 and do simple linear interpolation and return n2 array with values x2, y2.
     // if interploated array has wider range (x values) than original array, it will use the first original value
     //
@@ -529,6 +551,498 @@ void Tools::SimpleLinearInterpolation(int n1, double *x1, double *y1, int n2, do
 }
 
 
+
+void Tools::SimpleLinearInterpolation_OutZero(int n1, double *x1, double *y1, int n2, double *x2, double *y2 ) {    // reads n1 array values x1, y1 and do simple linear interpolation and return n2 array with values x2, y2.
+    // if interploated array has wider range (x values) than original array, it will use the first original value
+    //
+
+    int first=0;    // first x2 array which is bigger than x1[0]
+    int last=0;       // last x2 array which is smaller than x1[n1-1]
+
+    int cnt = 0;
+    
+    for (int i=0; i<n2; i++) {
+        if (x2[i] < x1[0] ) {
+            first++;
+        }
+        else if (x2[i] > x1[n1-1]) {
+            last++;
+        }
+    }
+
+
+    for (int i=0; i<n2; i++) {
+
+        if (i<first) {  // if x2 has smaller x values than x1, just use x1[0] value
+            //y2[i] = y1[0];
+            y2[i] = 0.;
+        }
+        else if (i>n2-last-1) {   // if x2 has bigger x values than x1, just use x1[n1-1] value
+            //y2[i] = y1[n1-1];
+            y2[i] = 0.;
+        }
+
+        else {
+            cnt=-1;
+            //for (int j=0; j<n1; j++) {
+            for (int j=1; j<n1; j++) {
+                //if (x2[i] < x1[j] && cnt==-1) {
+                if (x2[i] <= x1[j] && cnt==-1) {
+                    cnt = j;
+                }
+            }
+
+            y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+
+            // test
+            // if y2[i] goes outside y1[cnt] and y1[cnt-1] range (which should not)
+            if ( ( y2[i] > y1[cnt] && y2[i] > y1[cnt-1] ) || 
+                 ( y2[i] < y1[cnt] && y2[i] < y1[cnt-1] ) ) {
+                cout<<"SimpleLinearInterpolation bug?! y2["<<i<<"] : "<<y2[i]<<" where y1["<<cnt<<"] : "<<y1[cnt]<<", y1["<<cnt-1<<"] : "<<y1[cnt-1]<<std::endl;
+            }
+
+        }
+    }
+
+
+}
+
+
+
+
+void Tools::SimpleLinearInterpolation_extend_180cut(int n1, double *x1, double *y1, int n2, double *x2, double *y2 ) {    // reads n1 array values x1, y1 and do simple linear interpolation and return n2 array with values x2, y2.
+    //
+
+    int first=0;    // first x2 array which is bigger than x1[0]
+    int last=0;       // last x2 array which is smaller than x1[n1-1]
+
+    int cnt = 0;
+    
+    for (int i=0; i<n2; i++) {
+        if (x2[i] < x1[0] ) {
+            first++;
+        }
+        else if (x2[i] > x1[n1-1]) {
+            last++;
+        }
+    }
+
+
+    double slope_1;
+    double slope_2;
+
+    double slope_t1;
+    double slope_t2;
+
+    slope_1 = (y1[1] - y1[0]) / (x1[1] - x1[0]);
+    slope_2 = (y1[n1-1] - y1[n1-2]) / (x1[n1-1] - x1[n1-2]);
+
+
+    for (int i=0; i<n2; i++) {
+
+        if (i<first) {  // if x2 has smaller x values than x1, just use x1[0] value
+            y2[i] = slope_1 * (x2[i] - x1[0]) + y1[0];
+
+            if (y2[i] > 180.) {
+                while (y2[i] > 180.) {
+                    y2[i] = y2[i] - 360.;
+                }
+            }
+            else if (y2[i] < -180.) {
+                while (y2[i] < -180.) {
+                    y2[i] = y2[i] + 360.;
+                }
+            }
+        }
+        else if (i>n2-last-1) {   // if x2 has bigger x values than x1, just use x1[n1-1] value
+            y2[i] = slope_2 * (x2[i] - x1[n1-1]) + y1[n1-1];
+
+            if (y2[i] > 180.) {
+                while (y2[i] > 180.) {
+                    y2[i] = y2[i] - 360.;
+                }
+            }
+            else if (y2[i] < -180.) {
+                while (y2[i] < -180.) {
+                    y2[i] = y2[i] + 360.;
+                }
+            }
+        }
+
+        else {
+            cnt=-1;
+            for (int j=0; j<n1; j++) {
+                //if (x2[i] < x1[j] && cnt==-1) {
+                if (x2[i] <= x1[j] && cnt==-1) {
+                    cnt = j;
+                }
+            }
+
+            //y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+
+
+            if ( cnt<n1-1 && cnt>1 ) {
+
+                slope_t1 = (y1[cnt-1] - y1[cnt-2]) / (x1[cnt-1] - x1[cnt-2]);
+                slope_t2 = (y1[cnt+1] - y1[cnt]) / (x1[cnt+1] - x1[cnt]);
+
+                if ( slope_t1 * slope_t2 > 0. &&  y1[cnt] - y1[cnt-1] > 180. ) { // down going case
+                    y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]-360.-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+                }
+
+                else if ( slope_t1 * slope_t2 > 0. && y1[cnt] - y1[cnt-1] < -180. ) { // up going case
+                    y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]+360.-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+                }
+
+                else {
+                    y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+                }
+
+
+                // if outside 180 deg range, put inside
+                if (y2[i] > 180.) {
+                    while (y2[i] > 180.) {
+                        y2[i] = y2[i] - 360.;
+                    }
+                }
+                else if (y2[i] < -180.) {
+                    while (y2[i] < -180.) {
+                        y2[i] = y2[i] + 360.;
+                    }
+                }
+
+            }
+
+            else {
+                y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+            }
+
+
+
+        }
+    }
+
+
+}
+
+
+
+
+void Tools::SimpleLinearInterpolation_extend_PIcut(int n1, double *x1, double *y1, int n2, double *x2, double *y2 ) {    // reads n1 array values x1, y1 and do simple linear interpolation and return n2 array with values x2, y2.
+    //
+
+    int first=0;    // first x2 array which is bigger than x1[0]
+    int last=0;       // last x2 array which is smaller than x1[n1-1]
+
+    int cnt = 0;
+    
+    for (int i=0; i<n2; i++) {
+        if (x2[i] < x1[0] ) {
+            first++;
+        }
+        else if (x2[i] > x1[n1-1]) {
+            last++;
+        }
+    }
+
+
+    double slope_1;
+    double slope_2;
+
+    double slope_t1;
+    double slope_t2;
+
+    slope_1 = (y1[1] - y1[0]) / (x1[1] - x1[0]);
+    slope_2 = (y1[n1-1] - y1[n1-2]) / (x1[n1-1] - x1[n1-2]);
+
+
+    for (int i=0; i<n2; i++) {
+
+        if (i<first) {  // if x2 has smaller x values than x1, just use x1[0] value
+            y2[i] = slope_1 * (x2[i] - x1[0]) + y1[0];
+
+            if (y2[i] > PI) {
+                while (y2[i] > PI) {
+                    y2[i] = y2[i] - TWOPI;
+                }
+            }
+            else if (y2[i] < -PI) {
+                while (y2[i] < -PI) {
+                    y2[i] = y2[i] + TWOPI;
+                }
+            }
+        }
+        else if (i>n2-last-1) {   // if x2 has bigger x values than x1, just use x1[n1-1] value
+            y2[i] = slope_2 * (x2[i] - x1[n1-1]) + y1[n1-1];
+
+            if (y2[i] > PI) {
+                while (y2[i] > PI) {
+                    y2[i] = y2[i] - TWOPI;
+                }
+            }
+            else if (y2[i] < -PI) {
+                while (y2[i] < -PI) {
+                    y2[i] = y2[i] + TWOPI;
+                }
+            }
+        }
+
+        else {
+            cnt=-1;
+            for (int j=0; j<n1; j++) {
+                //if (x2[i] < x1[j] && cnt==-1) {
+                if (x2[i] <= x1[j] && cnt==-1) {
+                    cnt = j;
+                }
+            }
+
+            //y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+
+
+            if ( cnt<n1-1 && cnt>1 ) {
+
+                slope_t1 = (y1[cnt-1] - y1[cnt-2]) / (x1[cnt-1] - x1[cnt-2]);
+                slope_t2 = (y1[cnt+1] - y1[cnt]) / (x1[cnt+1] - x1[cnt]);
+
+                if ( slope_t1 * slope_t2 > 0. &&  y1[cnt] - y1[cnt-1] > PI ) { // down going case
+                    y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]-2*PI-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+                }
+
+                else if ( slope_t1 * slope_t2 > 0. && y1[cnt] - y1[cnt-1] < -PI ) { // up going case
+                    y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]+2*PI-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+                }
+
+                else {
+                    y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+                }
+
+
+                // if outside PIdeg range, put inside
+                if (y2[i] > PI) {
+                    while (y2[i] > PI) {
+                        y2[i] = y2[i] - TWOPI;
+                    }
+                }
+                else if (y2[i] < -PI) {
+                    while (y2[i] < -PI) {
+                        y2[i] = y2[i] + TWOPI;
+                    }
+                }
+
+            }
+
+            else {
+                y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+            }
+
+
+
+        }
+    }
+
+
+}
+
+
+
+
+
+void Tools::SimpleLinearInterpolation_OutZero_180cut(int n1, double *x1, double *y1, int n2, double *x2, double *y2 ) {    // reads n1 array values x1, y1 and do simple linear interpolation and return n2 array with values x2, y2.
+    //
+
+    int first=0;    // first x2 array which is bigger than x1[0]
+    int last=0;       // last x2 array which is smaller than x1[n1-1]
+
+    int cnt = 0;
+    
+    for (int i=0; i<n2; i++) {
+        if (x2[i] < x1[0] ) {
+            first++;
+        }
+        else if (x2[i] > x1[n1-1]) {
+            last++;
+        }
+    }
+
+
+    double slope_1;
+    double slope_2;
+
+    double slope_t1;
+    double slope_t2;
+
+    slope_1 = (y1[1] - y1[0]) / (x1[1] - x1[0]);
+    slope_2 = (y1[n1-1] - y1[n1-2]) / (x1[n1-1] - x1[n1-2]);
+
+
+    for (int i=0; i<n2; i++) {
+
+        if (i<first) {  // if x2 has smaller x values than x1, just use x1[0] value
+            y2[i] = 0.;
+        }
+        else if (i>n2-last-1) {   // if x2 has bigger x values than x1, just use x1[n1-1] value
+            y2[i] = 0.;
+        }
+
+        else {
+            cnt=-1;
+            for (int j=0; j<n1; j++) {
+                //if (x2[i] < x1[j] && cnt==-1) {
+                if (x2[i] <= x1[j] && cnt==-1) {
+                    cnt = j;
+                }
+            }
+
+            //y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+
+
+            if ( cnt<n1-1 && cnt>1 ) {
+
+                slope_t1 = (y1[cnt-1] - y1[cnt-2]) / (x1[cnt-1] - x1[cnt-2]);
+                slope_t2 = (y1[cnt+1] - y1[cnt]) / (x1[cnt+1] - x1[cnt]);
+
+                if ( slope_t1 * slope_t2 > 0. &&  y1[cnt] - y1[cnt-1] > 180. ) { // down going case
+                    y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]-360.-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+                }
+
+                else if ( slope_t1 * slope_t2 > 0. && y1[cnt] - y1[cnt-1] < -180. ) { // up going case
+                    y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]+360.-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+                }
+
+                else {
+                    y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+                }
+
+
+                // if outside 180 deg range, put inside
+                if (y2[i] > 180.) {
+                    while (y2[i] > 180.) {
+                        y2[i] = y2[i] - 360.;
+                    }
+                }
+                else if (y2[i] < -180.) {
+                    while (y2[i] < -180.) {
+                        y2[i] = y2[i] + 360.;
+                    }
+                }
+
+            }
+
+            else {
+                y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+            }
+
+
+
+        }
+    }
+
+
+}
+
+
+
+
+void Tools::SimpleLinearInterpolation_OutZero_PIcut(int n1, double *x1, double *y1, int n2, double *x2, double *y2 ) {    // reads n1 array values x1, y1 and do simple linear interpolation and return n2 array with values x2, y2.
+    //
+
+    int first=0;    // first x2 array which is bigger than x1[0]
+    int last=0;       // last x2 array which is smaller than x1[n1-1]
+
+    int cnt = 0;
+    
+    for (int i=0; i<n2; i++) {
+        if (x2[i] < x1[0] ) {
+            first++;
+        }
+        else if (x2[i] > x1[n1-1]) {
+            last++;
+        }
+    }
+
+
+    double slope_1;
+    double slope_2;
+
+    double slope_t1;
+    double slope_t2;
+
+    slope_1 = (y1[1] - y1[0]) / (x1[1] - x1[0]);
+    slope_2 = (y1[n1-1] - y1[n1-2]) / (x1[n1-1] - x1[n1-2]);
+
+
+    for (int i=0; i<n2; i++) {
+
+        if (i<first) {  // if x2 has smaller x values than x1, just use x1[0] value
+            y2[i] = 0.;
+        }
+        else if (i>n2-last-1) {   // if x2 has bigger x values than x1, just use x1[n1-1] value
+            y2[i] = 0.;
+        }
+
+        else {
+            cnt=-1;
+            for (int j=0; j<n1; j++) {
+                //if (x2[i] < x1[j] && cnt==-1) {
+                if (x2[i] <= x1[j] && cnt==-1) {
+                    cnt = j;
+                }
+            }
+
+            //y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+
+
+            if ( cnt<n1-1 && cnt>1 ) {
+
+                slope_t1 = (y1[cnt-1] - y1[cnt-2]) / (x1[cnt-1] - x1[cnt-2]);
+                slope_t2 = (y1[cnt+1] - y1[cnt]) / (x1[cnt+1] - x1[cnt]);
+
+                if ( slope_t1 * slope_t2 > 0. &&  y1[cnt] - y1[cnt-1] > PI ) { // down going case
+                    y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]-2*PI-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+                }
+
+                else if ( slope_t1 * slope_t2 > 0. && y1[cnt] - y1[cnt-1] < -PI ) { // up going case
+                    y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]+2*PI-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+                }
+
+                else {
+                    y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+                }
+
+
+                // if outside PIdeg range, put inside
+                if (y2[i] > PI) {
+                    while (y2[i] > PI) {
+                        y2[i] = y2[i] - TWOPI;
+                    }
+                }
+                else if (y2[i] < -PI) {
+                    while (y2[i] < -PI) {
+                        y2[i] = y2[i] + TWOPI;
+                    }
+                }
+
+            }
+
+            else {
+                y2[i] = y1[cnt-1] + (x2[i]-x1[cnt-1])*(y1[cnt]-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+            }
+
+
+
+        }
+    }
+
+
+}
+
+
+
+
+
+
+
+
 void Tools::get_random_rician(double signal_amplitude, double signal_phase, double sigma, double &amplitude, double &phase){
     double rand_gauss_a, rand_gauss_b;
     get_circular_bivariate_normal_random_variable(rand_gauss_a, rand_gauss_b);
@@ -563,4 +1077,9 @@ void Tools::get_circular_bivariate_normal_random_variable(double& rand_gauss_a, 
 
 
 
+void Tools::Exchange( double &a, double &b ) {
+    double tmp = a;
+    a = b;
+    b = tmp;
+}
 

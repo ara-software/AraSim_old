@@ -141,6 +141,10 @@ public:
 			       const Vector &nnu,
 			       double stepsize) const;
 
+
+  int WhereDoesItEnter_sphere(const Position &sphere_in, const Vector &nnu, Position &r_in ) const;
+
+
   Position WhereDoesItEnter(const Position &posnu,const Vector &nnu) const;
   Position WhereDoesItLeave(const Position &posnu,const Vector &nnu) const;
 

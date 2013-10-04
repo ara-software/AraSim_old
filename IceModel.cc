@@ -669,6 +669,90 @@ Position IceModel::WhereDoesItEnter(const Position &posnu,const Vector &nnu) con
 
 
 
+
+
+
+int IceModel::WhereDoesItEnter_sphere(const Position &sphere_in, const Vector &nnu, Position &r_in ) const {
+
+    double p = sphere_in.Mag(); // radius of interaction
+    double costheta = (nnu*sphere_in) / p; // theta of neutrino at interaction position
+    double sintheta = sqrt(1-costheta*costheta);
+    
+    double lon = sphere_in.Lon();
+    double lat = sphere_in.Lat();
+    
+    double a=0; // length of chord
+    
+    double R = Surface(lon,lat);
+    double delta = R - p; // depth of the interaction
+    // if interaction occurs below surface, as it should
+    
+
+
+    // if sphere_in is inside the earth
+    if (delta>-0.001) {
+	//a=p*costheta+sqrt(R*R*costheta*costheta+2*delta*R*sintheta*sintheta); // chord length
+	a=p*costheta + sqrt(R*R-p*p*sintheta*sintheta); // chord length
+	if (a<0) {
+	    cout << "Negative chord length: " << a << "\n";
+	} //end if
+
+        // first approx
+        r_in = sphere_in - a*nnu;
+
+    } //end if (sphere_in below surface)  
+
+    // if sphere_in is outside the earth
+    else if (delta<=-0.001) {
+	
+        // D : shortest distance between earth center and neutrino trajectory
+        Position D = sphere_in + (p*costheta)*nnu;
+
+        // neutrino pass through the earth
+        if ( D.Mag() < Surface(D) ) {
+        
+            // first approx
+            r_in = sphere_in - (sqrt(R*R-D.Mag()*D.Mag())+costheta*p)*nnu;
+        }
+        // neutrino don't pass through the earth
+        else {
+            return 0;
+        }
+	
+    } //else if (sphere_in above surface)
+    
+
+    int iter = 0;
+    // now do correction 3 times
+    //for (iter=0; iter<3; iter++) {
+    //    delta = r_in.Mag() - Surface( r_in );
+    //    r_in = r_in + (delta * nnu);
+    //}
+    
+    delta = r_in.Mag() - Surface( r_in );
+    while ( fabs(delta) >= 0.1 ) {
+        r_in = r_in + (delta * nnu);
+        delta = r_in.Mag() - Surface( r_in );
+        iter++;
+        if ( iter > 10 ) {
+            //cout<<"\n r_in iteration more than 10 times!!! delta : "<<delta<<". now set r_in as before."<<endl;
+            r_in = Surface( r_in ) * r_in.Unit();   // the way before
+            delta = r_in.Mag() - Surface( r_in );
+        }
+    }
+
+    // we found r_in properly
+    return 1;
+
+} //method WhereDoesItEnter_new
+
+
+
+
+
+
+
+
 Position IceModel::WhereDoesItLeave(const Position &posnu,const Vector &nnu) const {
     // now get neutrino entry point...
     double p = posnu.Mag(); // radius of interaction

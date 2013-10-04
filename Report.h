@@ -19,6 +19,8 @@ class Settings;
 class Vector;
 class Trigger;
 
+class FFTWComplex;
+
 using namespace std;
 
 class Surface_antenna_r {
@@ -57,6 +59,13 @@ class Antenna_r {
         vector <double> Fresnel;  // Fresnel factor
         vector <double> Pol_factor;  // Polarization factor
         
+        vector < vector <double> > Vm_zoom;  // E field before ant T-domain
+        vector < vector <double> > Vm_zoom_T;  // E field before ant T-domain time
+        vector < vector <double> > Vm_wo_antfactor;  // before applying ApplyAntFactors
+        int skip_bins[2]; // for two ray sols
+
+        int Nnew[2]; // new number of bins for V_fotfft array
+
         vector < vector <double> > VHz_antfactor;  // after applying ApplyAntFactors to vmmhz above ( 1/sqrt2 * 1/dt * 0.5 * heff * pol_factor )
         vector < vector <double> > VHz_filter;  // after applying ApplyAntFactors above and then apply filter gain from detector->GetFilterGain
         vector < vector <double> > Vfft;  // signal V preparing for FFT
@@ -75,6 +84,11 @@ class Antenna_r {
         vector < vector <double> > Az;
         vector < vector <double> > V;   // volt signal with all factors applied (as far as we can) (from fft)
 
+        vector <int> SignalExt; // flag if actual signal exist for the ray trace solution
+
+        vector <int> SignalBin; // the bin number where the center of signal located. we can compare this value to Trig_Pass value to have likely triggered ray trace solution
+
+
         vector <int> noise_ID;      // information about which pure noise waveform is used for trigger analysis
 
         //vector < vector <double> > V_noise; // volt noise signal (with all factors applied as far as we can) (from thermal noise + fft)
@@ -90,6 +104,10 @@ class Antenna_r {
         vector <int> Rank;      // rank of peak voltage between antennas (Rank = 0 for 0 signal)
         int Trig_Pass; // 0 if not passed the trigger, 1 if passed the trigger
         //vector <int> Trig_Pass; // 0 if not passed the trigger, 1 if passed the trigger
+
+        int Likely_Sol; // comparing Trig_Pass and SignalBin value, this value returns which ray trace solution has been triggered (not perfect but most likely)
+
+
         vector <int> TooMuch_Tdelay;    // 0 is PeakV is located inside the DATA_BIN_SIZE array,  1 is when PeakV is located outside the DATA_BIN_SIZE so that we can't correctly check if it is triggered or not
 
         
@@ -170,7 +188,10 @@ class Report {
         void Initialize (Detector *detector, Settings *settings1);
 
         //void Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1, Trigger *trigger);
-        void Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1, Trigger *trigger, UsefulIcrrStationEvent *theUsefulEvent);
+        //void Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1, Trigger *trigger, UsefulIcrrStationEvent *theUsefulEvent);
+        void Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1, Trigger *trigger, UsefulIcrrStationEvent *theUsefulEvent, int evt);
+
+
 
         void Select_Wave_Convlv_Exchange(Settings *settings1, Trigger *trigger, Detector *detector, int signalbin, vector <double> &V, int *noise_ID, int ID, int StationIndex);   // literally get noise waveform from trigger class and add signal voltage "V" and do convlv. convlv result will replace the value in Full_window array
         
@@ -193,17 +214,34 @@ class Report {
 
         void ApplyAntFactors(double heff, Vector &n_trg_pokey, Vector &n_trg_slappy, Vector &Pol_vector, int ant_type, double &pol_factor, double &vmmhz);
 
+        void ApplyAntFactors_Tdomain(double AntPhase, double heff, Vector &n_trg_pokey, Vector &n_trg_slappy, Vector &Pol_vector, int ant_type, double &pol_factor, double &vm_real, double &vm_img);
+
+        void ApplyAntFactors_Tdomain_FirstTwo ( double heff, double heff_lastbin, Vector &n_trg_pokey, Vector &n_trg_slappy, Vector &Pol_vector, int ant_type, double &pol_factor, double &vm_bin0, double &vm_bin1);
+
+        void ApplyElect_Tdomain(double freq, Detector *detector, double &vm_real, double &vm_img);
+
+        void ApplyElect_Tdomain_FirstTwo(double freq0, double freq1, Detector *detector, double &vm_bin0, double &vm_bin1);
+
+
+
+
         void ApplyFilter(int bin_n, Detector *detector, double &vmmhz);
         void ApplyFilter_databin(int bin_n, Detector *detector, double &vmmhz);
+        void ApplyFilter_NFOUR(int bin_n, Detector *detector, double &vmmhz);
+        void ApplyFilter_OutZero (double freq, Detector *detector, double &vmmhz);
 
 
         // apply gain in Preamp
         void ApplyPreamp(int bin_n, Detector *detector, double &vmmhz);
         void ApplyPreamp_databin(int bin_n, Detector *detector, double &vmmhz);
+        void ApplyPreamp_NFOUR(int bin_n, Detector *detector, double &vmmhz);
+        void ApplyPreamp_OutZero (double freq, Detector *detector, double &vmmhz);
 
         // apply gain in FOAM
         void ApplyFOAM(int bin_n, Detector *detector, double &vmmhz);
         void ApplyFOAM_databin(int bin_n, Detector *detector, double &vmmhz);
+        void ApplyFOAM_NFOUR(int bin_n, Detector *detector, double &vmmhz);
+        void ApplyFOAM_OutZero (double freq, Detector *detector, double &vmmhz);
 
 
         // apply RFCM gain
@@ -232,6 +270,8 @@ class Report {
         //vector <double> V_noise_timedomain;   // noise V timedomain after get_random_rician and inverse fft
         double Vfft_noise_org;              // V/Hz for thermal noise from Johnson-Nyquist
 
+        vector <double> V_total_forconvlv; // vector array for pure signal diode convlv result
+
 
         void clear_useless(Settings *settings1);   // to reduce the size of output AraOut.root, remove some information
 
@@ -239,6 +279,18 @@ class Report {
 
         vector <Station_r> stations;
         vector <String_r> strings;
+
+        double RandomTshift; // for t-domain signal, a factor for random init time shift
+
+
+        // test T domain waveform
+        //static const int outbin = 50;
+        static const int outbin = 64;
+        double Tarray[outbin];
+        double Earray[outbin];
+
+        double init_T; // locate zero time at the middle and give random time shift (for interpolated waveforms)
+
 
         ClassDef(Report,1);
 
