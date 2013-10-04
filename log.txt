@@ -973,7 +973,7 @@ Massive update
     
     V_SATURATION in setup wil set the limit voltage in degitized waveform.
     Degitized waveform values which have outside the range +-V_SATURATION will be forced to + or - V_SATURATION value.
-    By default V_SATURATION = 0.7 which is 0.7 V or 700 mV
+    By default V_SATURATION = 1.0 which is 1.0 V or 1000 mV
 
 
 ===============================================================================

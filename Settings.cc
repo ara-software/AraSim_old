@@ -203,7 +203,7 @@ outputdir="outputs"; // directory where outputs go
     DEBUG_SKIP_EVT = 0; // when DEBUG_MODE_ON = 1, skip upto this number and then do as DEBUG_MODE_ON = 0
 
 
-    V_SATURATION = 0.7; // saturated voltage +-V_SATURATION
+    V_SATURATION = 1.; // saturated voltage +-V_SATURATION
 
 
 

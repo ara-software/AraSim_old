@@ -196,7 +196,7 @@ class Settings
         int DEBUG_SKIP_EVT; // default 0, number of events that skip noise, signal generating, and trigger analysis part
 
 
-        double V_SATURATION; // default 0.7, output voltage saturation due to amplifier limit. by default it's +-0.7 V
+        double V_SATURATION; // default 1., output voltage saturation due to amplifier limit. by default it's +-1. V
 
 
 
