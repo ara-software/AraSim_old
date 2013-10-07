@@ -127,8 +127,8 @@ void Antenna_r::clear() {   // if any vector variable added in Antenna_r, need t
     Mag.clear();
     Fresnel.clear();
     Pol_factor.clear();
-    VHz_antfactor.clear();
-    VHz_filter.clear();
+    //VHz_antfactor.clear();
+    //VHz_filter.clear();
     Vfft.clear();
     Vfft_noise.clear();
 
@@ -155,7 +155,7 @@ void Antenna_r::clear() {   // if any vector variable added in Antenna_r, need t
 
 
     // additional for before ant waveform
-    Vm_wo_antfactor.clear();
+    //Vm_wo_antfactor.clear();
     Vm_zoom.clear();
     Vm_zoom_T.clear();
 
@@ -170,8 +170,8 @@ void Antenna_r::clear_useless(Settings *settings1) {   // to reduce the size of 
 
     if (settings1->DATA_SAVE_MODE == 1) {
     Heff.clear();
-    VHz_antfactor.clear();
-    VHz_filter.clear();
+    //VHz_antfactor.clear();
+    //VHz_filter.clear();
     Vfft.clear();
     Vfft_noise.clear();
 
@@ -196,15 +196,15 @@ void Antenna_r::clear_useless(Settings *settings1) {   // to reduce the size of 
     //Pol_factor.clear();
     //
     // additional for before ant waveform
-    Vm_wo_antfactor.clear();
+    //Vm_wo_antfactor.clear();
     Vm_zoom.clear();
     Vm_zoom_T.clear();
 
     }
     else if (settings1->DATA_SAVE_MODE == 2) {
     Heff.clear();
-    VHz_antfactor.clear();
-    VHz_filter.clear();
+    //VHz_antfactor.clear();
+    //VHz_filter.clear();
     Vfft.clear();
     Vfft_noise.clear();
 
@@ -235,7 +235,7 @@ void Antenna_r::clear_useless(Settings *settings1) {   // to reduce the size of 
 
 
     // additional for before ant waveform
-    Vm_wo_antfactor.clear();
+    //Vm_wo_antfactor.clear();
     Vm_zoom.clear();
     Vm_zoom_T.clear();
 
@@ -421,10 +421,10 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                    stations[i].strings[j].antennas[k].Vm_zoom.resize(ray_sol_cnt+1);
                                    stations[i].strings[j].antennas[k].Vm_zoom_T.resize(ray_sol_cnt+1);
 
-                                   stations[i].strings[j].antennas[k].Vm_wo_antfactor.resize(ray_sol_cnt+1);
+                                   //stations[i].strings[j].antennas[k].Vm_wo_antfactor.resize(ray_sol_cnt+1);
 
-                                   stations[i].strings[j].antennas[k].VHz_antfactor.resize(ray_sol_cnt+1);
-                                   stations[i].strings[j].antennas[k].VHz_filter.resize(ray_sol_cnt+1);
+                                   //stations[i].strings[j].antennas[k].VHz_antfactor.resize(ray_sol_cnt+1);
+                                   //stations[i].strings[j].antennas[k].VHz_filter.resize(ray_sol_cnt+1);
                                    stations[i].strings[j].antennas[k].Vfft.resize(ray_sol_cnt+1);
                                    stations[i].strings[j].antennas[k].Vfft_noise.resize(ray_sol_cnt+1);
 
@@ -482,6 +482,9 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                                        // initially give raysol has actual signal
                                        stations[i].strings[j].antennas[k].SignalExt[ray_sol_cnt] = 1;
+
+
+                                       double vmmhz_filter[ (int)(detector->GetFreqBin()) ];
 
 
                                        for (int l=0; l<detector->GetFreqBin(); l++) {   // for detector freq bin numbers
@@ -575,7 +578,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                            
                                            ApplyAntFactors(heff, n_trg_pokey, n_trg_slappy, Pol_vector, detector->stations[i].strings[j].antennas[k].type, Pol_factor, vmmhz1m_tmp);
 
-                                           stations[i].strings[j].antennas[k].VHz_antfactor[ray_sol_cnt].push_back( vmmhz1m_tmp );
+                                           //stations[i].strings[j].antennas[k].VHz_antfactor[ray_sol_cnt].push_back( vmmhz1m_tmp );
 
                                            // apply filter
                                            ApplyFilter(l, detector, vmmhz1m_tmp);
@@ -587,8 +590,8 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                            ApplyFOAM(l, detector, vmmhz1m_tmp);
 
 
-                                           stations[i].strings[j].antennas[k].VHz_filter[ray_sol_cnt].push_back( vmmhz1m_tmp );
-
+                                           //stations[i].strings[j].antennas[k].VHz_filter[ray_sol_cnt].push_back( vmmhz1m_tmp );
+                                           vmmhz_filter[l] = vmmhz1m_tmp;
 
 
 
@@ -599,7 +602,8 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                                        //cout<<"station["<<i<<"].strings["<<j<<"].antennas["<<k<<"].vmmhz1m["<<ray_sol_cnt<<"][0] : "<<stations[i].strings[j].antennas[k].vmmhz[ray_sol_cnt][0]<<endl;
 
-                                       MakeArraysforFFT(settings1, detector, i, stations[i].strings[j].antennas[k].VHz_filter[ray_sol_cnt], volts_forfft);
+                                       //MakeArraysforFFT(settings1, detector, i, stations[i].strings[j].antennas[k].VHz_filter[ray_sol_cnt], volts_forfft);
+                                       MakeArraysforFFT(settings1, detector, i, vmmhz_filter, volts_forfft);
 
 
 
@@ -719,7 +723,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                                                  
 
-                                               stations[i].strings[j].antennas[k].Vm_wo_antfactor[ray_sol_cnt].push_back( V_forfft[n] );
+                                               //stations[i].strings[j].antennas[k].Vm_wo_antfactor[ray_sol_cnt].push_back( V_forfft[n] );
 
                                            }
 
@@ -847,8 +851,11 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                                    ApplyAntFactors_Tdomain_FirstTwo( heff, heff_lastbin, n_trg_pokey, n_trg_slappy, Pol_vector, detector->stations[i].strings[j].antennas[k].type, Pol_factor, V_forfft[2*n], V_forfft[2*n+1] );
                                                }
 
+                                               /*
                                                stations[i].strings[j].antennas[k].VHz_antfactor[ray_sol_cnt].push_back( V_forfft[2*n] );
                                                stations[i].strings[j].antennas[k].VHz_antfactor[ray_sol_cnt].push_back( V_forfft[2*n+1] );
+                                               */
+
 
 
 
@@ -891,8 +898,11 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                                }
 
 
+                                               /*
                                                stations[i].strings[j].antennas[k].VHz_filter[ray_sol_cnt].push_back( V_forfft[2*n] );
                                                stations[i].strings[j].antennas[k].VHz_filter[ray_sol_cnt].push_back( V_forfft[2*n+1] );
+                                               */
+
 
 
 
@@ -947,9 +957,9 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                                    stations[i].strings[j].antennas[k].Vm_zoom[ray_sol_cnt].push_back( 0. );
                                                    stations[i].strings[j].antennas[k].Vm_zoom_T[ray_sol_cnt].push_back( n );
                                                }
-                                               stations[i].strings[j].antennas[k].Vm_wo_antfactor[ray_sol_cnt].push_back( 0. );
-                                               stations[i].strings[j].antennas[k].VHz_antfactor[ray_sol_cnt].push_back( 0. );
-                                               stations[i].strings[j].antennas[k].VHz_filter[ray_sol_cnt].push_back( 0. );
+                                               //stations[i].strings[j].antennas[k].Vm_wo_antfactor[ray_sol_cnt].push_back( 0. );
+                                               //stations[i].strings[j].antennas[k].VHz_antfactor[ray_sol_cnt].push_back( 0. );
+                                               //stations[i].strings[j].antennas[k].VHz_filter[ray_sol_cnt].push_back( 0. );
                                                stations[i].strings[j].antennas[k].V[ray_sol_cnt].push_back( 0. );
                                            }
 
@@ -2917,6 +2927,113 @@ void Report::MakeArraysforFFT(Settings *settings1, Detector *detector, int Stati
     
     
 }
+
+
+
+
+void Report::MakeArraysforFFT(Settings *settings1, Detector *detector, int StationIndex, double *vsignal_array, double *vsignal_forfft) {
+
+
+
+    // from icemc, anita class MakeArraysforFFT
+    int NFOUR = settings1->NFOUR;
+    double TIMESTEP = settings1->TIMESTEP;
+
+//    int NFOUR = detector->stations[StationIndex].NFOUR;
+//    int TIMESTEP = detector->stations[StationIndex].TIMESTEP;
+    Tools::Zero(vsignal_forfft,NFOUR/2);
+    
+    double previous_value_e_even=0.;
+    double previous_value_e_odd=0.;
+    int count_nonzero=0;
+    int iprevious=0;
+    int ifirstnonzero=-1;
+    int ilastnonzero=2000;
+    //for (int i=0;i<NFREQ;i++) {
+    for (int i=0;i<detector->GetFreqBin();i++) {
+	
+	// freq_forfft has NFOUR/2 elements because it is meant to cover real and imaginary values
+	// but there are only NFOUR/4 different values
+	// it's the index among the NFOUR/4 that we're interested in
+	int ifour=Tools::Getifreq(detector->GetFreq(i),detector->freq_forfft[0],detector->freq_forfft[NFOUR/2-1],NFOUR/4);
+	
+	if (ifour!=-1 && 2*ifour+1<NFOUR/2) {
+	    count_nonzero++;
+	    if (ifirstnonzero==-1)
+		ifirstnonzero=ifour;
+	    
+	    vsignal_forfft[2*ifour]=vsignal_array[i]*2/((double)NFOUR/2)/(TIMESTEP); // inverse fft normalization factor (2/(N/2)), 1/dt for change integration fft form to discrete numerical fft
+	    
+	    //      cout << "ifour, vsignal is " << ifour << " " << vsignal_e_forfft[2*ifour] << "\n";
+	    
+	    vsignal_forfft[2*ifour+1]=vsignal_array[i]*2/((double)NFOUR/2)/(TIMESTEP); // phase is 90 deg.
+	    // the 2/(nfour/2) needs to be included since were using Tools::realft with the -1 setting
+	    
+	    // how about we interpolate instead of doing a box average
+	    
+	    for (int j=iprevious+1;j<ifour;j++) {
+		vsignal_forfft[2*j]=previous_value_e_even+(vsignal_forfft[2*ifour]-previous_value_e_even)*(double)(j-iprevious)/(double)(ifour-iprevious);
+		//	cout << "j, vsignal is " << j << " " << vsignal_e_forfft[2*j] << "\n";
+		
+		vsignal_forfft[2*j+1]=previous_value_e_odd+(vsignal_forfft[2*ifour+1]-previous_value_e_odd)*(double)(j-iprevious)/(double)(ifour-iprevious);
+	    }
+	    
+	    ilastnonzero=ifour;
+	    iprevious=ifour;
+	    previous_value_e_even=vsignal_forfft[2*ifour];
+	    previous_value_e_odd=vsignal_forfft[2*ifour+1];
+	}
+	
+    } // end loop over nfreq
+    
+
+
+    // don't applying any extra factor for the change in array (change of bin size)
+    // as change in the bin size doesn't matter for the total energy
+    // total energy is just same as integral over frequency range and this frequency range will not change
+    //
+      //cout << "ifirstnonzero, ilastnonzero are " << ifirstnonzero << " " << ilastnonzero << "\n";
+      //cout << "non zero count is " << count_nonzero << "\n";
+      //cout << "ratio is " << (double)count_nonzero/(double)(ilastnonzero-ifirstnonzero) << "\n";
+    for (int j=0;j<NFOUR/4;j++) {
+	vsignal_forfft[2*j]*=1./sqrt((double)count_nonzero/(double)(ilastnonzero-ifirstnonzero));
+	vsignal_forfft[2*j+1]*=1./sqrt((double)count_nonzero/(double)(ilastnonzero-ifirstnonzero));
+    }
+
+
+
+    
+    //  Tools::InterpolateComplex(vsignal_e_forfft,NFOUR/4);
+    //Tools::InterpolateComplex(vsignal_h_forfft,NFOUR/4);
+    for (int ifour=0;ifour<NFOUR/4;ifour++) {
+
+
+
+	vsignal_forfft[2*ifour]*=cos(settings1->PHASE*PI/180.);
+	vsignal_forfft[2*ifour+1]*=sin(settings1->PHASE*PI/180.);
+	
+	//--------------------------------------------------
+	// if (!PULSER) {
+	//     
+	//     vsignal_forfft[2*ifour]*=cos(phase*PI/180.);
+	//     vsignal_forfft[2*ifour+1]*=sin(phase*PI/180.);
+	//     
+	//     
+	// }
+	// else {
+	//     vsignal_forfft[2*ifour]*=cos(v_phases[ifour]*PI/180.);
+	//     vsignal_forfft[2*ifour+1]*=sin(v_phases[ifour]*PI/180.);
+	//     
+	// }	  	  	  
+	//-------------------------------------------------- 
+	
+	
+    }
+    
+    
+}
+
+
 
 
 

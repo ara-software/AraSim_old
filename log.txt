@@ -979,3 +979,17 @@ Massive update
 ===============================================================================
 
 
+10/07/13 E. Hong;
+
+removed some vector arrays in Report class.
+
+    vector < vector <double> > Vm_wo_antfactor
+    vector < vector <double> > VHz_antfactor
+    vector < vector <double> > VHz_filter
+
+Above vector arrays are so far used to get information in the middle of applying antenna, electronics properties.
+However, as we don't need to check those steps right now, I removed those arrays to decrease size of output root file.
+
+===============================================================================
+
+

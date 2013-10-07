@@ -61,13 +61,14 @@ class Antenna_r {
         
         vector < vector <double> > Vm_zoom;  // E field before ant T-domain
         vector < vector <double> > Vm_zoom_T;  // E field before ant T-domain time
-        vector < vector <double> > Vm_wo_antfactor;  // before applying ApplyAntFactors
+        //vector < vector <double> > Vm_wo_antfactor;  // before applying ApplyAntFactors
+        //vector < vector <double> > VHz_antfactor;  // after applying ApplyAntFactors to vmmhz above ( 1/sqrt2 * 1/dt * 0.5 * heff * pol_factor )
+        //vector < vector <double> > VHz_filter;  // after applying ApplyAntFactors above and then apply filter gain from detector->GetFilterGain
+        //
         int skip_bins[2]; // for two ray sols
 
         int Nnew[2]; // new number of bins for V_fotfft array
 
-        vector < vector <double> > VHz_antfactor;  // after applying ApplyAntFactors to vmmhz above ( 1/sqrt2 * 1/dt * 0.5 * heff * pol_factor )
-        vector < vector <double> > VHz_filter;  // after applying ApplyAntFactors above and then apply filter gain from detector->GetFilterGain
         vector < vector <double> > Vfft;  // signal V preparing for FFT
         vector < vector <double> > Vfft_noise;  // noise V preparing for FFT
 
@@ -257,6 +258,8 @@ class Report {
         void GetNoisePhase(Settings *settings1);
 
         void MakeArraysforFFT(Settings *settings1, Detector *detector, int StationIndex, vector <double> &vsignal_array, double *vsignal_forfft);
+        void MakeArraysforFFT(Settings *settings1, Detector *detector, int StationIndex, double *vsignal_array, double *vsignal_forfft);
+
         void MakeArraysforFFT_noise(Settings *settings1, Detector *detector,  int StationIndex, vector <double> &vsignal_array, double *vsignal_forfft);
 
 
