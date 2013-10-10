@@ -925,6 +925,8 @@ Detector::Detector(Settings *settings1, IceModel *icesurface, string setupfile) 
         ReadGainOffset_TestBed("./data/preamp_ch_gain_offset.csv", settings1);// only TestBed for now
         // read threshold offset for chs file!!
         ReadThresOffset_TestBed("./data/threshold_offset.csv", settings1);// only TestBed for now
+	// read threshold values for chs file
+	ReadThres_TestBed("./data/thresholds_TB.csv", settings1);// only TestBed for now
         // read system temperature for chs file!!
         if (settings1->NOISE_TEMP_MODE!=0) {
             ReadTemp_TestBed("./data/system_temperature.csv", settings1);// only TestBed for now
@@ -1377,8 +1379,10 @@ Detector::Detector(Settings *settings1, IceModel *icesurface, string setupfile) 
         ReadGainOffset_TestBed("./data/preamp_ch_gain_offset.csv", settings1);// only TestBed for now
         // read threshold offset for chs file!!
         ReadThresOffset_TestBed("./data/threshold_offset.csv", settings1);// only TestBed for now
+	// read threshold values for chs file
+	ReadThres_TestBed("./data/thresholds_TB.csv", settings1);// only TestBed for now
         // read system temperature for chs file!!
-        if (settings1->NOISE_TEMP_MODE!=0) {
+       if (settings1->NOISE_TEMP_MODE!=0) {
             ReadTemp_TestBed("./data/system_temperature.csv", settings1);// only TestBed for now
         }
         // read total elec. chain response file!!
@@ -1655,6 +1659,8 @@ Detector::Detector(Settings *settings1, IceModel *icesurface, string setupfile) 
             ReadGainOffset_TestBed("./data/preamp_ch_gain_offset.csv", settings1);// only TestBed for now
             // read threshold offset for chs file!!
             ReadThresOffset_TestBed("./data/threshold_offset.csv", settings1);// only TestBed for now
+	    // read threshold values for chs file
+	    ReadThres_TestBed("./data/thresholds_TB.csv", settings1);// only TestBed for now
             // read system temperature for chs file!!
             if (settings1->NOISE_TEMP_MODE!=0) {
                 ReadTemp_TestBed("./data/system_temperature.csv", settings1);// only TestBed for now
@@ -3535,6 +3541,36 @@ inline void Detector::ReadGainOffset_TestBed(string filename, Settings *settings
 }
 
 
+inline void Detector::ReadThres_TestBed( string filename, Settings *settings1){
+  if (settings1->TRIG_THRES_MODE != 1){
+    for (int N=0; N<16; N++) {
+      Thres_TB_ch.push_back(settings1->POWERTHRESHOLD);
+      cout<<"Thres ch"<<N<<" : "<<Thres_TB_ch[N]<<endl;
+    }
+  }
+  else if (settings1->TRIG_THRES_MODE == 1){
+    ifstream Thres( filename.c_str() );
+        
+    string line;
+        
+    int N=0;
+        
+    if ( Thres.is_open() ) {
+      while (Thres.good() ) {
+	
+	getline (Thres, line);
+        
+	Thres_TB_ch.push_back( atof( line.c_str() ) );
+	cout<<"Thres ch" << N << " : " << Thres_TB_ch[N] << endl;
+        
+	N++;
+        
+      }
+      Thres.close();
+    }
+  }
+}
+
 
 inline void Detector::ReadThresOffset_TestBed(string filename, Settings *settings1) {    // will return gain offset (unit in voltage) for different chs
 
@@ -3548,24 +3584,9 @@ inline void Detector::ReadThresOffset_TestBed(string filename, Settings *setting
 
 
     else if ( settings1->TRIG_THRES_MODE == 1 ) {
-        ifstream ThresOffset( filename.c_str() );
-        
-        string line;
-        
-        int N=0;
-        
-        if ( ThresOffset.is_open() ) {
-            while (ThresOffset.good() ) {
-                
-                getline (ThresOffset, line);
-                
-                ThresOffset_TB_ch.push_back( atof( line.c_str() ) );
-                cout<<"ThresOffset ch"<<N<<" : "<<ThresOffset_TB_ch[N]<<endl;
-                
-                N++;
-                
-            }
-            ThresOffset.close();
+        for (int N=0; N<16; N++) {
+            ThresOffset_TB_ch.push_back(1.);
+            cout<<"ThresOffset ch"<<N<<" : "<<ThresOffset_TB_ch[N]<<endl;
         }
     }
     else if ( settings1->TRIG_THRES_MODE == 2 ) {
@@ -4022,6 +4043,16 @@ double Detector::GetThresOffset( int StationID, int ch, Settings *settings1 ) { 
     else {
         return 1.;// other stations, just return 1.
     }
+}
+
+double Detector::GetThres( int StationID, int ch, Settings *settings1 ){
+  if ( (StationID == 0) && (settings1->DETECTOR==3) ) {
+    //    cout << "TBChannel:Threshold: " << ch << " : " << Thres_TB_ch[ch] << endl;
+    return Thres_TB_ch[ch];
+  }
+  else {
+    return settings1->POWERTHRESHOLD;
+  }
 }
 
 

@@ -1554,7 +1554,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                                    if ( settings1->NOISE_TEMP_MODE==0) {
                                        // with threshold offset by chs
-                                       if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
+				     if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (detector->GetThres(i, channel_num-1, settings1) * trigger->rmsdiode * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
                                            //cout<<"trigger passed at bin "<<trig_i+trig_bin<<" ch : "<<trig_j<<endl;
                                            //stations[i].strings[(int)((trig_j)/4)].antennas[(int)((trig_j)%4)].Trig_Pass = trig_i+trig_bin;
                                            stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
@@ -1572,7 +1572,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                    }
                                    else if ( settings1->NOISE_TEMP_MODE==1) {
                                        // with threshold offset by chs
-                                       if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode_ch[channel_num-1] * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
+                                       if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (detector->GetThres(i, channel_num-1, settings1) * trigger->rmsdiode_ch[channel_num-1] * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
                                            //cout<<"trigger passed at bin "<<trig_i+trig_bin<<" ch : "<<trig_j<<endl;
                                            //stations[i].strings[(int)((trig_j)/4)].antennas[(int)((trig_j)%4)].Trig_Pass = trig_i+trig_bin;
                                            stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
@@ -1591,7 +1591,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                    else if ( settings1->NOISE_TEMP_MODE==2) {
                                        // with threshold offset by chs
                                        // for TRIG_ONLY_BH_ON = 1 case, we are only using first 8 chs so don't worry about other chs
-                                       if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode_ch[channel_num-1] * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
+                                       if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (detector->GetThres(i, channel_num-1, settings1) * trigger->rmsdiode_ch[channel_num-1] * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
                                            //cout<<"trigger passed at bin "<<trig_i+trig_bin<<" ch : "<<trig_j<<endl;
                                            //stations[i].strings[(int)((trig_j)/4)].antennas[(int)((trig_j)%4)].Trig_Pass = trig_i+trig_bin;
                                            stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
@@ -1624,7 +1624,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
                                if ( settings1->NOISE_TEMP_MODE==0) {
                                    // with threshold offset by chs
-                                   if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
+                                   if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (detector->GetThres(i, channel_num-1, settings1) * trigger->rmsdiode * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
                                        //cout<<"trigger passed at bin "<<trig_i+trig_bin<<" ch : "<<trig_j<<endl;
                                        //stations[i].strings[(int)((trig_j)/4)].antennas[(int)((trig_j)%4)].Trig_Pass = trig_i+trig_bin;
                                        stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
@@ -1642,7 +1642,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                }
                                else if ( settings1->NOISE_TEMP_MODE==1) {
                                    // with threshold offset by chs
-                                   if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode_ch[channel_num-1] * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
+                                   if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (detector->GetThres(i, channel_num-1, settings1) * trigger->rmsdiode_ch[channel_num-1] * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
                                        stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
                                        N_pass++;
                                        if (detector->stations[i].strings[string_i].antennas[antenna_i].type == 0) { // Vpol
@@ -1660,7 +1660,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                    // with threshold offset by chs
                                    // for TRIG_ONLY_BH_ON = 1 case, we are only using first 8 chs so don't worry about other chs
                                    if (channel_num-1 < 8) {
-                                       if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode_ch[channel_num-1] * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
+                                       if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (detector->GetThres(i, channel_num-1, settings1) * trigger->rmsdiode_ch[channel_num-1] * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
                                            stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
                                            N_pass++;
                                            if (detector->stations[i].strings[string_i].antennas[antenna_i].type == 0) { // Vpol
@@ -1675,7 +1675,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                        }
                                    }
                                    else { // chs starting from 8 (counted from 0), uses same rmsdiode value
-                                       if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (trigger->powerthreshold * trigger->rmsdiode_ch[8] * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
+                                       if ( trigger->Full_window[trig_j][trig_i+trig_bin] < (detector->GetThres(i, channel_num-1, settings1) * trigger->rmsdiode_ch[8] * detector->GetThresOffset( i, channel_num-1,settings1) ) ) {   // if this channel passed the trigger!
                                            stations[i].strings[string_i].antennas[antenna_i].Trig_Pass = trig_i+trig_bin;
                                            N_pass++;
                                            if (detector->stations[i].strings[string_i].antennas[antenna_i].type == 0) { // Vpol

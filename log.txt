@@ -992,4 +992,12 @@ However, as we don't need to check those steps right now, I removed those arrays
 
 ===============================================================================
 
+10/10/2013 C.Pfendner
 
+replaced TRIG_THRES_MODE=1 mode:
+Now this mode reads in the thresholds from a CSV file: ./data/thresholds_TB.csv
+Only for station 0 in detector mode 3 (i.e. installed TestBed)
+If this condition is not met, the simulation uses the default threshold (normally -6.06)
+Thresholds read in by ReadThres_TestBed function and called via the GetThres function
+
+Added threshold input file ./data/thresholds_TB.csv

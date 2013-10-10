@@ -395,13 +395,14 @@ double cur_posnu_z;
     int Events_Thrown = 0;
     //       for (int inu=0;inu<settings1->NNU;inu++) { // loop over neutrinos
     while (inu < nuLimit){
-       
+
+      
        check_station_DC = 0;
 
        if ( settings1->DEBUG_MODE_ON==0 ) {
            std::cerr<<"*";
 
-           if ( Events_Thrown%1000 == 0 )
+           if ( Events_Thrown%100 == 0 )
                cout<<"Thrown "<<Events_Thrown<<endl;
        }
 

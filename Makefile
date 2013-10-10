@@ -9,11 +9,13 @@ include StandardDefinitions.mk
 ifeq ($(strip $(BOOST_ROOT)),)
 	BOOST_ROOT = /usr/local/include
 endif
-SYSINCLUDES	= -I/usr/include -I$(BOOST_ROOT)
-SYSLIBS         = -L/usr/lib
+SYSINCLUDES	= -I$(BOOST_ROOT)
+SYSLIBS         = 
 DLLSUF = ${DllSuf}
 OBJSUF = ${ObjSuf}
 SRCSUF = ${SrcSuf}
+
+#-L/usr/lib -I/usr/include
 
 CXX = g++
 
@@ -47,13 +49,13 @@ PROGRAMS = AraSim
 ARAROOTLIB = libAraSimEvent.a libAraGeom.a
 
 all : $(ARAROOTLIB) $(PROGRAMS) 
-	
+
 $(ARAROOTLIB):
 	@cd AraRootFormat; make all; make install
 	@cd AraRoot; make all; make install
 
 AraSim : $(OBJS)
-	$(LD) $(OBJS) $(ARA_ROOT_OBJS) $(LDFLAGS)  $(LIBS) -lAraSimEvent -o $(PROGRAMS) 
+	$(LD) $(OBJS) $(ARA_ROOT_OBJS) $(LDFLAGS) $(LIBS) -lAraSimEvent  -o $(PROGRAMS) 
 	@echo "done."
 
 #The library
@@ -71,7 +73,7 @@ else
 endif
 endif
 else
-	$(LD) $(SOFLAGS) $(LDFLAGS) $(G77LDFLAGS) $(LIBS) $(LIB_OBJS) -o $@
+	$(LD) $(SOFLAGS) $(LDFLAGS) $(G77LDFLAGS) $(LIB_OBJS) $(LIBS)  -o $@
 endif
 
 ##-bundle

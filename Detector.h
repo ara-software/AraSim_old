@@ -239,6 +239,9 @@ class Detector {
         void ReadThresOffset_TestBed(string filename, Settings *settings1);
         vector <double> ThresOffset_TB_ch;   // constant gain offset for the TestBed chs 
 
+        void ReadThres_TestBed(string filename, Settings *settings1);
+        vector <double> Thres_TB_ch;   // Threshold values for the TestBed chs 
+
         void ReadTemp_TestBed(string filename, Settings *settings1);
         //vector <double> Temp_TB_ch;   // constant gain offset for the TestBed chs 
 
@@ -319,6 +322,8 @@ class Detector {
         double GetGainOffset( int StationID, int ch, Settings *settings1 );  // returns voltage factor for specific channel gain off set
 
         double GetThresOffset( int StationID, int ch, Settings *settings1 );  // returns voltage factor for specific channel gain off set
+
+        double GetThres( int StationID, int ch, Settings *settings1 );  // returns voltage factor threshold for specific channel 
 
         double GetTemp( int StationID, int ch, Settings *settings1 );  // returns voltage factor for specific channel gain off set
         vector <double> Temp_TB_ch;   // constant gain offset for the TestBed chs 
