@@ -837,11 +837,11 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                                    if ( settings1->ALL_ANT_V_ON==0 ) {
                                                    
                                                        ApplyAntFactors_Tdomain( detector->GetAntPhase_1D( freq_tmp*1.e-6, antenna_theta, antenna_phi, detector->stations[i].strings[j].antennas[k].type ),
-                                                           heff, n_trg_pokey, n_trg_slappy, Pol_vector, detector->stations[i].strings[j].antennas[k].type, Pol_factor, V_forfft[2*n], V_forfft[2*n+1] );
+                                                           heff, n_trg_pokey, n_trg_slappy, Pol_vector, detector->stations[i].strings[j].antennas[k].type, Pol_factor, V_forfft[2*n], V_forfft[2*n+1], settings1 );
                                                    }
                                                    else if ( settings1->ALL_ANT_V_ON==1 ) {
                                                        ApplyAntFactors_Tdomain( detector->GetAntPhase_1D( freq_tmp*1.e-6, antenna_theta, antenna_phi, 0 ),
-                                                           heff, n_trg_pokey, n_trg_slappy, Pol_vector, detector->stations[i].strings[j].antennas[k].type, Pol_factor, V_forfft[2*n], V_forfft[2*n+1] );
+                                                           heff, n_trg_pokey, n_trg_slappy, Pol_vector, detector->stations[i].strings[j].antennas[k].type, Pol_factor, V_forfft[2*n], V_forfft[2*n+1], settings1 );
                                                    }
 
 
@@ -891,7 +891,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                                                // apply entire elect chain gain, phase
                                                //
                                                if ( n > 0 ) {
-                                                   ApplyElect_Tdomain( freq_tmp*1.e-6, detector, V_forfft[2*n], V_forfft[2*n+1] );
+                                                   ApplyElect_Tdomain( freq_tmp*1.e-6, detector, V_forfft[2*n], V_forfft[2*n+1], settings1 );
                                                }
                                                else {
                                                    ApplyElect_Tdomain_FirstTwo( freq_tmp*1.e-6, freq_lastbin*1.e-6, detector, V_forfft[2*n], V_forfft[2*n+1] );
@@ -2311,7 +2311,7 @@ void Report::ApplyAntFactors(double heff, Vector &n_trg_pokey, Vector &n_trg_sla
 
 
 
-void Report::ApplyAntFactors_Tdomain (double AntPhase, double heff, Vector &n_trg_pokey, Vector &n_trg_slappy, Vector &Pol_vector, int ant_type, double &pol_factor, double &vm_real, double &vm_img) {  // vm is input and output. output will have some antenna factors on it
+void Report::ApplyAntFactors_Tdomain (double AntPhase, double heff, Vector &n_trg_pokey, Vector &n_trg_slappy, Vector &Pol_vector, int ant_type, double &pol_factor, double &vm_real, double &vm_img, Settings *settings1) {  // vm is input and output. output will have some antenna factors on it
 
 
 
@@ -2326,36 +2326,48 @@ void Report::ApplyAntFactors_Tdomain (double AntPhase, double heff, Vector &n_tr
     pol_factor = abs(pol_factor);
 
 
-    double phase_current;
 
-    if ( vm_real != 0. ) {
+    if ( settings1->PHASE_SKIP_MODE != 1 ) {
 
-        phase_current = atan( vm_img / vm_real );
+        double phase_current;
 
-        // phase in +-PI range
-        if (vm_real<0.) {
-            if (vm_img>0.) phase_current += PI;
-            else if (vm_img<0.) phase_current -= PI;
+        if ( vm_real != 0. ) {
+
+            phase_current = atan( vm_img / vm_real );
+
+            // phase in +-PI range
+            if (vm_real<0.) {
+                if (vm_img>0.) phase_current += PI;
+                else if (vm_img<0.) phase_current -= PI;
+            }
         }
+        else {
+
+            if ( vm_img>0. ) phase_current = PI;
+            else if (vm_img<0.) phase_current = -PI;
+            else phase_current = 0.;
+        }
+
+
+
+        // V amplitude
+        double v_amp  = sqrt(vm_real*vm_real + vm_img*vm_img) / sqrt(2.) * 0.5 * heff * pol_factor; // sqrt(2) for 3dB splitter for TURF, SURF, 0.5 to calculate power with heff
+
+        // real, img terms with phase shift
+        vm_real = v_amp * cos( phase_current + AntPhase*RADDEG );
+        vm_img = v_amp * sin( phase_current + AntPhase*RADDEG );
+
+        //vm_real = v_amp * cos( phase_current - AntPhase*RADDEG ); // subtract AntPhase for four1 function's equation definition (inverse in img values)
+        //vm_img = v_amp * sin( phase_current - AntPhase*RADDEG );
     }
-    else {
 
-        if ( vm_img>0. ) phase_current = PI;
-        else if (vm_img<0.) phase_current = -PI;
-        else phase_current = 0.;
+    else { // only amplitude
+
+        vm_real = vm_real / sqrt(2.) * 0.5 * heff * pol_factor; // only amplitude
+
+        vm_img = vm_img / sqrt(2.) * 0.5 * heff * pol_factor; // only amplitude
     }
 
-
-
-    // V amplitude
-    double v_amp  = sqrt(vm_real*vm_real + vm_img*vm_img) / sqrt(2.) * 0.5 * heff * pol_factor; // sqrt(2) for 3dB splitter for TURF, SURF, 0.5 to calculate power with heff
-
-    // real, img terms with phase shift
-    vm_real = v_amp * cos( phase_current + AntPhase*RADDEG );
-    vm_img = v_amp * sin( phase_current + AntPhase*RADDEG );
-
-    //vm_real = v_amp * cos( phase_current - AntPhase*RADDEG ); // subtract AntPhase for four1 function's equation definition (inverse in img values)
-    //vm_img = v_amp * sin( phase_current - AntPhase*RADDEG );
 
 }
 
@@ -2380,6 +2392,7 @@ void Report::ApplyAntFactors_Tdomain_FirstTwo (double heff, double heff_lastbin,
     vm_bin1 = vm_bin1 / sqrt(2.) * 0.5 * heff_lastbin * pol_factor; // sqrt(2) for 3dB splitter for TURF, SURF, 0.5 to calculate power with heff
 
 }
+
 
 
 
@@ -2419,40 +2432,46 @@ void Report::ApplyFilter_OutZero (double freq, Detector *detector, double &vmmhz
 }
 
 
-void Report::ApplyElect_Tdomain(double freq, Detector *detector, double &vm_real, double &vm_img) {  // read elect chain gain (unitless), phase (rad) and apply to V/m
+void Report::ApplyElect_Tdomain(double freq, Detector *detector, double &vm_real, double &vm_img, Settings *settings1) {  // read elect chain gain (unitless), phase (rad) and apply to V/m
 
+    if ( settings1->PHASE_SKIP_MODE == 0 ) {
 
-    double phase_current;
+        double phase_current;
 
-    if ( vm_real != 0. ) {
+        if ( vm_real != 0. ) {
 
-        phase_current = atan( vm_img / vm_real );
+            phase_current = atan( vm_img / vm_real );
 
-        // phase in +-PI range
-        if (vm_real<0.) {
-            if (vm_img>0.) phase_current += PI;
-            else if (vm_img<0.) phase_current -= PI;
+            // phase in +-PI range
+            if (vm_real<0.) {
+                if (vm_img>0.) phase_current += PI;
+                else if (vm_img<0.) phase_current -= PI;
+            }
         }
+        else {
+
+            if ( vm_img>0. ) phase_current = PI;
+            else if (vm_img<0.) phase_current = -PI;
+            else phase_current = 0.;
+        }
+
+        // V amplitude
+        double v_amp  = sqrt(vm_real*vm_real + vm_img*vm_img) * detector->GetElectGain_1D_OutZero( freq ); // apply gain (unitless) to amplitude
+
+        // real, img terms with phase shift
+        //vm_real = v_amp * cos( phase_current + detector->GetElectPhase_1D(freq) );
+        //vm_img = v_amp * sin( phase_current + detector->GetElectPhase_1D(freq) );
+
+        vm_real = v_amp * cos( phase_current - detector->GetElectPhase_1D(freq) );
+        vm_img = v_amp * sin( phase_current - detector->GetElectPhase_1D(freq) );
     }
+
     else {
 
-        if ( vm_img>0. ) phase_current = PI;
-        else if (vm_img<0.) phase_current = -PI;
-        else phase_current = 0.;
+        vm_real = vm_real * detector->GetElectGain_1D_OutZero( freq ); // only amplitude
+
+        vm_img = vm_img * detector->GetElectGain_1D_OutZero( freq ); // only amplitude
     }
-
-
-
-    // V amplitude
-    double v_amp  = sqrt(vm_real*vm_real + vm_img*vm_img) * detector->GetElectGain_1D_OutZero( freq ); // apply gain (unitless) to amplitude
-
-
-    // real, img terms with phase shift
-    //vm_real = v_amp * cos( phase_current + detector->GetElectPhase_1D(freq) );
-    //vm_img = v_amp * sin( phase_current + detector->GetElectPhase_1D(freq) );
-
-    vm_real = v_amp * cos( phase_current - detector->GetElectPhase_1D(freq) );
-    vm_img = v_amp * sin( phase_current - detector->GetElectPhase_1D(freq) );
 
 }
 
@@ -2465,6 +2484,9 @@ void Report::ApplyElect_Tdomain_FirstTwo(double freq0, double freq1, Detector *d
     vm_bin1 = vm_bin1 * detector->GetElectGain_1D_OutZero( freq1 );
 
 }
+
+
+
 
 
 

@@ -197,6 +197,9 @@ outputdir="outputs"; // directory where outputs go
 
     ALL_ANT_V_ON = 0; // use Vpol antenna gain for both Vpol and Hpol = 1, use Hpol gain for Hpol model = 0
 
+    PHASE_SKIP_MODE = 0; // skip applying phase in t-domain mode (SIMULATION_MODE = 1). default 0 : don't skip (apply all phase), 1 : only upto Askaryan radiation, 2 : only upto antenna
+
+
 
     DEBUG_MODE_ON = 0; // 0 : off (do as usual), 1 : on (skip most of intensive computational process which don't have random generations)
 
@@ -444,6 +447,9 @@ void Settings::ReadFile(string setupfile) {
               }
               else if (label == "ALL_ANT_V_ON") {
                   ALL_ANT_V_ON = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "PHASE_SKIP_MODE") {
+                  PHASE_SKIP_MODE = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
               }
               else if (label == "DEBUG_MODE_ON") {
                   DEBUG_MODE_ON = atoi( line.substr(line.find_first_of("=") + 1).c_str() );

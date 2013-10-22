@@ -215,14 +215,14 @@ class Report {
 
         void ApplyAntFactors(double heff, Vector &n_trg_pokey, Vector &n_trg_slappy, Vector &Pol_vector, int ant_type, double &pol_factor, double &vmmhz);
 
-        void ApplyAntFactors_Tdomain(double AntPhase, double heff, Vector &n_trg_pokey, Vector &n_trg_slappy, Vector &Pol_vector, int ant_type, double &pol_factor, double &vm_real, double &vm_img);
+        void ApplyAntFactors_Tdomain(double AntPhase, double heff, Vector &n_trg_pokey, Vector &n_trg_slappy, Vector &Pol_vector, int ant_type, double &pol_factor, double &vm_real, double &vm_img, Settings *settings1);
 
         void ApplyAntFactors_Tdomain_FirstTwo ( double heff, double heff_lastbin, Vector &n_trg_pokey, Vector &n_trg_slappy, Vector &Pol_vector, int ant_type, double &pol_factor, double &vm_bin0, double &vm_bin1);
 
-        void ApplyElect_Tdomain(double freq, Detector *detector, double &vm_real, double &vm_img);
+
+        void ApplyElect_Tdomain(double freq, Detector *detector, double &vm_real, double &vm_img, Settings *settings1);
 
         void ApplyElect_Tdomain_FirstTwo(double freq0, double freq1, Detector *detector, double &vm_bin0, double &vm_bin1);
-
 
 
 

@@ -190,6 +190,9 @@ class Settings
 
         int ALL_ANT_V_ON; // default 0 : use Vpol ant gain from Vpol model, Hpol ant gain from Hpol model (where Hpol ant model is not reliable). 1 : use both Vpol, Hpol ant gain from Vpol ant model but for Hpol ant case response is in Hpol, not Vpol
 
+    
+        int PHASE_SKIP_MODE; // skip applying phase in t-domain mode (SIMULATION_MODE = 1). default 0 : don't skip (apply all phase), 1 : only upto Askaryan radiation, 2 : only upto antenna
+
 
         int DEBUG_MODE_ON; // default 0 : do as usual, 1 : debug mode on -> skip noise generation, signal generating, trig analysis portion upto DEBUG_SKIP_EVT
 

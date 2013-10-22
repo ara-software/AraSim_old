@@ -1001,3 +1001,20 @@ If this condition is not met, the simulation uses the default threshold (normall
 Thresholds read in by ReadThres_TestBed function and called via the GetThres function
 
 Added threshold input file ./data/thresholds_TB.csv
+
+===============================================================================
+
+10/22/2013 E. Hong;
+
+Added (ANOTHER) new mode in AraSim to test t-domain phase affecting trigger efficiency.
+In setup file, you can add new parameter value named
+
+PHASE_SKIP_MODE
+
+This PHASE_SKIP_MODE only work in time domain signal mode (SIMULATION_MODE=1)
+
+PHASE_SKIP_MODE=0 default value. Don't skip any phase step
+PHASE_SKIP_MODE=1 only apply phase from Askaryan radiated signal. No antenna, electronics phase (only amplitude change)
+PHASE_SKIP_MODE=2 apply phase from Askaryan radiated signal to antenna. No electronics phase
+
+===============================================================================
