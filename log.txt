@@ -1018,3 +1018,17 @@ PHASE_SKIP_MODE=1 only apply phase from Askaryan radiated signal. No antenna, el
 PHASE_SKIP_MODE=2 apply phase from Askaryan radiated signal to antenna. No electronics phase
 
 ===============================================================================
+
+11/05/2013 E. Hong;
+
+Fixed Calpulser functionality in AraSim at T-domain mode (SIMULATION_MODE=1).
+AraSim will read Calpulser waveform (waveform before transmitter antenna) from ./data/CalPulserWF.txt file.
+There is an example Calpulser setup file which is
+
+setup_Tdomain_TestBed_CalPulser4
+
+Calpulser mode in old F-domain simulation mode should also work.
+
+Like old Calpulser mode, currently Calpulser mode will work only with DETECTOR=3 (actual TestBed geometry mode).
+
+===============================================================================

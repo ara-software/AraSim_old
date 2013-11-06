@@ -1672,6 +1672,15 @@ Detector::Detector(Settings *settings1, IceModel *icesurface, string setupfile) 
         cout<<"done read elect chain"<<endl;
 
 
+    
+        // if calpulser case
+            if (settings1->CALPULSER_ON > 0) {
+                // read TestBed Calpulser waveform measured (before pulser)
+                ReadCalPulserWF("./data/CalPulserWF.txt", settings1);
+            }
+
+
+
     }// if mode == 3
 
 
@@ -3323,6 +3332,76 @@ void Detector::ReadFOAM_New(Settings *settings1) {    // will return gain (dB) w
     }
 
 }
+
+
+
+
+
+inline void Detector::ReadCalPulserWF(string filename, Settings *settings1 ) {    // will store calpulser waveform array
+    
+    ifstream CalPulWF( filename.c_str() );
+    
+    string line;
+    
+    int N=-1;
+    
+    //vector <double> CalPulserWF_ns;
+    //vector <double> CalPulserWF_V;
+    CalPulserWF_ns.clear();
+    CalPulserWF_V.clear();
+    
+    int firstread = 1;
+
+    if ( CalPulWF.is_open() ) {
+        while (CalPulWF.good() ) {
+
+            // skip first two lines
+            if ( firstread == 1 ) {
+                getline (CalPulWF, line);
+                getline (CalPulWF, line);
+                firstread++;
+            }
+            
+            getline (CalPulWF, line);
+            //CalPulserWF_ns.push_back( atof( line.substr(0, 4).c_str() ) );
+            //CalPulserWF_V.push_back( atof( line.substr(5).c_str() ) * settings1->CALPUL_AMP );
+            CalPulserWF_ns.push_back( atof( line.substr(0, line.find_first_of(",")).c_str() ) );
+            CalPulserWF_V.push_back( atof( line.substr(line.find_first_of(",") + 1).c_str() ) * settings1->CALPUL_AMP );
+            
+            N++;
+
+
+        }
+        CalPulWF.close();
+    }
+    
+    else cout<<"CalPulserWF file can not opened!!"<<endl;
+    
+    // remove last element
+    CalPulserWF_ns.pop_back();
+    CalPulserWF_V.pop_back();
+
+    /*
+    for (int i=0; i<(int)CalPulserWF_ns.size(); i++) {
+            cout<<"CalPulser["<<i<<"] "<<CalPulserWF_ns[i]<<"ns, "<<CalPulserWF_V[i]<<"V"<<endl;
+    }
+    */
+
+    cout<<"done reading CalPulserWF file"<<endl;
+    
+    
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 

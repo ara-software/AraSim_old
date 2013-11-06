@@ -223,6 +223,11 @@ class Detector {
         vector <double> FOAMGain_NFOUR;   // Filter gain (dB) for NFOUR bin array
 
 
+
+        void ReadCalPulserWF(string filename, Settings *settings1 );  // will store calpulser waveform array
+
+
+
         void ReadElectChain(string filename, Settings *settings1);
         double ElectGain[freq_step_max];   // Elect chain gain (unitless) for Detector freq bin array
         double ElectPhase[freq_step_max];   // Elect chain phase (rad) for Detector freq bin array
@@ -432,6 +437,10 @@ class Detector {
     int getStringfromArbAntID( int stationID, int ant_ID);
     
     
+    vector <double> CalPulserWF_ns;
+    vector <double> CalPulserWF_V;
+
+
     
         ~Detector();    //destructor
 
