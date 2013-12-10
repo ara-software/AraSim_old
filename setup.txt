@@ -12,7 +12,7 @@ NOISE_WAVEFORM_GENERATE_MODE=0 // generate new noise waveforms for each events
 NOISE_EVENTS=16 // number of pure noise waveforms
 TRIG_ANALYSIS_MODE=0 // 0 = signal + noise, 1 = signal only, 2 = noise only
 DETECTOR=1 // ARA stations 1 to 7
-NOFZ=2
+NOFZ=1
 
 TIMESTEP=5.E-10 // value for 2GHz actual station value
 TRIG_WINDOW=1.E-7 // 100ns which is actual testbed trig window
