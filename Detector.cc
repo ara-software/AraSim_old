@@ -41,6 +41,7 @@ Detector::Detector(Settings *settings1, IceModel *icesurface, string setupfile) 
     // set freq_forfft array
     // same with icemc anita class initialization function
     
+    
     double freqstep=1./(double)(settings1->NFOUR/2)/(settings1->TIMESTEP);
     
     NFOUR = settings1->NFOUR;

@@ -390,7 +390,13 @@ double cur_posnu_z;
         cerr<<"There are "<< settings_compatibility_error<<" errors from settings. Check error messages."<<endl;
         return -1;
     }
-                
+    
+#ifndef ARA_UTIL_EXISTS
+    if (settings1->DETECTOR == 3 && settings1->READGEOM == 1){
+        cerr << "ERROR::InstalledStation geometry not available without AraRoot installation!" << endl;
+        return -1;
+    }
+#endif
 
 
 // test autoflush
