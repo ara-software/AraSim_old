@@ -1032,3 +1032,10 @@ Calpulser mode in old F-domain simulation mode should also work.
 Like old Calpulser mode, currently Calpulser mode will work only with DETECTOR=3 (actual TestBed geometry mode).
 
 ===============================================================================
+
+12/10/2013 C. Pfendner
+Added ability to define output directory for argc==4, at argv[3]
+added inverse exponential index of refraction model with NOFZ=2
+added conditional dependence on AraRoot for AraRoot-like output
+	checks if ARA_UTIL_INSTALL_DIR exists and links against the libraries there to make a UsefulIcrrStationEvent 
+
