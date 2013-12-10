@@ -61,6 +61,10 @@ using namespace std;
 
 //#include "UsefulIcrrStationEvent.h"
 
+#ifdef ARA_UTIL_EXISTS
+#include "UsefulIcrrStationEvent.h"
+#endif
+
 class EarthModel; //class
 
 void test();
