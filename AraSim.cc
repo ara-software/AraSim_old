@@ -59,6 +59,7 @@ using namespace std;
 #include "RaySolver.h"
 #include "Report.h"
 
+//#include "UsefulIcrrStationEvent.h"
 
 class EarthModel; //class
 
@@ -119,6 +120,11 @@ int main(int argc, char **argv) {   // read setup.txt file
   else if (argc == 3) { // read file!!
       setupfile = string( argv[1] );
       run_no = string( argv[2] );
+  }
+  else if (argc == 4) { // read file!!
+      setupfile = string( argv[1] );
+      run_no = string( argv[2] );
+      outputdir = string( argv[3] );
   }
   else { // no mode for argc > 2!
       cout<<"too many info! just use default setup.txt file!"<<endl;
@@ -206,7 +212,7 @@ int main(int argc, char **argv) {   // read setup.txt file
 
 
   TFile *AraFile;
-   if (argc == 3) {
+   if (argc == 3 || argc == 4) {
         AraFile=new TFile((outputdir+"/AraOut."+setupfile+".run"+run_no+".root").c_str(),"RECREATE","ara");
    }
    else {
@@ -240,12 +246,14 @@ cout<<"called RaySolver"<<endl;
 
     cout << "Make output file that is readable by AraRoot" << endl;
 
+#ifdef ARA_UTIL_EXISTS
     UsefulIcrrStationEvent *theEvent = 0;
-
+    
     TTree *eventTree;
     eventTree = new TTree("eventTree","Tree of ARA Events");
     //eventTree->Branch("event",&theEvent);
     eventTree->Branch("UsefulARAStationEvent",&theEvent);
+#endif
 
 
 cout<<"will call secondaries"<<endl;
@@ -393,15 +401,15 @@ double cur_posnu_z;
     
     int inu = 0;
     int Events_Thrown = 0;
+    int Events_Passed = 0;
     //       for (int inu=0;inu<settings1->NNU;inu++) { // loop over neutrinos
     while (inu < nuLimit){
 
-      
-       check_station_DC = 0;
-
+        check_station_DC = 0;
+        check_station_DC = 0;
+        
        if ( settings1->DEBUG_MODE_ON==0 ) {
            std::cerr<<"*";
-
            if ( Events_Thrown%100 == 0 )
                cout<<"Thrown "<<Events_Thrown<<endl;
        }
@@ -409,11 +417,14 @@ double cur_posnu_z;
 
 
        //event = new Event ( settings1, spectra, primary1, icemodel, detector, signal, sec1 );
-       event = new Event ( settings1, spectra, primary1, icemodel, detector, signal, sec1, inu );
-           
+       event = new Event ( settings1, spectra, primary1, icemodel, detector, signal, sec1, Events_Thrown );
+        event->inu_passed = -1;
+        
        report = new Report(detector, settings1);
-  
+
+#ifdef ARA_UTIL_EXISTS
        theEvent = new UsefulIcrrStationEvent();
+#endif
 
 
        // go further only if we picked up usable posnu
@@ -443,11 +454,19 @@ double cur_posnu_z;
            // connect Interaction class (nu interaction with ice) and Detector class (detector properties and layout)
            // save signal, noise at each antennas to Report class
            //report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1, trigger);
+
            //report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1, trigger, theEvent);
-           //report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1, trigger, theEvent, inu);
-           report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1, trigger, theEvent, Events_Thrown);
-           
-           
+           report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1, trigger, Events_Thrown);
+           //report->Connect_Interaction_Detector (event, detector, raysolver, signal, icemodel, settings1, trigger, theEvent, Events_Thrown);
+                      
+#ifdef ARA_UTIL_EXISTS
+           int stationID = 0;
+           if (report->stations[stationID].Global_Pass) {
+               report->MakeUsefulEvent(detector, settings1, trigger, stationID, theEvent);
+           }
+#endif
+               
+           report->ClearUselessfromConnect(detector, settings1, trigger);
 
 
            // test if posnu is exactly same in calpulser mode
@@ -473,36 +492,41 @@ double cur_posnu_z;
 
 
            for (int i=0; i<detector->params.number_of_stations; i++) {
+#ifdef ARA_UTIL_EXISTS
                if (settings1->DETECTOR == 3 && i == 0){ theEvent->numRFChans = 14; }
                else { theEvent->numRFChans = 16; }
-
+#endif
+               
                if (max_dt < report->stations[i].max_arrival_time - report->stations[i].min_arrival_time) max_dt = report->stations[i].max_arrival_time - report->stations[i].min_arrival_time;
                // check the total global trigger passed
                if (report->stations[i].Global_Pass) {
 
                    cout<<"\nGlobal_Pass : "<<report->stations[i].Global_Pass<<" evt : "<<inu<<" added weight : "<<event->Nu_Interaction[0].weight<<endl;
-
+                   
                    if ( check_station_DC == 0) { // count trigger pass only once per event
-
-                   Total_Global_Pass ++;
-                   Total_Weight += event->Nu_Interaction[0].weight;
-                   Total_Probability += event->Nu_Interaction[0].probability;
-
-                   // test increment weight
-                   if (settings1->INTERACTION_MODE==1) {
-                       count1->incrementEventsFound( event->Nu_Interaction[0].weight, event );
+                       
+                       Total_Global_Pass ++;
+                       Total_Weight += event->Nu_Interaction[0].weight;
+                       Total_Probability += event->Nu_Interaction[0].probability;
+                       
+                       // test increment weight
+                       if (settings1->INTERACTION_MODE==1) {
+                           count1->incrementEventsFound( event->Nu_Interaction[0].weight, event );
+                       }
+                       else if (settings1->INTERACTION_MODE==0) {
+                           count1->incrementEventsFound( event->Nu_Interaction[0].probability, event );
+                       }
+                       else if (settings1->INTERACTION_MODE==3) {
+                           count1->incrementEventsFound( event->Nu_Interaction[0].probability, event );
+                       }
+                       
+                       
                    }
-                   else if (settings1->INTERACTION_MODE==0) {
-                       count1->incrementEventsFound( event->Nu_Interaction[0].probability, event );
-                   }
-                   else if (settings1->INTERACTION_MODE==3) {
-                       count1->incrementEventsFound( event->Nu_Interaction[0].probability, event );
-                   }
-
-
-                   }
-
+                   
                    check_station_DC++;
+                                      
+                   event->inu_passed = Events_Passed;
+                   
 
                }
 
@@ -549,6 +573,8 @@ double cur_posnu_z;
            
            AraTree2->Fill();   //fill interaction every events
 
+#ifdef ARA_UTIL_EXISTS
+
            // for 1, save all events whether passed trigger or not
            if (settings1->WRITE_ALL_EVENTS==1) {
                //theEvent = &report->theUsefulEvent;
@@ -561,12 +587,13 @@ double cur_posnu_z;
                    eventTree->Fill();
                }
            }
+#endif
        }
        else if (settings1->FILL_TREE_MODE==1) { // fill only usable posnu event
            
            if (event->Nu_Interaction[0].pickposnu>0) {
                AraTree2->Fill();   //fill interaction every events
-
+#ifdef ARA_UTIL_EXISTS
                // for 1, save all events whether passed trigger or not
                if (settings1->WRITE_ALL_EVENTS==1) {
                    //theEvent = &report->theUsefulEvent;
@@ -579,12 +606,14 @@ double cur_posnu_z;
                        eventTree->Fill();
                    }
                }
+#endif
            }
        }
        else if (settings1->FILL_TREE_MODE==2) { // fill only triggered event
            
            if (check_station_DC>0) {
                AraTree2->Fill();   //fill interaction every events
+#ifdef ARA_UTIL_EXISTS
 
                // for 1, save all events whether passed trigger or not
                if (settings1->WRITE_ALL_EVENTS==1) {
@@ -598,17 +627,21 @@ double cur_posnu_z;
                        eventTree->Fill();
                    }
                }
+#endif
            }
        }
 
        
        if (settings1->ONLY_PASSED_EVENTS == 1){
-	 if (check_station_DC > 0){
-	   inu++;
-	 }
+           if (check_station_DC > 0){
+               inu++;
+           }
        } else {
-	 inu++;
+           inu++;
        }
+        if (check_station_DC > 0){
+            Events_Passed++;
+        }
        Events_Thrown++;
        
 
@@ -629,8 +662,9 @@ double cur_posnu_z;
 
  delete event;
  delete report;
+#ifdef ARA_UTIL_EXISTS
  delete theEvent;
-
+#endif
 
 
   } // end loop over neutrinos

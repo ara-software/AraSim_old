@@ -30,7 +30,7 @@ Event::Event (Settings *settings1, Spectra *spectra1, Primaries *primary1, IceMo
 
     Initialize ();
 
-    inu = event_num;
+    inu_thrown = event_num;
 
     Choose_Evt_Type (settings1);
 

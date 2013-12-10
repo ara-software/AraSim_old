@@ -13,7 +13,10 @@
 #include <stdlib.h>
 #include "Constants.h"
 #include "TF1.h"
+
+#ifdef ARA_UTIL_EXISTS
 #include "AraGeomTool.h"
+#endif
 
 ClassImp(Detector);
 ClassImp(Parameters);
@@ -696,6 +699,8 @@ Detector::Detector(Settings *settings1, IceModel *icesurface, string setupfile) 
 
 
         } // if idealized geometry
+#ifdef ARA_UTIL_EXISTS
+
         else { // non-idealized geometry
 
 	  //SetupInstalledStations();        
@@ -908,7 +913,7 @@ Detector::Detector(Settings *settings1, IceModel *icesurface, string setupfile) 
 
             
         }// if non-idealized geom
-        
+#endif
         
         
         // test read V-pol gain file!!
@@ -1523,7 +1528,9 @@ Detector::Detector(Settings *settings1, IceModel *icesurface, string setupfile) 
         // set station positions
         //cout << "READGEOM:" << settings1->READGEOM << endl;
         
+#ifdef ARA_UTIL_EXISTS
         UseAntennaInfo(0, settings1);
+#endif
 //            UseAntennaInfo(1, settings1);
         for (int i = 0; i < (int)params.number_of_stations; i++){
             stations[i].StationID = i;
@@ -4690,6 +4697,7 @@ void Detector::GetSSAfromChannel ( int stationNum, int channelNum, int * antenna
 }
 
 
+#ifdef ARA_UTIL_EXISTS
 
 void Detector::UseAntennaInfo(int stationNum, Settings *settings1){
     
@@ -4828,6 +4836,7 @@ void Detector::UseAntennaInfo(int stationNum, Settings *settings1){
     }
     
 }
+#endif
 
 void Detector::SetupIdealStations(){
         

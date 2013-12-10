@@ -386,8 +386,9 @@ class Detector {
     int GetChannelfromStringAntenna (int stationNum, int stringnum, int antennanum );
     void GetSSAfromChannel ( int stationNum, int channelNum, int * antennaNum, int * stringNum );
     
+#ifdef ARA_UTIL_EXISTS
     void UseAntennaInfo (int stationNum, Settings *settings1);
-
+#endif
 
 // more general used function
     void GetSSAfromChannel ( int stationNum, int channelNum, int * antennaNum, int * stringNum, Settings *settings1);

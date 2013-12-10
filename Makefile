@@ -9,8 +9,22 @@ include StandardDefinitions.mk
 ifeq ($(strip $(BOOST_ROOT)),)
 	BOOST_ROOT = /usr/local/include
 endif
-SYSINCLUDES	= -I$(BOOST_ROOT)
-SYSLIBS         = 
+
+ifdef ARA_UTIL_INSTALL_DIR
+	ARA_UTIL_LIB_DIR=${ARA_UTIL_INSTALL_DIR}/lib
+	ARA_UTIL_INC_DIR=${ARA_UTIL_INSTALL_DIR}/include
+	CXXFLAGS += -DARA_UTIL_EXISTS
+	LD_ARA_UTIL=-L${ARA_UTIL_LIB_DIR} -lAraEvent
+	INC_ARA_UTIL=-I${ARA_UTIL_INC_DIR}
+	ARA_ROOT_HEADERS = ${ARA_UTIL_INC_DIR}/UsefulIcrrStationEvent.h
+endif
+
+SYSINCLUDES	= -I/usr/include -I$(BOOST_ROOT)
+SYSLIBS         = -L/usr/lib
+
+#SYSINCLUDES	= -I$(BOOST_ROOT)
+#SYSLIBS         = 
+
 DLLSUF = ${DllSuf}
 OBJSUF = ${ObjSuf}
 SRCSUF = ${SrcSuf}
@@ -20,8 +34,8 @@ SRCSUF = ${SrcSuf}
 CXX = g++
 
 #Generic and Site Specific Flags
-CXXFLAGS     += $(SYSINCLUDES) -Iinclude ##-IAraRootFormat -IAraRoot ##$(INC_ARASIM)
-LDFLAGS      += -g -I$(BOOST_ROOT) $(ROOTLDFLAGS) -Llib -L. -lAraSimEvent -lAraGeom
+CXXFLAGS     += $(INC_ARA_UTIL) $(SYSINCLUDES) 
+LDFLAGS      += -g $(LD_ARA_UTIL) -I$(BOOST_ROOT) $(ROOTLDFLAGS) -L. 
 
 # copy from ray_solver_makefile (removed -lAra part)
 
@@ -31,14 +45,7 @@ LDFLAGS      += -g -I$(BOOST_ROOT) $(ROOTLDFLAGS) -Llib -L. -lAraSimEvent -lAraG
 LIBS	= $(ROOTLIBS) -lMinuit $(SYSLIBS) -lsqlite3
 GLIBS	= $(ROOTGLIBS) $(SYSLIBS)
 
-ARAROOT_DIR = ./AraRootFormat
-LIB_DIR = ./lib
-INC_DIR = ./include
-ARA_ROOT_OBJS = $(ARAROOT_DIR)/UsefulAraStationEvent.o $(ARAROOT_DIR)/UsefulIcrrStationEvent.o
-ARA_ROOT_H = $(INC_DIR)/UsefulAraStationEvent.h $(INC_DIR)/UsefulIcrrStationEvent.h
-
-
-#ROOT_LIBRARY = libAra.${DLLSUF}
+# ROOT_LIBRARY = libAra.${DLLSUF}
 
 OBJS = Vector.o EarthModel.o IceModel.o Trigger.o Ray.o Tools.o Efficiencies.o Event.o Detector.o Position.o Spectra.o RayTrace.o RayTrace_IceModels.o signal.o secondaries.o Settings.o Primaries.o counting.o RaySolver.o Report.o eventDict.o AraSim.o
 CCFILE = Vector.cc EarthModel.cc IceModel.cc Trigger.cc Ray.cc Tools.cc Efficiencies.cc Event.cc Detector.cc Spectra.cc Position.cc RayTrace.cc signal.cc secondaries.cc RayTrace_IceModels.cc Settings.cc Primaries.cc counting.cc RaySolver.cc Report.cc AraSim.cc
@@ -46,20 +53,14 @@ CLASS_HEADERS = Trigger.h Detector.h Settings.h Spectra.h IceModel.h Primaries.h
 
 PROGRAMS = AraSim
 
-ARAROOTLIB = libAraSimEvent.a libAraGeom.a
-
-all : $(ARAROOTLIB) $(PROGRAMS) 
-
-$(ARAROOTLIB):
-	@cd AraRootFormat; make all; make install
-	@cd AraRoot; make all; make install
+all : $(PROGRAMS) 
 
 AraSim : $(OBJS)
-	$(LD) $(OBJS) $(ARA_ROOT_OBJS) $(LDFLAGS) $(LIBS) -lAraSimEvent  -o $(PROGRAMS) 
+	$(LD) $(LDFLAGS) $(OBJS) $(LIBS) -o $(PROGRAMS) 
 	@echo "done."
 
 #The library
-$(ROOT_LIBRARY) : $(LIB_OBJS) $(ARA_ROOT_OBJS)
+$(ROOT_LIBRARY) :
 	@echo "Linking $@ ..."
 ifeq ($(PLATFORM),macosx)
 # We need to make both the .dylib and the .so
@@ -73,7 +74,7 @@ else
 endif
 endif
 else
-	$(LD) $(SOFLAGS) $(LDFLAGS) $(G77LDFLAGS) $(LIB_OBJS) $(LIBS)  -o $@
+	$(LD) $(SOFLAGS) $(LDFLAGS) $(G77LDFLAGS) $(LIBS) -o $@
 endif
 
 ##-bundle
@@ -99,7 +100,7 @@ endif
 eventDict.C: $(CLASS_HEADERS)
 	@echo "Generating dictionary ..."
 	@ rm -f *Dict* 
-	rootcint $@ -c $(CLASS_HEADERS) $(ARA_ROOT_H) LinkDef.h
+	rootcint $@ -c ${INC_ARA_UTIL} $(CLASS_HEADERS) ${ARA_ROOT_HEADERS} LinkDef.h
 
 clean:
 	@rm -f *Dict*

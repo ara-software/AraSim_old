@@ -105,11 +105,13 @@ double inverseExponentialRefractiveIndex::indexOfRefraction(double z) const{
 		return(1.0);
 	return(A+B/(1.+exp(C*z)));
 }
+
 double inverseExponentialRefractiveIndex::indexOfRefractionDerivative(double z) const{
 	if(z>0.0)
 		return(0.0);
 	return(-B*C*exp(C*z)/((1.+exp(C*z))*(1.+exp(C*z))));
 }
+
 void inverseExponentialRefractiveIndex::indexOfRefractionWithDerivative(double z, double& n, double& dndz) const{
 	if(z>0.0){
 		n=1.0;
@@ -122,6 +124,73 @@ void inverseExponentialRefractiveIndex::indexOfRefractionWithDerivative(double z
 	}
 }
 
+RayTrace::indexOfRefractionModel::RayEstimate inverseExponentialRefractiveIndex::estimateRayAngle(double sourceDepth, double receiverDepth, double distance) const{
+	if(B==0.0){
+		//in this degenerate case, n(z)==A for all z
+		//which causes problems when we divide by (n-A) and (n0-A) below
+		//however, this case is really simple, so we can handle it directly
+		double theta=atan(distance/(sourceDepth-receiverDepth));
+		if(theta<0.0)
+			theta+=RayTrace::pi;
+		return(RayEstimate(SOLUTION,theta));
+	}
+	
+    double n0=A+B/(1.+exp(C*sourceDepth));
+    double n=A+B/(1.+exp(C*receiverDepth));
+//	double n0=A+B*exp(C*sourceDepth);
+//	double n=A+B*exp(C*receiverDepth);
+	bool swap=(n<n0);
+	if(swap)
+		std::swap(n,n0);
+	double s1=1e-10;
+	double s2=1.0;
+	
+	double sDiff=C*distance;
+	
+	double a,b,c,s;
+	
+	double f;
+	a=s1*s1*n0*n0;
+	b=sqrt(A*A-a);
+	c=A/b;
+	f=log((((sqrt(n*n-a)+b)/(n-A))+c)/(((sqrt(n0*n0-a)+b)/(n0-A))+c))-((b*sDiff)/(s1*n0));
+	
+	double fmid;
+	a=s2*s2*n0*n0;
+	b=sqrt(A*A-a);
+	c=A/b;
+	fmid=log((((sqrt(n*n-a)+b)/(n-A))+c)/(((sqrt(n0*n0-a)+b)/(n0-A))+c))-((b*sDiff)/(s2*n0));
+	
+	if(f*fmid>=0.0 || std::isnan(f) || std::isnan(fmid))
+		return(RayEstimate());
+	
+	double ds;
+	double rtb=(f<0.0?(ds=s2-s1,s1):(ds=s1-s2,s2));
+	const unsigned int maxIter=40;
+	unsigned int i;
+	for(i=0; i<maxIter; i++){
+		ds*=0.5;
+		s=rtb+ds;
+		a=s*s*n0*n0;
+		b=sqrt(A*A-a);
+		c=A/b;
+		fmid=log((((sqrt(n*n-a)+b)/(n-A))+c)/(((sqrt(n0*n0-a)+b)/(n0-A))+c))-((b*sDiff)/(s*n0));
+		if(fmid<=0.0)
+			rtb=s;
+		if(std::abs(fmid)<1.0e-4)
+			break;
+	}
+	if(i==maxIter)
+		return(RayEstimate());
+	if(swap){
+		if(sourceDepth>receiverDepth)
+			return(RayEstimate(SOLUTION,RayTrace::pi-asin((n0/n)*s)));
+		return(RayEstimate(SOLUTION,asin((n0/n)*s)));
+	}
+	if(sourceDepth<receiverDepth)
+		return(RayEstimate(SOLUTION,asin(s)));
+	return(RayEstimate(SOLUTION,RayTrace::pi-asin(s)));
+}
 
 simpleExponentialRefractiveIndex::simpleExponentialRefractiveIndex(double a, double b):
 A(a),B(b){}

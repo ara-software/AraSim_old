@@ -278,6 +278,7 @@ void RaySolver::Solve_Ray_org (Position &source, Position &target, std::vector <
     frequency = 300;
     polarization = RayTrace::pi/2;
     
+    
     if (settings1->NOFZ == 1){
     
     refractionModel=boost::shared_ptr<exponentialRefractiveIndex>(new exponentialRefractiveIndex(ns,nd,nc));
@@ -285,6 +286,10 @@ void RaySolver::Solve_Ray_org (Position &source, Position &target, std::vector <
 
     } else if (settings1->NOFZ == 0){
         refractionModel=boost::shared_ptr<constantRefractiveIndex>(new constantRefractiveIndex(1.48));
+        attenuationModel=boost::shared_ptr<basicAttenuationModel>(new basicAttenuationModel);
+    }
+    else if (settings1->NOFZ == 2){
+        refractionModel=boost::shared_ptr<inverseExponentialRefractiveIndex>(new inverseExponentialRefractiveIndex(ns,nd,nc));
         attenuationModel=boost::shared_ptr<basicAttenuationModel>(new basicAttenuationModel);
     }
 
@@ -856,7 +861,11 @@ void RaySolver::Solve_Ray (Position &source, Position &target, IceModel *antarct
         refractionModel=boost::shared_ptr<constantRefractiveIndex>(new constantRefractiveIndex(1.5));
         attenuationModel=boost::shared_ptr<basicAttenuationModel>(new basicAttenuationModel);
     }
-	
+    else if (settings1->NOFZ == 2){
+        refractionModel=boost::shared_ptr<inverseExponentialRefractiveIndex>(new inverseExponentialRefractiveIndex(ns,nd,nc));
+        attenuationModel=boost::shared_ptr<basicAttenuationModel>(new basicAttenuationModel);
+    }
+    
 	unsigned short refl = RayTrace::NoReflection;
 	if(surface_reflect)
 		refl|=RayTrace::SurfaceReflection;

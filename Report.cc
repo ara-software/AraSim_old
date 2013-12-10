@@ -18,12 +18,6 @@
 #include "TRandom3.h"
 #include "Constants.h"
 
-#include "TCanvas.h"
-#include "TGraph.h"
-
-
-//Include output format to enable reading by analysis software AraRoot
-#include "AraRootFormat/UsefulIcrrStationEvent.h"
 
 ClassImp(Report);
 ClassImp(Antenna_r);
@@ -273,7 +267,10 @@ void Report::clear_useless(Settings *settings1) {   // to reduce the size of out
 
 //void Report::Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1, Trigger *trigger) {
 //void Report::Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1, Trigger *trigger, UsefulIcrrStationEvent *theUsefulEvent) {
-void Report::Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1, Trigger *trigger, UsefulIcrrStationEvent *theUsefulEvent, int evt) {
+//void Report::Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1, Trigger *trigger) {
+//void Report::Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1, Trigger *trigger, UsefulIcrrStationEvent *theUsefulEvent) {
+//void Report::Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1, Trigger *trigger, UsefulIcrrStationEvent *theUsefulEvent, int evt) {
+void Report::Connect_Interaction_Detector (Event *event, Detector *detector, RaySolver *raysolver, Signal *signal, IceModel *icemodel, Settings *settings1, Trigger *trigger, int evt) {
 
     int ray_sol_cnt;
     double viewangle;
@@ -2109,8 +2106,9 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                            double arrivtime = stations[i].strings[string_i].antennas[antenna_i].arrival_time[0];
                            double X = detector->stations[i].strings[string_i].antennas[antenna_i].GetX();
                            double Y = detector->stations[i].strings[string_i].antennas[antenna_i].GetY();
-                            double Z = detector->stations[i].strings[string_i].antennas[antenna_i].GetZ();
+                           double Z = detector->stations[i].strings[string_i].antennas[antenna_i].GetZ();
                            //std::cout << "Arrival time:X:Y:Z " << arrivtime << " : " << X << " : " << Y << " : " << Z << std::endl;
+                           /*
                            int AraRootChannel = 0;
                            AraRootChannel = detector->GetChannelfromStringAntenna (i, string_i, antenna_i, settings1);
 
@@ -2129,7 +2127,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                            //theUsefulEvent->fNumPointsRF[ch_loop] = EFFECTIVE_SAMPLES * 2;
                            theUsefulEvent->fNumPointsRF[ch_loop] = UsefulEventBin;
                            //cout << " : " << theUsefulEvent->fNumPointsRF[ch_loop] << endl;
-
+                            */
                        }
 
                        //cout<<"Global trigger passed!!, N_pass : "<<N_pass<<endl;
@@ -2143,6 +2141,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                    } // if global trig!
                    else {
                        trig_i++;   // also if station not passed the trigger, just go to next bin
+                       /*
                        for (int ch_loop=0; ch_loop<ch_ID; ch_loop++) {
                            int string_i = detector->getStringfromArbAntID( i, ch_loop);
                            int antenna_i = detector->getAntennafromArbAntID( i, ch_loop);
@@ -2163,6 +2162,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                            //theUsefulEvent->fNumPointsRF[ch_loop] = EFFECTIVE_SAMPLES * 2;
                            theUsefulEvent->fNumPointsRF[ch_loop] = UsefulEventBin;
                        }
+                       */
                    }
                }    // while trig_i
 
@@ -2182,12 +2182,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
 
            }// if there is any ray_sol in the station
-
-
-
-
-
-
+/*
                // now remove all information which are useless
                for (int c_j=0; c_j< detector->stations[i].strings.size(); c_j++) {
 
@@ -2199,21 +2194,60 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
                    }
                }
                // clear useless done
-
-
+*/
         } // for stations
-
 
         // also clear all vector info to reduce output root file size
         clear_useless(settings1);   // to reduce the size of output AraOut.root, remove some information
 
-
-
-
-
 }   // end Connect_Interaction_Detector
 
+#ifdef ARA_UTIL_EXISTS
+void Report::MakeUsefulEvent(Detector *detector, Settings *settings1, Trigger *trigger, int stationID, UsefulIcrrStationEvent *theUsefulEvent) {
+    if (stationID < detector->params.number_of_stations){
+        int i = stationID;
+        cout << stationID << endl;
+        for (int ch_loop=0; ch_loop<ch_ID; ch_loop++) {
+            int string_i = detector->getStringfromArbAntID( i, ch_loop);
+            int antenna_i = detector->getAntennafromArbAntID( i, ch_loop);
+            int AraRootChannel = 0;
+            AraRootChannel = detector->GetChannelfromStringAntenna (i, string_i, antenna_i, settings1);
+            
+            int UsefulEventBin;
+            if ( settings1->NFOUR/2 < EFFECTIVE_LAB3_SAMPLES*2) UsefulEventBin = settings1->NFOUR/2;
+            else UsefulEventBin = EFFECTIVE_LAB3_SAMPLES*2;
+            
+            //for (int mimicbin=0; mimicbin<settings1->NFOUR/2; mimicbin++) {
+            for (int mimicbin=0; mimicbin<UsefulEventBin; mimicbin++) {
+                if (stations[i].Global_Pass > 0){
+                    theUsefulEvent->fVoltsRF[AraRootChannel-1][mimicbin] = stations[i].strings[string_i].antennas[antenna_i].V_mimic[mimicbin];
+                    theUsefulEvent->fTimesRF[AraRootChannel-1][mimicbin] = stations[i].strings[string_i].antennas[antenna_i].time_mimic[mimicbin];
+                }
+                else {
+                    theUsefulEvent->fVoltsRF[AraRootChannel-1][mimicbin] = 0.;
+                    theUsefulEvent->fTimesRF[AraRootChannel-1][mimicbin] = 0.;
+                }
+            }
+            //theUsefulEvent->fNumPointsRF[ch_loop] = EFFECTIVE_SAMPLES * 2;
+            theUsefulEvent->fNumPointsRF[ch_loop] = UsefulEventBin;
+        }
+    }
+}
+#endif
 
+void Report::ClearUselessfromConnect(Detector *detector, Settings *settings1, Trigger *trigger){
+    
+    for (int i = 0; i< detector->params.number_of_stations; i++) {
+        // now remove all information which are useless
+        for (int c_j=0; c_j< detector->stations[i].strings.size(); c_j++) {
+            for (int c_k=0; c_k< detector->stations[i].strings[c_j].antennas.size(); c_k++) {
+                stations[i].strings[c_j].antennas[c_k].clear_useless(settings1);  // clear data in antenna which stored in previous event
+                //stations[i].strings[c_j].antennas[c_k].clear();  // clear data in antenna which stored in previous event
+            }
+        }
+        //clear_useless(settings1);
+    }
+}
 
 
 

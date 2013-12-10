@@ -35,6 +35,7 @@ public:
 	virtual double indexOfRefraction(double z) const;
 	virtual double indexOfRefractionDerivative(double z) const;
 	virtual void indexOfRefractionWithDerivative(double z, double& n, double& dndz) const;
+    virtual RayTrace::indexOfRefractionModel::RayEstimate estimateRayAngle(double sourceDepth, double receiverDepth, double distance) const;
 };
 
 class simpleExponentialRefractiveIndex : public RayTrace::indexOfRefractionModel{
