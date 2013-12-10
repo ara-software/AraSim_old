@@ -22,9 +22,6 @@ endif
 SYSINCLUDES	= -I/usr/include -I$(BOOST_ROOT)
 SYSLIBS         = -L/usr/lib
 
-#SYSINCLUDES	= -I$(BOOST_ROOT)
-#SYSLIBS         = 
-
 DLLSUF = ${DllSuf}
 OBJSUF = ${ObjSuf}
 SRCSUF = ${SrcSuf}
