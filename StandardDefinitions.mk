@@ -28,3 +28,12 @@ endif
 ifdef USE_GOOGLE_PROFILER
 SYSLIBS += -L/home/rjn/thirdParty/lib -lprofiler -ltcmalloc
 endif
+
+ifdef ARA_UTIL_INSTALL_DIR
+	ARA_UTIL_LIB_DIR=${ARA_UTIL_INSTALL_DIR}/lib
+	ARA_UTIL_INC_DIR=${ARA_UTIL_INSTALL_DIR}/include
+	CXXFLAGS += -DARA_UTIL_EXISTS
+	LD_ARA_UTIL=-L${ARA_UTIL_LIB_DIR} -lAraEvent -lsqlite3
+	INC_ARA_UTIL=-I${ARA_UTIL_INC_DIR}
+	ARA_ROOT_HEADERS = ${ARA_UTIL_INC_DIR}/UsefulIcrrStationEvent.h
+endif
