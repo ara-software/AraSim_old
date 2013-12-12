@@ -14,13 +14,13 @@ ifdef ARA_UTIL_INSTALL_DIR
 	ARA_UTIL_LIB_DIR=${ARA_UTIL_INSTALL_DIR}/lib
 	ARA_UTIL_INC_DIR=${ARA_UTIL_INSTALL_DIR}/include
 	CXXFLAGS += -DARA_UTIL_EXISTS
-	LD_ARA_UTIL=-L${ARA_UTIL_LIB_DIR} -lAraEvent
+	LD_ARA_UTIL=-L${ARA_UTIL_LIB_DIR} -lAraEvent -lsqlite3
 	INC_ARA_UTIL=-I${ARA_UTIL_INC_DIR}
 	ARA_ROOT_HEADERS = ${ARA_UTIL_INC_DIR}/UsefulIcrrStationEvent.h
 endif
 
 SYSINCLUDES	= -I/usr/include -I$(BOOST_ROOT)
-SYSLIBS         = -L/usr/lib
+SYSLIBS         = -L/usr/lib 
 
 DLLSUF = ${DllSuf}
 OBJSUF = ${ObjSuf}
@@ -39,7 +39,8 @@ LDFLAGS      += -g $(LD_ARA_UTIL) -I$(BOOST_ROOT) $(ROOTLDFLAGS) -L.
 # added for Fortran to C++
 
 
-LIBS	= $(ROOTLIBS) -lMinuit $(SYSLIBS) -lsqlite3
+LIBS	= $(ROOTLIBS) -lMinuit $(SYSLIBS) 
+#-lsqlite3
 GLIBS	= $(ROOTGLIBS) $(SYSLIBS)
 
 # ROOT_LIBRARY = libAra.${DLLSUF}
