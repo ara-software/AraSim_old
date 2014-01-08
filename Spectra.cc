@@ -303,6 +303,10 @@ Spectra::Spectra(double EXPONENT) {
       GetFlux("Kotera2010_mix_min.dat");
   }
 
+  else if (EXPONENT==224.)
+  {
+      GetFlux("Kotera2010_max.dat");
+  }
 
 
 

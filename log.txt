@@ -1039,3 +1039,14 @@ added inverse exponential index of refraction model with NOFZ=2
 added conditional dependence on AraRoot for AraRoot-like output
 	checks if ARA_UTIL_INSTALL_DIR exists and links against the libraries there to make a UsefulIcrrStationEvent 
 
+===============================================================================
+
+01/08/2014 E. Hong;
+
+Added new flux model file.
+Kotera 2010 max model file (./fluxes/Kotera2010_max.dat) added and to use
+that, use EXPONENT value 224.
+New Kotera 2010 max is similar with Kotera2010_mix_max.dat but slightly
+different.
+The flux value is from ARA paper arXiv:1105.2854v1, Fig.27 Kotera et al. '10 max
+
