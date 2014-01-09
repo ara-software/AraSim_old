@@ -63,6 +63,7 @@ using namespace std;
 
 #ifdef ARA_UTIL_EXISTS
 #include "UsefulIcrrStationEvent.h"
+ClassImp(UsefulIcrrStationEvent);
 #endif
 
 class EarthModel; //class

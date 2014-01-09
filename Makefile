@@ -24,6 +24,7 @@ CXX = g++
 #Generic and Site Specific Flags
 CXXFLAGS     += $(INC_ARA_UTIL) $(SYSINCLUDES) 
 LDFLAGS      += -g $(LD_ARA_UTIL) -I$(BOOST_ROOT) $(ROOTLDFLAGS) -L. 
+ARA_ROOT_FLAGS = 
 
 # copy from ray_solver_makefile (removed -lAra part)
 
@@ -85,11 +86,10 @@ endif
 	@echo "<**Compiling**> "$<
 	$(G77) -c $<
 
-
 eventDict.C: $(CLASS_HEADERS)
 	@echo "Generating dictionary ..."
 	@ rm -f *Dict* 
-	rootcint $@ -c ${INC_ARA_UTIL} $(CLASS_HEADERS) ${ARA_ROOT_HEADERS} LinkDef.h
+	rootcint -f $@ -c $(DICT_FLAGS) $(INC_ARA_UTIL) $(CLASS_HEADERS) ${ARA_ROOT_HEADERS} LinkDef.h
 
 clean:
 	@rm -f *Dict*
