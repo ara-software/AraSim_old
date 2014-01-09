@@ -45,7 +45,13 @@ public:
   Spectra(double EXPONENT); // constructor  
   ~Spectra();   // destructor
   
-  double GetNuEnergy(); // get the neutrino energy which follows neutrino flux. 
+  double GetNuEnergy_bin(); // get the neutrino energy which follows neutrino flux. (bin step)
+
+  double GetNuEnergy(); // get the neutrino energy which follows neutrino flux. (interpolated flux)
+
+
+  double SimpleLinearInterpolation_value(int n1, double *x1, double *y1, double x2 );    // reads n1 array values x1, y1 and do simple linear interpolated value at x2 and return it
+
 
 //--------------------------------------------------
 //   TGraph *GetGEdNdEdAdt();

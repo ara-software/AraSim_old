@@ -340,6 +340,8 @@ Spectra::Spectra(double EXPONENT) {
       EdNdEdAdt[i] = pow(10, EdNdEdAdt[i]);     //to linear 
       E2dNdEdAdt[i] = pow(10, E2dNdEdAdt[i]);   //to linear
 //      E2dNdEdAdt[i]=log10(EdNdEdAdt[i])+energy[i]-9.;
+
+      cout<<"linear EdNdEdAdt["<<i<<"] : "<<EdNdEdAdt[i]<<endl;
   }
 
 //--------------------------------------------------
@@ -356,7 +358,7 @@ Spectra::Spectra(double EXPONENT) {
  
 }
 
-double  Spectra::GetNuEnergy() {
+double  Spectra::GetNuEnergy_bin() {
   
   double thisenergy=16.; // arbitrary initialisation
   double thisflux=2.; // initialise higher than max
@@ -388,6 +390,89 @@ double  Spectra::GetNuEnergy() {
   }
 	
 } //Pick Neutrino Energy
+
+
+
+
+
+double  Spectra::GetNuEnergy() {
+  
+  double thisenergy=16.; // arbitrary initialisation
+  double thisflux=2.; // initialise higher than max
+  double max=1.;
+  int energybin=0; // arbitrary initialisation
+  double maxenergy=Tools::dMax(energy,E_bin);
+  double minenergy=Tools::dMin(energy,E_bin);
+  // this uses the dartboard approach
+  //cout << "minenergy, maxenergy are " << minenergy << " " << maxenergy << "\n";
+  
+  if (EXPONENT_model>=10. && EXPONENT_model<30.) {
+      return pow(10.,pnu_EXPONENT);
+  }
+
+  else {
+  
+  while(thisflux>max) {
+    // pick an energy  
+    thisenergy=Rand3.Rndm()*(maxenergy-minenergy)+minenergy; // pick energy at random between the highest and lowest
+    // the energy array is actually filled with energy exponents 
+    // and thisenergy starts from 0 so it has an offset
+    
+    // get interpolated flux at "thisenergy"
+    max=SimpleLinearInterpolation_value(E_bin, energy, EdNdEdAdt, thisenergy ) / maxflux; // normalize to 1
+    //cout<<"interpolated max : "<<max<<", thisenergy : "<<thisenergy<<endl;
+    /*
+    energybin=Tools::Getifreq(thisenergy,minenergy,maxenergy,E_bin);
+    //max=gspectrum[(int)EXPONENT]->Eval(thisenergy,0,"S")/maxflux; // this is the maximum the normalized flux can be in this bin, always less than 1
+    max=EdNdEdAdt[energybin]/maxflux;
+    */
+    thisflux=Rand3.Rndm(); // pick the flux at random between 0 and 1, if it's less than max it's a winner
+  } //while
+  return pow(10.,thisenergy);
+  }
+	
+} //Pick Neutrino Energy
+
+
+
+
+
+double Spectra::SimpleLinearInterpolation_value(int n1, double *x1, double *y1, double x2 ) {    // reads n1 array values x1, y1 and do simple linear interpolated value at x2 and return it
+    //
+
+    if ( x2 <= x1[0] ) return y1[0];
+
+    if ( x2 >= x1[n1-1] ) return y1[n1-1];
+
+
+    // find if there's same x value
+    for ( int i=0; i<n1; i++) {
+
+        if ( x1[i] == x2 ) return y1[i]; // if x value is equal, return that y value
+    }
+
+    int cnt = 0;
+    double output;
+
+    // find the nearest bin for x2 value
+    for ( int i=0; i<n1; i++) {
+
+        if ( x1[i] > x2 ) {
+
+            cnt = i;
+            output = y1[cnt-1] + (x2-x1[cnt-1])*(y1[cnt]-y1[cnt-1])/(x1[cnt]-x1[cnt-1]);
+
+            break; // we found the value, get out from the loop
+        }
+    }
+
+    return output;
+
+}
+
+
+
+
 
 
 
