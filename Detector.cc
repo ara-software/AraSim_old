@@ -1698,6 +1698,10 @@ Detector::Detector(Settings *settings1, IceModel *icesurface, string setupfile) 
 
             
         
+
+    // add additional depth if it's on
+    AddAdditional_Depth(settings1);
+
     
             
     // change coordinate from flat surface to curved Earth surface
@@ -3018,6 +3022,47 @@ inline void Detector::FlattoEarth_ARA_sharesurface(IceModel *icesurface) {    //
     
     
 }
+
+
+
+
+
+inline void Detector::AddAdditional_Depth(Settings *settings1) {    // each station share the lowest surface
+    
+
+    if (settings1->ADDITIONAL_DEPTH_ON == 1) {
+
+        // stations
+        for (int i=0; i<int(stations.size()); i++) {
+
+            // strings
+            for (int j=0; j<int(stations[i].strings.size()); j++) {
+
+                // antennas
+                for (int k = 0; k < int(stations[i].strings[j].antennas.size()); k++){
+
+                    //stations[i].strings[j].antennas[k].SetR( stations[i].strings[j].antennas[k].GetR() - settings1->ADDITIONAL_DEPTH );
+                    stations[i].strings[j].antennas[k].SetZ( stations[i].strings[j].antennas[k].GetZ() - settings1->ADDITIONAL_DEPTH );
+                }
+            }
+        }
+
+    }
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 inline void Detector::ReadFilter(string filename, Settings *settings1) {    // will return gain (dB) with same freq bin with antenna gain

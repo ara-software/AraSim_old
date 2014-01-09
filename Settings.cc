@@ -208,6 +208,9 @@ outputdir="outputs"; // directory where outputs go
 
     V_SATURATION = 1.; // saturated voltage +-V_SATURATION
 
+    ADDITIONAL_DEPTH_ON = 0; // whether add more depth to each antenas
+
+    ADDITIONAL_DEPTH = 100.; // default additional depth value
 
 
 }
@@ -463,6 +466,13 @@ void Settings::ReadFile(string setupfile) {
               else if (label == "OFFCONE_LIMIT") {
                   OFFCONE_LIMIT = atof( line.substr(line.find_first_of("=") + 1).c_str() );
               }
+              else if (label == "ADDITIONAL_DEPTH_ON") {
+                  ADDITIONAL_DEPTH_ON = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+              else if (label == "ADDITIONAL_DEPTH") {
+                  ADDITIONAL_DEPTH = atof( line.substr(line.find_first_of("=") + 1).c_str() );
+              }
+
           }
       }
       setFile.close();

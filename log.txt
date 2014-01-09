@@ -1050,3 +1050,23 @@ New Kotera 2010 max is similar with Kotera2010_mix_max.dat but slightly
 different.
 The flux value is from ARA paper arXiv:1105.2854v1, Fig.27 Kotera et al. '10 max
 
+Also added new mode.
+In setup file, "ADDITIONAL_DEPTH_ON" and "ADDITIONAL_DEPTH" settings are
+added.
+Those are used when you want to manually add same additional depth to default
+values.
+
+For example, when you use TestBed geometry (DETECTOR=3, READGEOM=1 case) and
+want to add addtional depth to all channels except surface channels, use this
+mode.
+
+ADDITIONAL_DEPTH_ON=1 will turn on this mode (by default this value is 0 which
+is turned off)
+And when ADDITIONAL_DEPTH_ON=1 case, AraSim will read ADDITIONAL_DEPTH=xxx
+value and make all channels xxx amount deeper than before (positive xxx value
+will make antennas more deeper and negative xxx value will make antennas move
+up near the surface)
+
+Don't give ADDITIONAL_DEPTH value too big so that antennas are located in the
+middle of air or in the bed rock.
+

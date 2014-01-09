@@ -202,6 +202,14 @@ class Settings
         double V_SATURATION; // default 1., output voltage saturation due to amplifier limit. by default it's +-1. V
 
 
+    
+        int ADDITIONAL_DEPTH_ON; // whether add more depth to each antenas, default : 0 (not on)
+    
+        double ADDITIONAL_DEPTH; // additional depth value, default 100, only applied when ADDITIONAL_DEPTH_ON=1
+
+
+
+
 
 
 

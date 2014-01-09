@@ -264,6 +264,11 @@ class Detector {
         void FlattoEarth_ARA(IceModel *icesurface);
         void FlattoEarth_ARA_sharesurface(IceModel *icesurface);  // each station share the lowest surface
 
+
+        void AddAdditional_Depth(Settings *settings1); // each station share the lowest surface
+
+
+
         int freq_step;
         int ang_step;
         double freq_width;
