@@ -208,7 +208,12 @@ class Settings
         double ADDITIONAL_DEPTH; // additional depth value, default 100, only applied when ADDITIONAL_DEPTH_ON=1
 
 
+        
+        int TRIG_ONLY_LOW_CH_ON;    // if trigger will occur with all chs (0, default) or only lower 8 chs (1)
 
+
+    
+        double ACCUM_TRIG_SEARCH_BINS_STATION0; // not actually setting value but gives us how much trigger searched bins there were in the run
 
 
 

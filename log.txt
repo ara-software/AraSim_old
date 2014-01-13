@@ -1070,3 +1070,41 @@ up near the surface)
 Don't give ADDITIONAL_DEPTH value too big so that antennas are located in the
 middle of air or in the bed rock.
 
+===============================================================================
+
+01/13/2014 E. Hong;
+
+Added few modes to Settings class.
+
+1) TRIG_ONLY_LOW_CH_ON
+
+For ideal stations, this mode will force only lower 8 antennas can contribute
+to trigger.
+By default this value is 0 (just regular mode; all 16 channels contribute to
+trigger)
+There are combinations of settings to compare ideal ARA station and TestBed by
+using for example
+DETECTOR=1
+number_of_stations=1
+TRIG_ONLY_LOW_CH_ON=1
+NOISE_TEMP_MODE=1 // different noise for different chs
+NOISE=1 // use TB calibrated Rayleigh dist. noise
+TRIG_THRES_MODE=1 // TB calibrated trig threshold
+
+above combinations will make ideal ARA station 1 which only triggered by
+bottom 8 antennas (4 Vpol, 4 Hpol) and those 8 channels will have calibrated
+TestBed's thermal noise waveform (by Rayleigh dist.) and calibrated trigger
+threshold.
+
+2) ACCUM_TRIG_SEARCH_BINS_STATION0
+
+Above value is actually not a setting value but an output value which gives us
+how much trigger searched bins there were in the run for station 0.
+This value is needed if we want to calculate the global trigger rate with
+small output root file size (FILL_TREE_MODE=2 which only stores triggered
+events).
+
+With this value, we can calculate trigger rate with global passed number of
+events in station 0.
+
+

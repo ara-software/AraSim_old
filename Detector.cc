@@ -4161,6 +4161,9 @@ double Detector::GetGainOffset( int StationID, int ch, Settings *settings1 ) { /
     if ( (StationID == 0)&&(settings1->DETECTOR==3) ) { // if TestBed, we have offset values
         return GainOffset_TB_ch[ch];
     }
+    else if ( settings1->TRIG_ONLY_LOW_CH_ON==1 ) { // if only triggered by bottom chs with TB info
+        return GainOffset_TB_ch[ch];
+    }
     else {
         return 1.;// other stations, just return 1.
     }
@@ -4170,6 +4173,9 @@ double Detector::GetGainOffset( int StationID, int ch, Settings *settings1 ) { /
 double Detector::GetThresOffset( int StationID, int ch, Settings *settings1 ) { // returns voltage factor for specific channel gain off set
 
     if ( (StationID == 0)&&(settings1->DETECTOR==3) ) { // if TestBed, we have offset values
+        return ThresOffset_TB_ch[ch];
+    }
+    else if ( settings1->TRIG_ONLY_LOW_CH_ON==1 ) { // if only triggered by bottom chs with TB info
         return ThresOffset_TB_ch[ch];
     }
     else {
@@ -4182,6 +4188,12 @@ double Detector::GetThres( int StationID, int ch, Settings *settings1 ){
     //    cout << "TBChannel:Threshold: " << ch << " : " << Thres_TB_ch[ch] << endl;
     return Thres_TB_ch[ch];
   }
+
+  else if ( settings1->TRIG_ONLY_LOW_CH_ON==1 ) { // if only triggered by bottom chs with TB info
+    //    cout << "TBChannel:Threshold: " << ch << " : " << Thres_TB_ch[ch] << endl;
+    return Thres_TB_ch[ch];
+  }
+
   else {
     return settings1->POWERTHRESHOLD;
   }
@@ -4192,6 +4204,9 @@ double Detector::GetThres( int StationID, int ch, Settings *settings1 ){
 double Detector::GetTemp( int StationID, int ch, Settings *settings1 ) {  // returns system temp for specific channel
 
     if ( (StationID == 0)&&(settings1->DETECTOR==3) ) { // if TestBed, we have offset values
+        return Temp_TB_ch[ch];
+    }
+    else if ( settings1->TRIG_ONLY_LOW_CH_ON==1 ) { // if only triggered by bottom chs with TB info
         return Temp_TB_ch[ch];
     }
     else {

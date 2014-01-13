@@ -292,6 +292,12 @@ class Report {
         void SetRank(Detector *detector); // set rank (rank of strength of signal at each antenna)
 
 
+
+        int GetChannelNum8_LowAnt(int string_num, int antenna_num); // just return ch numbers 1-8 for antenna 0-1 (bottom antennas) and higher ch numbers for antenna 2-3 (top antennas) this is used for only TRIG_ONLY_LOW_CH_ON=1 mode with 
+
+
+
+
         vector <double> Vfft_noise_after;   // noise Vfft after get_random_rician
         vector <double> Vfft_noise_before;   // noise Vfft before get_random_rician
         //vector <double> V_noise_timedomain;   // noise V timedomain after get_random_rician and inverse fft

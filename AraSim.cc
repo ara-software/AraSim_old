@@ -118,18 +118,25 @@ int main(int argc, char **argv) {   // read setup.txt file
   string run_no;
   if (argc<2) { // no setup file input, use default
       setupfile = "setup.txt";
+      cout<<"setupfile : "<<setupfile<<endl;
   }
   else if (argc == 2) { // read file!!
       setupfile = string( argv[1] );
+      cout<<"setupfile : "<<setupfile<<endl;
   }
   else if (argc == 3) { // read file!!
       setupfile = string( argv[1] );
+      cout<<"setupfile : "<<setupfile<<endl;
       run_no = string( argv[2] );
+      cout<<"run number : "<<run_no<<endl;
   }
   else if (argc == 4) { // read file!!
       setupfile = string( argv[1] );
+      cout<<"setupfile : "<<setupfile<<endl;
       run_no = string( argv[2] );
+      cout<<"run number : "<<run_no<<endl;
       outputdir = string( argv[3] );
+      cout<<"outputdir : "<<outputdir<<endl;
   }
   else { // no mode for argc > 2!
       cout<<"too many info! just use default setup.txt file!"<<endl;
@@ -403,6 +410,11 @@ double cur_posnu_z;
 // test autoflush
 //AraTree2->SetAutoFlush(0);
 
+
+    // reset accumulative trig search bin info 
+    settings1->ACCUM_TRIG_SEARCH_BINS_STATION0 = 0.;
+
+
     int nuLimit =0;
     if (settings1->ONLY_PASSED_EVENTS == 1){
       nuLimit = settings1->NNU_PASSED;
@@ -568,6 +580,7 @@ double cur_posnu_z;
  delete theEvent;
  */
 
+            settings1->ACCUM_TRIG_SEARCH_BINS_STATION0 += report->stations[0].total_trig_search_bin;
 
 
        } // if pickposnu > 0

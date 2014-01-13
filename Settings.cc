@@ -213,6 +213,13 @@ outputdir="outputs"; // directory where outputs go
     ADDITIONAL_DEPTH = 100.; // default additional depth value
 
 
+
+    TRIG_ONLY_LOW_CH_ON = 0;    // default trigger will occur with all chs (1 will do trigger analysis with lower 8 chs; bottom 4 Vpol & bottom 4 Hpols)
+
+
+    ACCUM_TRIG_SEARCH_BINS_STATION0 = 0.; // not actually setting value but gives us how much trigger searched bins there were in the run for station0
+
+
 }
 
 void Settings::ReadFile(string setupfile) {
@@ -472,6 +479,9 @@ void Settings::ReadFile(string setupfile) {
               else if (label == "ADDITIONAL_DEPTH") {
                   ADDITIONAL_DEPTH = atof( line.substr(line.find_first_of("=") + 1).c_str() );
               }
+              else if (label == "TRIG_ONLY_LOW_CH_ON") {
+                  TRIG_ONLY_LOW_CH_ON = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+              }              
 
           }
       }
@@ -568,13 +578,17 @@ int Settings::CheckCompatibilities(Detector *detector) {
         num_err++;
     }
 
-    if (NOISE_TEMP_MODE==1 && DETECTOR!=3) {
-        cerr<<"NOISE_TEMP_MODE=1 only works with DETECTOR=3!"<<endl;
+    //if (NOISE_TEMP_MODE==1 && DETECTOR!=3) {
+    if (NOISE_TEMP_MODE==1 && DETECTOR!=3 && TRIG_ONLY_LOW_CH_ON!=1) {
+        //cerr<<"NOISE_TEMP_MODE=1 only works with DETECTOR=3!"<<endl;
+        cerr<<"NOISE_TEMP_MODE=1 only works with DETECTOR=3 or TRIG_ONLY_LOW_CH_ON=1"<<endl;
         num_err++;
     }
 
-    if (NOISE_TEMP_MODE==2 && DETECTOR!=3) {
-        cerr<<"NOISE_TEMP_MODE=2 only works with DETECTOR=3!"<<endl;
+    //if (NOISE_TEMP_MODE==2 && DETECTOR!=3) {
+    if (NOISE_TEMP_MODE==2 && DETECTOR!=3 && TRIG_ONLY_LOW_CH_ON!=1) {
+        //cerr<<"NOISE_TEMP_MODE=2 only works with DETECTOR=3!"<<endl;
+        cerr<<"NOISE_TEMP_MODE=2 only works with DETECTOR=3 or TRIG_ONLY_LOW_CH_ON=1"<<endl;
         num_err++;
     }
 
@@ -593,13 +607,15 @@ int Settings::CheckCompatibilities(Detector *detector) {
         num_err++;
     }
 
-    if ((TRIG_THRES_MODE==1||TRIG_THRES_MODE==2) && DETECTOR!=3) {
-        cerr<<"TRIG_THRES_MODE=1 and 2 only works with DETECTOR=3!"<<endl;
+    if (TRIG_THRES_MODE==1 && DETECTOR!=3 && TRIG_ONLY_LOW_CH_ON!=1) {
+        //cerr<<"TRIG_THRES_MODE=1 and 2 only works with DETECTOR=3!"<<endl;
+        cerr<<"TRIG_THRES_MODE=1 only works with DETECTOR=3 or TRIG_ONLY_LOW_CH_ON=1"<<endl;
         num_err++;
     }
 
-    if ((NOISE_TEMP_MODE==1||NOISE_TEMP_MODE==2) && DETECTOR!=3) {
-        cerr<<"NOISE_TEMP_MODE=1 and 2 only works with DETECTOR=3!"<<endl;
+    if (TRIG_THRES_MODE==2 && DETECTOR!=3 && TRIG_ONLY_LOW_CH_ON!=1) {
+        //cerr<<"TRIG_THRES_MODE=1 and 2 only works with DETECTOR=3!"<<endl;
+        cerr<<"TRIG_THRES_MODE=2 only works with DETECTOR=3 or TRIG_ONLY_LOW_CH_ON=1"<<endl;
         num_err++;
     }
 
@@ -623,8 +639,9 @@ int Settings::CheckCompatibilities(Detector *detector) {
         num_err++;
     }
 
-    if (NOISE==1 && DETECTOR!=3) {
-        cerr<<"NOISE=1 only works with DETECTOR=3!"<<endl;
+    //if (NOISE==1 && DETECTOR!=3) {
+    if (NOISE==1 && DETECTOR!=3 && TRIG_ONLY_LOW_CH_ON!=1) {
+        cerr<<"NOISE=1 only works with DETECTOR=3 or TRIG_ONLY_LOW_CH_ON=1"<<endl;
         num_err++;
     }
 
@@ -635,6 +652,15 @@ int Settings::CheckCompatibilities(Detector *detector) {
 
     if (NOISE==1 && NOISE_TEMP_MODE==0) {
         cerr<<"NOISE=1 don't work with NOISE_TEMP_MODE=0!"<<endl;
+        num_err++;
+    }
+
+
+
+
+    // This is for only ideal stations
+    if (TRIG_ONLY_LOW_CH_ON==1 && DETECTOR==3) {
+        cerr<<"TRIG_ONLY_LOW_CH_ON=1 doesn't work with DETECTOR=3!"<<endl;
         num_err++;
     }
 
