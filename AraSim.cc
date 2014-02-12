@@ -120,28 +120,25 @@ int main(int argc, char **argv) {   // read setup.txt file
       setupfile = "setup.txt";
       cout<<"setupfile : "<<setupfile<<endl;
   }
-  else if (argc == 2) { // read file!!
+  else if (argc > 1) { // read file!!
       setupfile = string( argv[1] );
       cout<<"setupfile : "<<setupfile<<endl;
   }
-  else if (argc == 3) { // read file!!
-      setupfile = string( argv[1] );
-      cout<<"setupfile : "<<setupfile<<endl;
+  if (argc > 2) { // read file!!
+     
       run_no = string( argv[2] );
       cout<<"run number : "<<run_no<<endl;
   }
-  else if (argc == 4) { // read file!!
-      setupfile = string( argv[1] );
-      cout<<"setupfile : "<<setupfile<<endl;
-      run_no = string( argv[2] );
-      cout<<"run number : "<<run_no<<endl;
+  if (argc > 3) { // read file!!
+      
       outputdir = string( argv[3] );
+      if(outputdir[outputdir.size()-1]=='/') outputdir=outputdir.substr(0,outputdir.size()-1);
       cout<<"outputdir : "<<outputdir<<endl;
   }
-  else { // no mode for argc > 2!
-      cout<<"too many info! just use default setup.txt file!"<<endl;
-      setupfile = "setup.txt";
-  }
+//   else { // no mode for argc > 2!
+//       cout<<"too many info! just use default setup.txt file!"<<endl;
+//       setupfile = "setup.txt";
+//   }
 
   settings1->ReadFile(setupfile);
   cout<<"Read "<<setupfile<<" file!"<<endl;
@@ -224,8 +221,8 @@ int main(int argc, char **argv) {   // read setup.txt file
 
 
   TFile *AraFile;
-   if (argc == 3 || argc == 4) {
-        AraFile=new TFile((outputdir+"/AraOut."+setupfile+".run"+run_no+".root").c_str(),"RECREATE","ara");
+   if (argc > 2) {
+        AraFile=new TFile((outputdir+"/AraOut."+setupfile.substr(setupfile.find_last_of("/")+1)+".run"+run_no+".root").c_str(),"RECREATE","ara");
    }
    else {
         AraFile=new TFile((outputdir+"/AraOut.root").c_str(),"RECREATE","ara");
@@ -713,7 +710,7 @@ double cur_posnu_z;
 
    ofstream weight_file;
    //weight_file.open(("./weight_output/weight_"+setupfile).c_str());
-   if (argc == 3) {
+   if (argc >2) {
         weight_file.open(("./weight_output/weight_"+setupfile+".run"+run_no).c_str());
    }
    else {
@@ -914,6 +911,7 @@ double cur_posnu_z;
 
  test();
 
+ cout<<"outputdir= "<<outputdir<<endl;
 
  return 0;
   

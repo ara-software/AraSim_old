@@ -1108,3 +1108,35 @@ With this value, we can calculate trigger rate with global passed number of
 events in station 0.
 
 
+============================================================================
+
+12/02/2014 Guy Nir:
+
+added some minor changes to input/output:
+
+* in AraSim.cc : now using setupfiles inside directories will not make output files very long:
+
+if you run ./AraSim setupdirectory/setup.txt 0 you will get
+
+AraOut.setup.txt.run0.root instead of AraOut.setupdirectory/setup.txt.run0.root
+
+* can now add third parameter to AraSim for output directory:
+
+./AraSim setup.txt 0 /path/to/output/dir/ 
+
+can add slash in the end or not
+
+* in Spectra.cc : added new EXPONENT values between 510 and 650 (including), so we can have non-integer energy values:
+
+the formula is E=10^X with X=(EXPONENT-400)/10 
+
+so if you want 10^18.3eV use EXPONENT=400+18.3*10=583
+
+added a bash script to make a dynamic load library "library.sh"  
+run it and get "libSim.so" which is useful for loading all the simulation files you need to link with. 
+
+added the user guide in it's own directory. 
+
+modified the StandardDefinitions.mk : commented out the parts where it calls ARA_UTIL_INSTALL_DIR 
+(it messed up my installation and I think in general AraRoot conflicts with AraSim)
+

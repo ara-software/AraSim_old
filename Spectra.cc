@@ -87,7 +87,13 @@ Spectra::Spectra(double EXPONENT) {
   {
       pnu_EXPONENT = EXPONENT;
   }
-
+  
+  else if (EXPONENT_model>=510. && EXPONENT_model<=650.) // g.n. added so we can have simulations at E^2=17.8 not just whole numbers
+  {
+      pnu_EXPONENT = (EXPONENT_model - 400)/10;
+	cout<<"**************** energy is "<<pnu_EXPONENT<<" *******************"<<endl;
+  }
+  
   else if (EXPONENT==30.) // ESS baseline model. Used to be EXPONENT "0"
   {
       E_bin = 9;
@@ -406,7 +412,7 @@ double  Spectra::GetNuEnergy() {
   // this uses the dartboard approach
   //cout << "minenergy, maxenergy are " << minenergy << " " << maxenergy << "\n";
   
-  if (EXPONENT_model>=10. && EXPONENT_model<30.) {
+  if ((EXPONENT_model>=10. && EXPONENT_model<30.) || (EXPONENT_model>=510. && EXPONENT_model<=650.)) {
       return pow(10.,pnu_EXPONENT);
   }
 
@@ -584,7 +590,7 @@ int Spectra::GetE_bin() {
 
 int Spectra::IsSpectrum() {
     int out;
-    if (EXPONENT_model>=30.) {
+    if (EXPONENT_model>=30. && EXPONENT_model <510) {
         out = 1;
     }
     else {
@@ -595,7 +601,7 @@ int Spectra::IsSpectrum() {
 
 int Spectra::IsMonoenergetic() {
     int out;
-    if (EXPONENT_model>0.&&EXPONENT_model<30.) {
+    if ((EXPONENT_model>0.&&EXPONENT_model<30.) || (EXPONENT_model>=510 && EXPONENT_model<=650) ) {
         out = 1;
     }
     else {
