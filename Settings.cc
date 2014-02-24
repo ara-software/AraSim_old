@@ -84,6 +84,8 @@ outputdir="outputs"; // directory where outputs go
 
   ATMOSPHERE=1;         // default : 1, include atmosphere
 
+  TRIG_SCAN_MODE=0;	// default 0 (old mode) 1: new mode (faster) 2: scan all Pthresh values 3: scan also all N out of 8 
+  
   POWERTHRESHOLD=-6.15; // default : -6.15
 
   MAXT_DIODE=70.E-9;    // default : 70 ns
@@ -304,6 +306,9 @@ void Settings::ReadFile(string setupfile) {
               else if (label == "ATMOSPHERE") {
                   ATMOSPHERE = atof( line.substr(line.find_first_of("=") + 1).c_str() );
               }
+              else if(label == "TRIG_SCAN_MODE"){
+                  TRIG_SCAN_MODE = atoi( line.substr(line.find_first_of("=") + 1).c_str() );
+	      }
               else if (label == "POWERTHRESHOLD") {
                   POWERTHRESHOLD = atof( line.substr(line.find_first_of("=") + 1).c_str() );
               }

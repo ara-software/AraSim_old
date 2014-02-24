@@ -893,7 +893,8 @@ double cur_posnu_z;
 // int ii = 1;
 // model_(&ii);
 //-------------------------------------------------- 
-
+ 
+ cout<<"rmsdiode= "<<trigger->rmsdiode<<endl;
 
  delete raysolver;
  delete icemodel;
@@ -913,6 +914,8 @@ double cur_posnu_z;
 
  cout<<"outputdir= "<<outputdir<<endl;
 
+
+ 
  return 0;
   
 } //end main

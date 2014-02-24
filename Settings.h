@@ -68,6 +68,8 @@ class Settings
 
         int ATMOSPHERE;         // include atmosphere 1, no 0
 
+        int TRIG_SCAN_MODE;
+        
         double POWERTHRESHOLD;  // power threshold value. default -4.41 (same with icemc powerthreshold)
 
         double MAXT_DIODE;      // diode model max time, default : 70.e-9s

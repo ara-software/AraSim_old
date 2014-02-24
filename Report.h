@@ -6,6 +6,8 @@
 #ifndef REPORT_H
 #define REPORT_H
 
+#define REPORT_NCHAN 24
+
 #include <vector>
 
 #ifndef __CINT__
@@ -152,7 +154,15 @@ class Station_r {
 
         int total_trig_search_bin;  // total number of bins for searching trigger. 
 
-        ClassDef(Station_r,1);
+        // TDR is for Tunnel Diode Response i.e. the value on which the trigger happened
+	double TDR_all[REPORT_NCHAN];
+	double TDR_all_sorted[REPORT_NCHAN];
+	double TDR_Hpol[REPORT_NCHAN];
+	double TDR_Hpol_sorted[REPORT_NCHAN];
+	double TDR_Vpol[REPORT_NCHAN];
+	double TDR_Vpol_sorted[REPORT_NCHAN];
+        
+        ClassDef(Station_r,2);
 };
 
 
@@ -177,6 +187,11 @@ class Report {
            vector <int> signal_dbin;     // the bin difference between signal bins
            vector <int> connect_signals;    // if ray_sol time delay is small enough to connect each other
 
+           int triggerCheckLoop(Settings *settings1, Detector *detector, Event *event, Trigger *trigger, int stationID, int numChan, int trig_search_init, int max_total_bin, int trig_window_bin, int scan_mode=1);
+// 	   int triggerCheckLoopScan();
+// 	   int triggerCheckLoopScanNumbers();
+	   
+           int saveTriggeredEvent(Settings *settings1, Detector *detector, Event *event, Trigger *trigger, int stationID, int numChan, int trig_search_init, int max_total_bin, int trig_window_bin, int last_trig_bin);
 
 
     public:

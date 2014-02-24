@@ -1140,3 +1140,20 @@ added the user guide in it's own directory.
 modified the StandardDefinitions.mk : commented out the parts where it calls ARA_UTIL_INSTALL_DIR 
 (it messed up my installation and I think in general AraRoot conflicts with AraSim)
 
+
+============================================================================
+
+23/02/2014 Guy Nir:
+
+Triggering upgrade:
+
+* added to Settings class new mode: TRIG_SCAN_MODE
+
+-in TRIG_SCAN_MODE=0 triggering works same as before (default)
+-in TRIG_SCAN_MODE=1 triggering is faster using circular buffer (10-15% for time domain, 40-50% for freq domain)
+-in TRIG_SCAN_MODE=2 choose low POWERTHRESHOLD, for each triggered event get above what Pthresh this would trigger (e.g. event can trigger if threshold was -5.7). 
+-results for mode 2 saved in report->stations[].TDR_all and TDR_Hpol and TDR_Vpol and sorted from highest to lowest in TDR_Vpol_sorted etc. (TDR= Tunnel Diode Response). 
+
+So for one run at TRIG_SCAN_MODE=2 and POWERTHRESHOLD=-4 and TRIG_MODE=1 (trigger on Hpol and Vpol seperately) and N_TRIG_H=N_TRIG_V=3 we will get for each event the maximum number of channels and maximum POWERTHRESHOLD combination on which it would trigger (e.g. it could trigger at -6.1 in 3 channels or -5.9 at 4 channels). Don't need to run different runs for different Pthresh or N_TRIG, can make the cuts out of the outputfile. 
+
+
