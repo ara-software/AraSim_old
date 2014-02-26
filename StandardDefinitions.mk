@@ -36,5 +36,6 @@ ifdef ARA_UTIL_INSTALL_DIR
 	DICT_FLAGS = -DARA_UTIL_EXISTS
 	LD_ARA_UTIL=-L${ARA_UTIL_LIB_DIR} -lAraEvent -lsqlite3
 	INC_ARA_UTIL=-I${ARA_UTIL_INC_DIR}
-	ARA_ROOT_HEADERS=RawIcrrStationHeader.h RawIcrrStationEvent.h  RawAraStationEvent.h  FullIcrrHkEvent.h  AraEventCalibrator.h IcrrTriggerMonitor.h IcrrHkData.h AraRawIcrrRFChannel.h AraAntennaInfo.h AraGeomTool.h  UsefulAraStationEvent.h UsefulIcrrStationEvent.h araIcrrStructures.h AtriEventHkData.h AtriSensorHkData.h araAtriStructures.h araSoft.h araIcrrDefines.h RawAtriSimpleStationEvent.h RawAtriStationBlock.h RawAraGenericHeader.h RawAtriStationEvent.h UsefulAtriStationEvent.h AraFileUtility.h AraStationInfo.h araSimDefines.h araSimStructures.h
+	ARA_ROOT_HEADERS=RawIcrrStationHeader.h RawIcrrStationEvent.h  RawAraStationEvent.h  FullIcrrHkEvent.h  AraEventCalibrator.h IcrrTriggerMonitor.h IcrrHkData.h AraRawIcrrRFChannel.h AraAntennaInfo.h AraGeomTool.h  UsefulAraStationEvent.h UsefulIcrrStationEvent.h araIcrrStructures.h AtriEventHkData.h AtriSensorHkData.h araAtriStructures.h araSoft.h araIcrrDefines.h RawAtriSimpleStationEvent.h RawAtriStationBlock.h RawAraGenericHeader.h RawAtriStationEvent.h UsefulAtriStationEvent.h  AraStationInfo.h 
+#AraFileUtility.h araSimDefines.h araSimStructures.h
 endif

@@ -53,7 +53,6 @@
 #pragma link C++ class RawAtriStationBlock+;
 #pragma link C++ class RawAtriStationEvent+;
 #pragma link C++ class RawAraGenericHeader+;
-#pragma link C++ class AraFileUtility+;
 
 #pragma link C++ typedef AraDataStructureType_t;
 
@@ -85,10 +84,6 @@
 #pragma link C++ namespace     AraAntDir;
 #pragma link C++ enum          AraAntDir::EAraAntDir;
 #pragma link C++ nestedtypedef AraAntDir::AraAntDir_t;
-
-#pragma link C++ namespace     AraSurfaceOrientation;
-#pragma link C++ enum          AraSurfaceOrientation::EAraSurfaceOrientation;
-#pragma link C++ nestedtypedef AraSurfaceOrientation::AraSurfaceOrientation_t;
 
 #endif
 

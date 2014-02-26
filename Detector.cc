@@ -721,10 +721,10 @@ Detector::Detector(Settings *settings1, IceModel *icesurface, string setupfile) 
                             //int chan = GetChannelfromStringAntenna (i+1,j,k);
                             int chan = GetChannelfromStringAntenna (i+1,j,k,settings1);
                             
-                            stations[i].strings[j].antennas[k].SetX(stations[i].GetX()+araGeom->fStationInfo[i+1].fAntInfo[chan-1].antLocation[0]);
-                            stations[i].strings[j].antennas[k].SetY(stations[i].GetY()+araGeom->fStationInfo[i+1].fAntInfo[chan-1].antLocation[1]);
+                            stations[i].strings[j].antennas[k].SetX(stations[i].GetX()+araGeom->getStationInfo(i+1)->fAntInfo[chan-1].antLocation[0]);
+                            stations[i].strings[j].antennas[k].SetY(stations[i].GetY()+araGeom->getStationInfo(i+1)->fAntInfo[chan-1].antLocation[1]);
                             //stations[i].strings[j].antennas[k].SetZ(araGeom->fStationInfo[i+1].fAntInfo[chan-1].antLocation[2]-double(settings1->DEPTH_CHANGE));
-                            stations[i].strings[j].antennas[k].SetZ(araGeom->fStationInfo[i+1].fAntInfo[chan-1].antLocation[2]);
+                            stations[i].strings[j].antennas[k].SetZ(araGeom->getStationInfo(i+1)->fAntInfo[chan-1].antLocation[2]);
                                                     cout <<
                              "DetectorStation:string:antenna:X:Y:Z:: " <<
                              i<< " : " <<
@@ -743,8 +743,8 @@ Detector::Detector(Settings *settings1, IceModel *icesurface, string setupfile) 
                         //int chanstring = GetChannelfromStringAntenna (i+1, j,2);
                         int chanstring = GetChannelfromStringAntenna (i+1, j,2,settings1);
                         
-                        stations[i].strings[j].SetX(stations[i].GetX()+araGeom->fStationInfo[i+1].fAntInfo[chanstring-1].antLocation[0]);
-                        stations[i].strings[j].SetY(stations[i].GetY()+araGeom->fStationInfo[i+1].fAntInfo[chanstring-1].antLocation[1]);
+                        stations[i].strings[j].SetX(stations[i].GetX()+araGeom->getStationInfo(i+1)->fAntInfo[chanstring-1].antLocation[0]);
+                        stations[i].strings[j].SetY(stations[i].GetY()+araGeom->getStationInfo(i+1)->fAntInfo[chanstring-1].antLocation[1]);
                         
                     }
                 
@@ -4775,12 +4775,13 @@ void Detector::UseAntennaInfo(int stationNum, Settings *settings1){
         int antennaNum, stringNum;
         //GetSSAfromChannel(stationNum, chan, &antennaNum, &stringNum);
         GetSSAfromChannel(stationNum, chan, &antennaNum, &stringNum, settings1);
-        
-        if (araGeom->fStationInfo[stationNum].fAntInfo[chan-1].polType != AraAntPol::kSurface){
-            stations[stationNum].strings[stringNum].antennas[antennaNum].SetX(stations[stationNum].GetX()+araGeom->fStationInfo[stationNum].fAntInfo[chan-1].antLocation[0]);
-            stations[stationNum].strings[stringNum].antennas[antennaNum].SetY(stations[stationNum].GetY()+araGeom->fStationInfo[stationNum].fAntInfo[chan-1].antLocation[1]);
+
+        if (araGeom->getStationInfo(stationNum)->fAntInfo[chan-1].polType != AraAntPol::kSurface){
+
+            stations[stationNum].strings[stringNum].antennas[antennaNum].SetX(stations[stationNum].GetX()+araGeom->getStationInfo(stationNum)->fAntInfo[chan-1].antLocation[0]);
+            stations[stationNum].strings[stringNum].antennas[antennaNum].SetY(stations[stationNum].GetY()+araGeom->getStationInfo(stationNum)->fAntInfo[chan-1].antLocation[1]);
             //stations[stationNum].strings[stringNum].antennas[antennaNum].SetZ(araGeom->fStationInfo[stationNum].fAntInfo[chan-1].antLocation[2]-double(settings1->DEPTH_CHANGE));
-            stations[stationNum].strings[stringNum].antennas[antennaNum].SetZ(araGeom->fStationInfo[stationNum].fAntInfo[chan-1].antLocation[2]);
+            stations[stationNum].strings[stringNum].antennas[antennaNum].SetZ(araGeom->getStationInfo(stationNum)->fAntInfo[chan-1].antLocation[2]);
             
             /*
              cout <<
@@ -4794,10 +4795,10 @@ void Detector::UseAntennaInfo(int stationNum, Settings *settings1){
              endl;
              */
             
-            stations[stationNum].strings[stringNum].antennas[antennaNum].type = int(araGeom->fStationInfo[stationNum].fAntInfo[chan-1].polType);  //set polarization to match the deployed information
+            stations[stationNum].strings[stringNum].antennas[antennaNum].type = int(araGeom->getStationInfo(stationNum)->fAntInfo[chan-1].polType);  //set polarization to match the deployed information
             
-            stations[stationNum].strings[stringNum].SetX(stations[stationNum].GetX()+araGeom->fStationInfo[stationNum].fAntInfo[chan-1].antLocation[0]);
-            stations[stationNum].strings[stringNum].SetY(stations[stationNum].GetY()+araGeom->fStationInfo[stationNum].fAntInfo[chan-1].antLocation[1]);
+            stations[stationNum].strings[stringNum].SetX(stations[stationNum].GetX()+araGeom->getStationInfo(stationNum)->fAntInfo[chan-1].antLocation[0]);
+            stations[stationNum].strings[stringNum].SetY(stations[stationNum].GetY()+araGeom->getStationInfo(stationNum)->fAntInfo[chan-1].antLocation[1]);
             
             
             
@@ -4826,10 +4827,10 @@ void Detector::UseAntennaInfo(int stationNum, Settings *settings1){
 
 
             // put DAQ channel type 
-            if (araGeom->fStationInfo[stationNum].fAntInfo[chan-1].daqChanType == AraDaqChanType::kDisconeChan) { // BH chs
+            if (araGeom->getStationInfo(stationNum)->fAntInfo[chan-1].daqChanType == AraDaqChanType::kDisconeChan) { // BH chs
                 stations[stationNum].strings[stringNum].antennas[antennaNum].DAQchan = 0;
             }
-            else if (araGeom->fStationInfo[stationNum].fAntInfo[chan-1].daqChanType == AraDaqChanType::kBatwingChan) { // not BH chs
+            else if (araGeom->getStationInfo(stationNum)->fAntInfo[chan-1].daqChanType == AraDaqChanType::kBatwingChan) { // not BH chs
                 stations[stationNum].strings[stringNum].antennas[antennaNum].DAQchan = 1;
             }
 
@@ -4842,7 +4843,7 @@ void Detector::UseAntennaInfo(int stationNum, Settings *settings1){
             if (stationNum == 0) {
 
                 //cout<<"TestBed ch"<<chan-1<<" delay : "<<araGeom->fStationInfo[stationNum].fAntInfo[chan-1].debugTotalCableDelay<<endl;
-                params.TestBed_Ch_delay[chan-1] = araGeom->fStationInfo[stationNum].fAntInfo[chan-1].debugTotalCableDelay;
+                params.TestBed_Ch_delay[chan-1] = araGeom->getStationInfo(stationNum)->fAntInfo[chan-1].debugTotalCableDelay;
                 params.TestBed_Ch_delay_bin[chan-1] = params.TestBed_Ch_delay[chan-1]/(settings1->TIMESTEP * 1.e9); // change TIMESTEP s to ns
                 //cout<<"TestBed ch"<<chan-1<<" delay bin : "<<params.TestBed_Ch_delay_bin[chan-1]<<endl;
                 if (chan<9) params.TestBed_BH_Mean_delay += params.TestBed_Ch_delay[chan-1];
@@ -4869,11 +4870,11 @@ void Detector::UseAntennaInfo(int stationNum, Settings *settings1){
         }// end polarization (antenna type) selection
         else {
             
-            int antPolNum = araGeom->fStationInfo[stationNum].fAntInfo[chan-1].antPolNum;
+            int antPolNum = araGeom->getStationInfo(stationNum)->fAntInfo[chan-1].antPolNum;
             // set surface antenna postions
             
-            stations[stationNum].surfaces[antPolNum].SetX( stations[stationNum].GetX()+araGeom->fStationInfo[stationNum].fAntInfo[chan-1].antLocation[0]);
-            stations[stationNum].surfaces[antPolNum].SetY( stations[stationNum].GetY()+araGeom->fStationInfo[stationNum].fAntInfo[chan-1].antLocation[1]);
+            stations[stationNum].surfaces[antPolNum].SetX( stations[stationNum].GetX()+araGeom->getStationInfo(stationNum)->fAntInfo[chan-1].antLocation[0]);
+            stations[stationNum].surfaces[antPolNum].SetY( stations[stationNum].GetY()+araGeom->getStationInfo(stationNum)->fAntInfo[chan-1].antLocation[1]);
             
             //                cout << "Surface: " << chan << " : " << stationNum << " : " << stringNum << " : " << antennaNum << " : " << stations[stationNum].surfaces[antPolNum].GetX() << " : " << stations[stationNum].surfaces[antPolNum].GetY() << " : " << stations[stationNum].surfaces[antPolNum].GetZ() << " : " << stations[stationNum].surfaces[antPolNum].type << endl;
             
@@ -4881,7 +4882,7 @@ void Detector::UseAntennaInfo(int stationNum, Settings *settings1){
             
         }
         
-
+        
 
         
         
