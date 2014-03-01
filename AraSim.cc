@@ -132,7 +132,7 @@ int main(int argc, char **argv) {   // read setup.txt file
   if (argc > 3) { // read file!!
       
       outputdir = string( argv[3] );
-      if(outputdir[outputdir.size()-1]=='/') outputdir=outputdir.substr(0,outputdir.size()-1);
+      if(outputdir[outputdir.size()-1]=='/') outputdir=outputdir.substr(0,outputdir.size()-1); // make sure outputdir doesn't have a / at the end
       cout<<"outputdir : "<<outputdir<<endl;
   }
 //   else { // no mode for argc > 2!
@@ -710,8 +710,11 @@ double cur_posnu_z;
 
    ofstream weight_file;
    //weight_file.open(("./weight_output/weight_"+setupfile).c_str());
-   if (argc >2) {
+   if (argc == 3) {
         weight_file.open(("./weight_output/weight_"+setupfile+".run"+run_no).c_str());
+   }
+   else if (argc >3 ){ // add the subdirectory for outputs
+        weight_file.open((outputdir+"/weight_output/weight_"+setupfile+".run"+run_no).c_str());
    }
    else {
         weight_file.open(("./weight_output/weight_"+setupfile).c_str());

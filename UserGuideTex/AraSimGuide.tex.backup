@@ -155,6 +155,12 @@ for writing this software
 
 (and the having patience to explain everything to me). 
 
+\room
+
+\today
+
+svn: revision 446
+
 \end{centering}
 
 \vspace{3cm}
@@ -224,7 +230,8 @@ Along with this .pdf document is a settings file `setup.txt' which contains the 
   \item Add the environmental variables: add to your .bashrc the line:\\ \verb| export BOOST_ROOT=/path/to/boost_x_xx_x/ |
    
  \end{enumerate}
- 
+
+ \vspace{-0.5cm}
  
 
 \end{itemize}
@@ -244,6 +251,10 @@ Along with this .pdf document is a settings file `setup.txt' which contains the 
 \verb|delos.mps.ohio-state.edu/RadioSim/AraSim/  AraSim | 
 
 (write this in one line). 
+
+\item For more instructions regarding the \arasim svn:
+
+\verb| http://www.physics.ohio-state.edu/~connolly/AraSim/arainstr.html |
 
 \item To get a username and password contact Amy Connolly at: 
 
@@ -288,17 +299,17 @@ If any problems arise try the following:
  
  \pagebreak
  
- \item Check that the makefile has:
- 
- \begin{itemize}
- 
- \item in the \verb| SYSLIBS| line make sure \verb| -L/usr/local/lib | appears after \verb| -L/usr/lib| 
- 
- \item in the \verb| LDFLAGS| line make sure \verb| -lAraGeom | appears after \verb| -lAraSimEvent|
- 
- \item in the \verb| $(DL) $(LDFLAGS) | line make sure \verb| -lAraGeom | and \verb| -lsqlite3 | appears after \verb| -lAraSimEvent |. 
- 
- \end{itemize}
+%  \item Check that the makefile has:
+%  
+%  \begin{itemize}
+%  
+%  \item in the \verb| SYSLIBS| line make sure \verb| -L/usr/local/lib | appears after \verb| -L/usr/lib| 
+%  
+%  \item in the \verb| LDFLAGS| line make sure \verb| -lAraGeom | appears after \verb| -lAraSimEvent|
+%  
+%  \item in the \verb| $(DL) $(LDFLAGS) | line make sure \verb| -lAraGeom | and \verb| -lsqlite3 | appears after \verb| -lAraSimEvent |. 
+%  
+%  \end{itemize}
  
  \item If all else fails: contact Eugene Hong (\verb| ripple90@gmail.com |), Carl Pfendner\\ (\verb| pfendner.1@physics.osu.edu |) or Amy Connolly. 
  
@@ -454,11 +465,25 @@ Another useful possiblity is to run simulation on several setup files, saving th
 
 will give us two different outputs, one for each detector setup, both at run number 0. 
 
+For setup files that are inside subfolders or on a completely different path, AraSim will truncate the path to the setup file when writing the output files, e.g.:
+
+\verb| $ ./AraSim SETUP/parameter/setup.par.txt 0 | will create output file: 
+
+\verb| AraOut.setup.par.txt.run0.root | and not the entire path. 
+
+\room
+
+If you wish to specify the output directory for \arasim, simply add the path after the run number:
+
+\verb| ./AraSim setup.txt 0 /some/other/path/to/store/outputs/ |
+
+This is especially useful when running large data sets that do not fit in a user's home directory. 
+
 \subsection{Super users}\label{super users}
 
 For running massive simulations we recommend setting up \arasim on a cluster, where we can send multiple jobs to run. This allows us to run multiple simulations at once, freeing our computer and our time to write user guides for simulation programs. 
 
-Depending on the super computer / cluster used we recommend using some que submission e.g.
+Depending on the super computer / cluster used we recommend using some queue submission e.g.
 
 \verb| for i in `seq 0 99`; do qsub -v var=$i ./run_sim.sh | 
 
@@ -477,7 +502,7 @@ Make sure you ask your local cluster admin for instructions on how to submit mul
 
 \room
 
-In any case, the outputs of running \arasim on several machines will all funnel back into the \verb|outputs/| directory, and if you do multiple runs with a distinct setup file and run number you can gather them all up at the end (or even after a few finished runs) and start analysis. 
+In any case, the outputs of running \arasim on several machines will all funnel back into the \verb|outputs/| directory, unless you specified a different output (i.e.~some hard drive that can store large data sets instead of the home directory). If you do multiple runs with a distinct setup file and run number you can gather them all up at the end (or even after a few finished runs) and start analysis. 
 
 
 \room
@@ -488,27 +513,31 @@ Analizing the data from \arasim output files divides into two categories. There 
 
 \room
 
-As explained in section \ref{basic implementation} there are two trees for `behind the scenes' information. The information in `AraTree' is read using the Detector and Settings classes. The specific events (kept in `AraTree2') are accessible via the Event and Interaction classes. 
+As explained in section \ref{basic implementation} there are two trees for `behind the scenes' information. Most the information in `AraTree' is stored in the Detector and Settings classes. The specific events (kept in `AraTree2') are accessible via the Event and Report classes. 
 
 \room
 
-The detector style information is saved in `eventTree', using classes from AraRoot (version 3.2), i.e.~`UsefulIcrrStationEvent'.  It will \emph{not be compatible with new versions of AraRoot}. Make sure you load the right headers and libraries from the \arasim directory, not from AraRoot. It may be necessary to compile a dynamic library containing the \arsim and AraRoot3.2 classes. 
+The detector style information is saved in `eventTree', using classes from AraRoot (version 3.13), i.e.~`UsefulIcrrStationEvent'. 
 
-This should include \verb| Detector.o  EarthModel.o  Ray.o | etc.~as well as the AraRoot formats for geometry: inside \verb| AraRoot/ | we have \verb| AraGeomTool.o  AraStationInfo.o | etc.~and for event class inside \verb| AraRootFormat/ | we need \verb| UsefulIcrrStationEvent.o |. \
+% Make sure you load the right headers and libraries from the \arasim directory, not from AraRoot. It may be necessary to compile a dynamic library containing the \arsim and AraRoot3.2 classes. 
 
-You may have these libraries loaded in your makefile. For use with \verb|g++| directly, make a new library name \verb|libSim.so| using:
+% This should include \verb| Detector.o  EarthModel.o  Ray.o | etc.~as well as the AraRoot formats for geometry: inside \verb| AraRoot/ | we have \verb| AraGeomTool.o  AraStationInfo.o | etc.~and for event class inside \verb| AraRootFormat/ | we need \verb| UsefulIcrrStationEvent.o |. \
 
-\verb< gcc -shared -Wl,--no-as-needed  $(ls | grep '^[^A]*\.o' | tr '\n' ' ')< //
+% You may have these libraries loaded in your makefile. For use with \verb|g++| directly, make a new library name \verb|libSim.so| using:
 
-\verb< $(ls AraRoot | grep '\.o$' | awk '{print "AraRoot/" $1}'| tr '\n' ' ') < //
+% \verb< gcc -shared -Wl,--no-as-needed  $(ls | grep '^[^A]*\.o' | tr '\n' ' ')< //
 
-\verb<$(ls AraRootFormat | grep '\.o$' | awk '{print "AraRootFormat/" $1}'| tr '\n' ' ')<//
+% \verb< $(ls AraRoot | grep '\.o$' | awk '{print "AraRoot/" $1}'| tr '\n' ' ') < //
 
-\verb< -o libSim.so<  
+% \verb<$(ls AraRootFormat | grep '\.o$' | awk '{print "AraRootFormat/" $1}'| tr '\n' ' ')<//
 
-\room
+% \verb< -o libSim.so<  
 
-when inside the \arasim directory. This \verb|.so| file should contain all the relvant classes to run scripts for data analysis. Example:
+If you have analysis code that depends on the AraSim library, you may wish to generate a dynamically loaded library that knows all the classes used by \arasim. Use \verb| ./library.sh | to create \verb| libSim.so |. You can now compile any code with the AraSim headers, and link to this library. Make sure it is in your \verb| LD_LIBRARY_PATH |
+
+example:
+
+% when inside the \arasim directory. This \verb|.so| file should contain all the relvant classes to run scripts for data analysis. Example:
 
 \verb| g++ example_loop.cxx -I$SIM -I$SIM/AraRoot -I$SIM/AraRootFormat| //
 
@@ -516,7 +545,7 @@ when inside the \arasim directory. This \verb|.so| file should contain all the r
 
 Where \verb| $SIM| is the directory of AraSim. This program can have access to the trees inside the \arasim output files, reading geometry, event physics and the actual waveforms similarly to the way we access L0 files in AraRoot (with Iccr rather than the newer Atri board). Make sure you actually write the waveforms to file (see section \ref{writing events}).
 
-Make sure \verb|libSim| is in your \verb|LD_LIBRARY_PATH| when running any such code. 
+% Make sure \verb|libSim| is in your \verb|LD_LIBRARY_PATH| when running any such code. 
 
 \newpage
 
@@ -536,7 +565,7 @@ These parameters are read into the \verb|Settings| class. If any field is commen
 
 You may comment out any part of the `setup.txt' file using `\verb|//|'. 
 
-Adding lines like this: `\p{PARAMETER}= N' will set the appropriate parameter to N. The order of input lines is irrelevant. 
+Adding lines like this: `\p{PARAMETER}= N' will set the appropriate parameter to N. The order of input lines is irrelevant, but if two or more lines set the same parameter, the last one will be used. 
 
 \subsection{Neutrino energies}\label{neutrino energies}
 
@@ -548,7 +577,21 @@ For selecting a single energy choose values \p{EXPONENT}= $N$. When $10<N<20$, \
 
 In order to simulate real spectra of neutrinos, so each neutrino energy is randomly chosen from a distribution of energies, use \p{EXPONENT}= $N$ with values $1<N<4$, or $N\geq30$. 
 
-For $1<N<4$ the distribution is just $E^{-N}$. Choosing $N\geq20$ gives energies based on different models (see list\footnote{Work in progress. Use `README\textunderscore~EXPONENT.pdf' for more details}).
+For $1<N<4$ the distribution is just $E^{-N}$. 
+
+% Choosing $N\geq20$ gives energies based on different models (see list\footnote{Work in progress. Use `README\textunderscore~EXPONENT.pdf' for more details}).
+
+If you wish to give a more specific energy value to all neutrinos, use $510\leq$ \p{EXPONENT}$\leq 650$, AraSim will give an energy of $10^x$~eV to all neutrinos, where $x=(\p{EXPONENT}-400)/10$. For example, to get $E=10^{18.3}$~eV neutrinos, use \p{EXPONENT}= 583.
+
+
+\room
+
+To generate neutrinos at random energies from specific distributions (flux models) use \linebreak $30\leq \p{EXPONENT}\leq 500$. The specific choice of flux model can be examined in `Spectra.cc', with some of the flux model files stored in \verb| fluxes/ |.
+
+
+
+
+
 
 \newpage
 
@@ -639,9 +682,9 @@ The second option is \p{ONLY PASSED EVENTS}= 1, where we specify how many $\nu$'
 If you really want to work in the old methods choose \p{NOISE WAVEFORM GENERATE MODE}= 1 and choose \p{NOISE EVENTS} to be a large number, enough to provide \arasim with enough noise events to use when generating all events. 
 
 
-\pr{NOISE}=0 (default) generates waveforms from a flat thermal distribution. mode 1 (TB only) uses calibrated Rayleigh distribution noise from testbed data. 
+\pr{NOISE}=0 (default) generates waveforms from a flat thermal distribution. mode 1 uses calibrated Rayleigh distribution noise from testbed data (only used for lower 8 channels - see triggering~\ref{triggering}). 
 
-\pr{NOISE TEMP MODE}=0 (default) generate the same noise waveforms for all channels. When using \p{NOISE}= 1 (Rayleigh distribution), we can choose several modes for the \tb{testbed only}. mode 1 generate different noise temperatures for each channel. mode 2 generates different noise for the first 8 channels (borehole antennas) and the rest are all the same.  
+\pr{NOISE TEMP MODE}=0 (default) generate the same noise waveforms for all channels. When using \p{NOISE}= 1 (Rayleigh distribution), we can choose several modes: mode 1 generate different noise temperatures for each channel; mode 2 generates different noise for the first 8 channels (borehole antennas) and the rest are all the same.  
 
 \pr{NOISE TEMP}=325. If the noise is generated from a thermal distribution (\p{NOISE}= 0), then the temperature of the noise is determined by \p{NOISE TEMP} (default is 325) given in Kelvins. This value is composed of the ice temperature ($T_{ice}=230$K) added to the receiver noise ($T_{rec}=95$K).  
 
@@ -755,7 +798,7 @@ If you really want to work in the old methods choose \p{NOISE WAVEFORM GENERATE 
 
    relative to the station center. This mode is useful for testing reconstruction at a specific location, or for making sure all events have a ray trace solution (see subsection \ref{ray solving}).
    
-   \item \textbf{Pick near-unbiased} (mode 3): choose position of $\ny$'s in a sphere around center of ARA stations. 
+   \item \textbf{Pick near-unbiased} (mode 3): choose position of $\nu$'s in a sphere around center of ARA stations. 
    
    \underline{in pick near-unbiased mode only}:
    
@@ -797,7 +840,11 @@ for time domain (\p{SIMULATION MODE}=1) only:
 
 \pr{SHOWER MODE}=2. Decides on hadronic / EM showers. 0: EM shower only, 1: hadronic shower only. 2 (default): use either EM or HAD shower, depending on signal strength. 
 
-\pr{
+\pr{SHOWER STEP}=0.001 This decides the physical step size (in meters) for the simulation. Default 1mm is small enough for most applications. 
+
+\pr{SHOWER PARAM MODEL}=0 Shower parameters, choose between 0: Jaime's fit, 1: Carl's fit. 
+
+\pr{OFFCONE LIMIT}=10 (degrees). This limits calculations of radiation more than 10 degrees (default) away from the Cherenkov angle, in order to save calculation time where the emitted radiation is already very weak. 
 
 
 %FLOWCHART of ray solving and triggering and saving
@@ -916,7 +963,7 @@ for time domain (\p{SIMULATION MODE}=1) only:
  
 \end{figure}
 
-
+\newpage
 
 \subsection{Triggering}\label{triggering}
 
@@ -958,12 +1005,20 @@ This means that a number of waveforms (exact number is determined by the paramet
   
 \end{itemize}
 
-\vspace{-0.5cm}
+\pr{TRIG SCAN MODE}=0 (default): use old triggering algorithm. mode 1: use new, slightly faster code. mode 2: scan all threshold values and save the results in `Report' class. This mode takes a little more time, but gives information for each event that triggers what would be the best \p{POWERTHRESHOLD} it would have triggered on, and how many channels required for it. For example, an event passed the threshold in 3 channels (at \p{POWERTHRESHOLD}=-6.15) but had large amplitude and could have triggered \p{POWERTHRESHOLD}=-6.5 in four channels. Useful for scanning low values of \p{POWERTHRESHOLD}. Information is stored in \verb| TDR_all_sorted | or \verb| TDR_Vpol_sorted | and \verb| TDR_Hpol_sorted | when triggering on Vpol/Hpol seperately. One can then use this information to make powerthreshold cut vs.~number of triggers. 
+
 
 \pr{TRIG ONLY BH ON}=0 (default) trigger is checked for all channels. mode 1 use only borehole antennas for triggering. Use in \tb{testbed mode only}!  
 
+\pr{TRIG ONLY LOW CH ON}=0 (default) trigger is checked for all channels. mode 1 uses only lower 8 channels (4 Vpol, 4 Hpol). Useful for comparing to testbed, can be used with ideal station. For example use mode 1 with \p{NOISE TEMP MODE}=1, \p{NOISE}=1, \p{TRIG THRESH MODE}=1 to get the testbed calibrated noise and trigger threshold for lower 8 channels, and trigger on them alone. 
 
-\pr{TRIG THRES MODE}=0 (default) use the same trigger threshold for all channels. mode 1 gives each channel its own threshold offset from file `data/thresholdoffset.csv', currently \tb{testbed only}! 
+\tb{do not use in testbed mode}.
+
+\pr{TRIG THRES MODE}=0 (default) use the same trigger threshold for all channels. mode 1 gives each channel its own threshold offset from file `data/thresholdoffset.csv'.
+
+% , currently \tb{testbed only}! 
+
+
 
 \begin{figure}[H]
  
@@ -1026,6 +1081,9 @@ This means that a number of waveforms (exact number is determined by the paramet
 
 \pr{RFCM OFFSET}=80 the amount of dB of amplification we must cancel when using \p{USE TESTBED RFCM ON}= 0. This is an approximate value (future release will include specific amplifications). \tb{Testbed Only!}
 
+\pr{V SATURATION}=1 (in Volts). Any points of the digitized waveform that go over 1000mV (default) or below -1000mV will be clipped to that value (i.e.~saturation voltage). Note this is given in Volts while the units presented in the waveforms is in mV. 
+
+
 \newpage
 
 \subsection{Ice and Earth models}\label{ice and earth}
@@ -1053,6 +1111,8 @@ We can also determine the way the radio waves move through the antarctic ice usi
 \pr{taumodes}=1: (default) Tau neutrinos may interact in the bedrock and create a $\tau$ that then interacts inside the ice. 0: do not allow these modes. 
 
 \pr{MOOREBAY}=0 determines which attenuation length to use: mode 0 (default) for the south pole data, while mode 1 is for Moore's Bay measurements.
+
+
 
 \newpage
 
@@ -1147,7 +1207,7 @@ We can also determine the way the radio waves move through the antarctic ice usi
   
   \begin{centering}
    
-   \begin{tikzpicture}
+   \resizebox{0.5\textwidth}{!}{\begin{tikzpicture}%[transform canvas={scale=0.6}]
     
     \node[block, text width=20em] (layout) {\p{BORE HOLE ANTENNA LAYOUT}};
     
@@ -1218,7 +1278,7 @@ We can also determine the way the radio waves move through the antarctic ice usi
     \node[antenna, below of=m4a2] (m4a1) {V};
     \path[line] (m4a2) -- (m4a1);
     
-   \end{tikzpicture}
+   \end{tikzpicture}}
 
      
   \end{centering}
@@ -1262,8 +1322,6 @@ We can also determine the way the radio waves move through the antarctic ice usi
  
  \pr{z btw23}=2 (in meters) between the third and fourth (last, if it exists) antenna. 
 
- \pagebreak
- 
  \begin{itemize}
  
  \item \p{DETECTOR} mode 3: testbed. This mode simulates the testbed and has several parameters that \tb{can only be used in testbed mode}:
@@ -1669,13 +1727,16 @@ working progress
 
 \r[10]{NNU PASSED}{when using \p{ONLY PASSED EVENTS} this determines how many events will pass the trigger.}
 
+
+
+
 \rsection{generating noise}
 
 \r[16]{NOISE EVENTS}{the number of noise wf generated.}
 
 \r{NOISE WAVEFORM GENERATE MODE}{new noise wf are generated for each event. 1: old mode all noise wf are made beforehand.}
 
-\r{NOISE}{0: flat thermal distribution. 1: calibrated Rayleigh noise (\tb{testbed only!)}.}
+\r{NOISE}{0: flat thermal distribution. 1: calibrated Rayleigh noise }
 
 \r{NOISE TEMP MODE}{0: same noise wf for all channels. 1: different temperatures for each channel. 2: diff temps for first 8 channels.}
 
@@ -1687,9 +1748,11 @@ working progress
 
 \rsection{neutrino position}
 
-\r[1]{INTERACTION MODE}{0: make nu's all over antarctica. 1: pick near (a cylinder around detector). 2: exact location at (353.55, 612.37, 707.1). }
+\r[1]{INTERACTION MODE}{0: make nu's all over antarctica. 1: pick near (a cylinder around detector). 2: exact location at (353.55, 612.37, 707.1). 3: pick near-unbiased (a sphere around detector)}
 
 \r[3000]{POSNU RADIUS}{radius around detector in pick near mode.}
+
+\r[5000]{PICKNEARUNBIASED R}{spherical radius around detector in pick near-unbiased mode.}
 
 \r{PICK POSNU DEPTH}{0: use all ice down to bedrock. 1: choose maximum depth yourself.}
 
@@ -1709,7 +1772,7 @@ working progress
 
 \rsection{ray solving}
 
-\r[5000]{RAYSOL RANGE}{distance from detector above which we do not attemp a ray solution (there is no trigger check beyond this).}
+\r[5000]{RAYSOL RANGE}{distance from detector above which we do not attempt a ray solution (there is no trigger check beyond this).}
 
 
 
@@ -1732,6 +1795,9 @@ working progress
 \r[3]{N TRIG V}{number of Vpol required for a global trigger (if \p{TRIG MODE}=1).}
 
 \r[3]{N TRIG H}{number of Hpol required for a global trigger (if \p{TRIG MODE}=1).}
+
+\r[0]{TRIG SCAN MODE}{triggering algorithm. 0: old code. 1: new, faster code. 2: scan all powerthreshold values.}
+
 
 \r{TRIG ONLY BH ON}{0: check trigger on all channels. 1: check only borehole antennas.}
 

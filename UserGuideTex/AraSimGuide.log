@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2013.7.9)  27 OCT 2013 13:22
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2013.7.9)  28 FEB 2014 18:32
 entering extended mode
  %&-line parsing enabled.
 **AraSimGuide.tex
@@ -520,65 +520,43 @@ ABD: EveryShipout initializing macros
 ) [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
-LaTeX Font Info:    Try loading font information for U+msa on input line 208.
+LaTeX Font Info:    Try loading font information for U+msa on input line 214.
 
 (/usr/share/texmf-texlive/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2009/06/22 v3.00 AMS symbols A
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 208.
+LaTeX Font Info:    Try loading font information for U+msb on input line 214.
 
 (/usr/share/texmf-texlive/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2009/06/22 v3.00 AMS symbols B
 )
-LaTeX Font Info:    Try loading font information for U+rsfs on input line 208.
+LaTeX Font Info:    Try loading font information for U+rsfs on input line 214.
 
 (/usr/share/texmf-texlive/tex/latex/jknapltx/ursfs.fd
 File: ursfs.fd 1998/03/24 rsfs font definition file (jk)
-) [2] [3] [4]
-! Undefined control sequence.
-l.495 ...e a dynamic library containing the \arsim
-                                                   and AraRoot3.2 classes.
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-
-Overfull \hbox (7.60251pt too wide) in paragraph at lines 505--506
-[][]\OT1/cmtt/m/n/9 $(ls AraRootFormat | grep '\.o$' | awk '{print "AraRootForm
-at/" $1}'| tr '\n' ' ')\OT1/cmr/m/n/9 // 
+) [2] [3] [4] [5]
+Underfull \hbox (badness 3179) in paragraph at lines 587--588
+[]\OT1/cmr/m/n/9 To gen-er-ate neu-tri-nos at ran-dom en-er-gies from spe-cific
+ dis-tri-bu-tions (flux mod-els) use
  []
 
-[5] [6]
-Underfull \hbox (badness 2698) in paragraph at lines 599--599
+[6]
+Underfull \hbox (badness 2698) in paragraph at lines 640--640
  [][][][] 
  []
 
-[7] [8]
-! Undefined control sequence.
-<recently read> \ny 
-                    
-l.758 ...biased} (mode 3): choose position of $\ny
-                                                  $'s in a sphere around cen...
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-[9]
-Overfull \hbox (1.9445pt too wide) in paragraph at lines 859--859
+[7] [8] [9]
+Overfull \hbox (1.9445pt too wide) in paragraph at lines 900--900
  [][][][]\OT1/cmr/m/n/10 no 
  []
 
-[10] [11] [12] [13] [14] [15] [16] [17]
-Overfull \hbox (1.93874pt too wide) in paragraph at lines 1362--1363
+[10] [11] [12] [13] [14] [15] [16]
+Overfull \hbox (1.93874pt too wide) in paragraph at lines 1409--1410
 []\OT1/cmr/m/n/9 mode 0 (de-fault): Save all gen-er-ated neu-trino events. When
  us-ing `pick un-bi-ased' (\OT1/cmtt/m/n/9 INTERACTION_
  []
 
-[18] <wave_box.jpg, id=95, 876.27374pt x 499.8675pt>
+[17] <wave_box.jpg, id=92, 876.27374pt x 499.8675pt>
 File: wave_box.jpg Graphic file (type jpg)
  <use wave_box.jpg>
 File: wave_box.jpg Graphic file (type jpg)
@@ -589,7 +567,7 @@ File: wave_box.jpg Graphic file (type jpg)
 ! Argument of \@tempf has an extra }.
 <inserted text> 
                 \par 
-l.1467 ... windows for modes of \p{V MIMIC MODE} }
+l.1514 ... windows for modes of \p{V MIMIC MODE} }
                                                   
 I've run across a `}' that doesn't seem to match anything.
 For example, `\def\a#1{...}' and `\a}' would produce
@@ -603,44 +581,46 @@ Runaway argument?
 ! Paragraph ended before \@tempf was complete.
 <to be read again> 
                    \par 
-l.1467 ... windows for modes of \p{V MIMIC MODE} }
+l.1514 ... windows for modes of \p{V MIMIC MODE} }
                                                   
 I suspect you've forgotten a `}', causing me to apply this
 control sequence to too much text. How can we recover?
 My plan is to forget the whole thing and hope for the best.
 
-[19 <./wave_box.jpg>] [20] [21] [22] [23] [24] [25] (./AraSimGuide.aux)
+[18 <./wave_box.jpg>] [19] [20] [21]
+Overfull \hbox (21.75865pt too wide) in paragraph at lines 1753--1754
+[]\OT1/cmr/m/n/9 #\OT1/cmtt/m/n/9 PICKNEARUNBIASED_ R\OT1/cmr/m/n/9 =5000 // (D
+EFAULT=5000) spherical radius around detector in pick near-unbiased
+ []
 
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
- ) 
+[22] [23] [24] (./AraSimGuide.aux) ) 
 Here is how much of TeX's memory you used:
- 13524 strings out of 495061
- 266926 string characters out of 1182622
- 357866 words of memory out of 3000000
- 16417 multiletter control sequences out of 15000+50000
- 14431 words of font info for 58 fonts, out of 3000000 for 9000
+ 13527 strings out of 495061
+ 266976 string characters out of 1182622
+ 364878 words of memory out of 3000000
+ 16419 multiletter control sequences out of 15000+50000
+ 14767 words of font info for 60 fonts, out of 3000000 for 9000
  28 hyphenation exceptions out of 8191
- 56i,9n,73p,669b,749s stack positions out of 5000i,500n,10000p,200000b,50000s
-</usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/sha
-re/texmf-texlive/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/share/texmf-te
-xlive/fonts/type1/public/amsfonts/cm/cmbx9.pfb></usr/share/texmf-texlive/fonts/
-type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texmf-texlive/fonts/type1/publi
-c/amsfonts/cm/cmmi6.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/c
-m/cmmi9.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmr10.pfb>
-</usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/
-texmf-texlive/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/share/texmf-texlive
-/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/share/texmf-texlive/fonts/type1/
-public/amsfonts/cm/cmr9.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfon
-ts/cm/cmsy6.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmsy8.
-pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmsy9.pfb></usr/sh
-are/texmf-texlive/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/share/texmf-t
-exlive/fonts/type1/public/amsfonts/cm/cmti9.pfb></usr/share/texmf-texlive/fonts
-/type1/public/amsfonts/cm/cmtt10.pfb></usr/share/texmf-texlive/fonts/type1/publ
-ic/amsfonts/cm/cmtt9.pfb>
-Output written on AraSimGuide.pdf (25 pages, 392985 bytes).
+ 56i,10n,73p,971b,749s stack positions out of 5000i,500n,10000p,200000b,50000s
+</usr/share/texmf-texlive/fonts/type1/publi
+c/amsfonts/cm/cmbx10.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/
+cm/cmbx12.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmbx9.pf
+b></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/sha
+re/texmf-texlive/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/share/texmf-tex
+live/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/share/texmf-texlive/fonts/t
+ype1/public/amsfonts/cm/cmr10.pfb></usr/share/texmf-texlive/fonts/type1/public/
+amsfonts/cm/cmr12.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/
+cmr6.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmr8.pfb></us
+r/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/share/texmf
+-texlive/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/share/texmf-texlive/fon
+ts/type1/public/amsfonts/cm/cmsy8.pfb></usr/share/texmf-texlive/fonts/type1/pub
+lic/amsfonts/cm/cmsy9.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts
+/cm/cmti10.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmti9.p
+fb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/sh
+are/texmf-texlive/fonts/type1/public/amsfonts/cm/cmtt9.pfb>
+Output written on AraSimGuide.pdf (24 pages, 389370 bytes).
 PDF statistics:
- 175 PDF objects out of 1000 (max. 8388607)
+ 171 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  114 words of extra memory for PDF output out of 10000 (max. 10000000)
 

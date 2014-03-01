@@ -1135,7 +1135,7 @@ so if you want 10^18.3eV use EXPONENT=400+18.3*10=583
 added a bash script to make a dynamic load library "library.sh"  
 run it and get "libSim.so" which is useful for loading all the simulation files you need to link with. 
 
-added the user guide in it's own directory. 
+added the user guide in its own directory. 
 
 modified the StandardDefinitions.mk : commented out the parts where it calls ARA_UTIL_INSTALL_DIR 
 (it messed up my installation and I think in general AraRoot conflicts with AraSim)
@@ -1157,3 +1157,8 @@ Triggering upgrade:
 So for one run at TRIG_SCAN_MODE=2 and POWERTHRESHOLD=-4 and TRIG_MODE=1 (trigger on Hpol and Vpol seperately) and N_TRIG_H=N_TRIG_V=3 we will get for each event the maximum number of channels and maximum POWERTHRESHOLD combination on which it would trigger (e.g. it could trigger at -6.1 in 3 channels or -5.9 at 4 channels). Don't need to run different runs for different Pthresh or N_TRIG, can make the cuts out of the outputfile. 
 
 
+============================================================================
+
+28/02/2014 Guy Nir:
+
+* changed TDR arrays to vectors to save space. The non-sorted TDR_all will have each channel's TDR value, and TDR_***_sorted will be filled depending on trigger mode: if we trigger on all channels only TDR_all_sorted will contain sorted triggering info, if we trigger on Vpol/Hpol then those will be sorted and filled.

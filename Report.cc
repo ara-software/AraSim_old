@@ -100,18 +100,53 @@ void Report::Initialize(Detector *detector, Settings *settings1) {
 
 	if(settings1->TRIG_SCAN_MODE>0){// scan Pthresh mode
 
-	  for(int ch=0;ch<REPORT_NCHAN; ch++){
-	   
-	    stations[i].TDR_all[ch]=0;
-	    stations[i].TDR_all_sorted[ch]=0;
-	    stations[i].TDR_Vpol[ch]=0; stations[i].TDR_Vpol_sorted[ch]=0; 
-	    stations[i].TDR_Hpol[ch]=0; stations[i].TDR_Hpol_sorted[ch]=0; 
+	  int numChan=0; 
+	  int numChanVpol=0;
+	  int numChanHpol=0;
+	  
+	  for(int j=0;j<detector->stations[i].strings.size(); j++){
 	    
-	  }
+	    for (int k=0;k<detector->stations[i].strings[j].antennas.size();k++) {
+	      
+	      int string_i = detector->getStringfromArbAntID( i, numChan);
+              int antenna_i = detector->getAntennafromArbAntID( i, numChan);
+	      if (detector->stations[i].strings[string_i].antennas[antenna_i].type == 0) numChanVpol++;
+	      if (detector->stations[i].strings[string_i].antennas[antenna_i].type == 1) numChanHpol++;
+	      numChan++;
+	    }// for k
+	    
+	  }// for j
+	  
+// 	  cout<<"numChan= "<<numChan<<" numChanVpol= "<<numChanVpol<<" numChanHpol= "<<numChanHpol<<endl;
+	  
+	  stations[i].TDR_all.clear();
+	  for(int ch=0;ch<numChan; ch++ ) stations[i].TDR_all.push_back(0);
+	  stations[i].TDR_all_sorted.clear();
+	  if(settings1->TRIG_MODE==0) for(int ch=0;ch<numChan; ch++ ) stations[i].TDR_all_sorted.push_back(0);
+
+// 	  stations[i].TDR_Vpol.clear();
+// 	  for(int ch=0;ch<numChan; ch++) stations[i].TDR_Vpol.push_back(0);
+	  stations[i].TDR_Vpol_sorted.clear();
+	  if(settings1->TRIG_MODE==1) for(int ch=0;ch<numChanVpol; ch++) stations[i].TDR_Vpol_sorted.push_back(0);
+
+// 	  stations[i].TDR_Hpol.clear();
+// 	  for(int ch=0;ch<numChan; ch++ ) stations[i].TDR_Hpol.push_back(0);
+	  stations[i].TDR_Hpol_sorted.clear();
+	  if(settings1->TRIG_MODE==1) for(int ch=0;ch<numChanHpol; ch++ ) stations[i].TDR_Hpol_sorted.push_back(0);
+
 
 	  
+// 	  for(int ch=0;ch<REPORT_NCHAN; ch++){
+	   
+// 	    stations[i].TDR_all[ch]=0;
+// 	    stations[i].TDR_all_sorted[ch]=0;
+// 	    stations[i].TDR_Vpol[ch]=0; stations[i].TDR_Vpol_sorted[ch]=0; 
+// 	    stations[i].TDR_Hpol[ch]=0; stations[i].TDR_Hpol_sorted[ch]=0; 
+	    
+// 	  }
 	  
 	}// if TRIG_SCAN_MODE 
+	
     }// for i (number of stations)
 
 
@@ -2300,7 +2335,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
 	       }// if TRIG_SCAN_MODE==0
 	       
-	       else if(settings1->TRIG_SCAN_MODE>0) triggerCheckLoop(settings1, detector, event, trigger, i, ch_ID, trig_search_init, max_total_bin, trig_window_bin, settings1->TRIG_SCAN_MODE);
+	       else if(settings1->TRIG_SCAN_MODE>0) triggerCheckLoop(settings1, detector, event, trigger, i, trig_search_init, max_total_bin, trig_window_bin, settings1->TRIG_SCAN_MODE);
 	       
 // 	       else if(settings1->TRIG_SCAN_MODE==2) triggerCheckLoopScan();
 	       
@@ -2340,7 +2375,7 @@ void Report::Connect_Interaction_Detector (Event *event, Detector *detector, Ray
 
 }   // end Connect_Interaction_Detector
 
-int Report::triggerCheckLoop(Settings *settings1, Detector *detector, Event *event, Trigger *trigger, int stationID, const int numChan,int trig_search_init, int max_total_bin, int trig_window_bin, int scan_mode ){
+int Report::triggerCheckLoop(Settings *settings1, Detector *detector, Event *event, Trigger *trigger, int stationID, int trig_search_init, int max_total_bin, int trig_window_bin, int scan_mode ){
  
   class CircularBuffer {
     
@@ -2473,8 +2508,13 @@ int Report::triggerCheckLoop(Settings *settings1, Detector *detector, Event *eve
     }// numBinsToLatestTrigger
     
   };
-  
   int i=stationID;
+  
+  int numChan=stations[i].TDR_all.size();
+  int numChanVpol=stations[i].TDR_Vpol_sorted.size();
+  int numChanHpol=stations[i].TDR_Hpol_sorted.size();
+  
+
   double powerthreshold=settings1->POWERTHRESHOLD;
   // this value is compared to POWERTHRESHOLD for local trigger.  
   
@@ -2493,19 +2533,22 @@ int Report::triggerCheckLoop(Settings *settings1, Detector *detector, Event *eve
     
   }// for trig_j
   
+  double *TDR_all_sorted_temp;
+  double *TDR_Vpol_sorted_temp;
+  double *TDR_Hpol_sorted_temp;
   
-  
-  double *TDR_all_sorted_temp=new double[numChan];
-  double *TDR_Vpol_sorted_temp=new double[numChan/2];
-  double *TDR_Hpol_sorted_temp=new double[numChan/2];
-  
-  if(scan_mode>1) for(int trig_j=0;trig_j<numChan;trig_j++){// only need to initialize for scan_mode>1
-   
-    TDR_all_sorted_temp[trig_j]=0;
-    if(trig_j<numChan/2) TDR_Vpol_sorted_temp[trig_j]=0;
-    else TDR_Hpol_sorted_temp[trig_j-numChan/2]=0;
-        
-  }
+  if(scan_mode>1){
+    
+    TDR_all_sorted_temp=new double[numChan];
+    TDR_Vpol_sorted_temp=new double[numChanVpol];
+    TDR_Hpol_sorted_temp=new double[numChanHpol];
+    
+    // only need to initialize for scan_mode>1
+    for(int trig_j=0;trig_j<numChan;trig_j++) TDR_all_sorted_temp[trig_j]=0;
+    for(int trig_j=0;trig_j<numChanVpol;trig_j++) TDR_Vpol_sorted_temp[trig_j]=0;
+    for(int trig_j=0;trig_j<numChanHpol;trig_j++) TDR_Hpol_sorted_temp[trig_j]=0;
+          
+  }// if scan_mode>1
 
   int global_pass_bit=0;
   int check_TDR_configuration=0; // check if we need to reorder our TDR arrays
@@ -2527,9 +2570,9 @@ int Report::triggerCheckLoop(Settings *settings1, Detector *detector, Event *eve
       
       if (settings1->TRIG_ONLY_BH_ON==0
 	               || 
-         (settings1->TRIG_ONLY_BH_ON==1 && ( (settings1->DETECTOR==3&&detector->stations[i].strings[string_i].antennas[antenna_i].DAQchan==0)
-                                                ||
-	                                   (settings1->DETECTOR!=3&&antenna_i<2) ) ) ){
+         (settings1->TRIG_ONLY_BH_ON==1 && settings1->DETECTOR==3 && detector->stations[i].strings[string_i].antennas[antenna_i].DAQchan==0)
+                       ||
+	 (settings1->TRIG_ONLY_LOW_CH_ON==1 && settings1->DETECTOR!=3 && antenna_i<2 ) ){ // channel filter: choose if to use lower/borehole channels or not
       
 
       int channel_num = detector->GetChannelfromStringAntenna ( i, string_i, antenna_i, settings1 );
@@ -2584,7 +2627,7 @@ int Report::triggerCheckLoop(Settings *settings1, Detector *detector, Event *eve
 	  
 	}// for trig_j
 	
-	saveTriggeredEvent(settings1, detector, event, trigger, stationID, numChan, trig_search_init, max_total_bin, trig_window_bin, trig_i);
+	saveTriggeredEvent(settings1, detector, event, trigger, stationID, trig_search_init, max_total_bin, trig_window_bin, trig_i);
 // 	cout<<"\nPthresh value=";
 // 	if(scan_mode==1) for(int trig_j=0;trig_j<numChan; trig_j++) cout<<" "<<Pthresh_value[trig_j];
 // 	if(scan_mode>1)  for(int trig_j=0;trig_j<numChan; trig_j++) cout<<" "<<buffer[trig_j]->best_value;
@@ -2599,20 +2642,13 @@ int Report::triggerCheckLoop(Settings *settings1, Detector *detector, Event *eve
     
     if(scan_mode>1&&check_TDR_configuration&&global_pass_bit){// if there's a trigger and anything changes in the buffers, restock the TDR arrays
       	    
-      for(int trig_j=0;trig_j<numChan;trig_j++){// only need to initialize for scan_mode>1
-   
-	TDR_all_sorted_temp[trig_j]=0;
-	if(trig_j<numChan/2) TDR_Vpol_sorted_temp[trig_j]=0;
-	else TDR_Hpol_sorted_temp[trig_j-numChan/2]=0;
-      } 
+      for(int trig_j=0;trig_j<numChan;trig_j++) TDR_all_sorted_temp[trig_j]=0;
+      for(int trig_j=0;trig_j<numChanVpol;trig_j++) TDR_Vpol_sorted_temp[trig_j]=0;
+      for(int trig_j=0;trig_j<numChanHpol;trig_j++) TDR_Hpol_sorted_temp[trig_j]=0;
 
       for(int trig_j=0;trig_j<numChan;trig_j++){// fill the TDR (unsorted) arrays if they improved... 
 	
-	int string_i = detector->getStringfromArbAntID( i, trig_j);
-	int antenna_i = detector->getAntennafromArbAntID( i, trig_j);
 	if(buffer[trig_j]->best_value<stations[i].TDR_all[trig_j]) stations[i].TDR_all[trig_j]=buffer[trig_j]->best_value;
-	if(detector->stations[i].strings[string_i].antennas[antenna_i].type==0&&buffer[trig_j]->best_value<stations[i].TDR_Vpol[trig_j]) stations[i].TDR_Vpol[trig_j]=buffer[trig_j]->best_value;
-	if(detector->stations[i].strings[string_i].antennas[antenna_i].type==1&&buffer[trig_j]->best_value<stations[i].TDR_Hpol[trig_j]) stations[i].TDR_Hpol[trig_j]=buffer[trig_j]->best_value;
 
       }// for trig_j
 
@@ -2643,10 +2679,6 @@ int Report::triggerCheckLoop(Settings *settings1, Detector *detector, Event *eve
 	    
 	}
 	
-	// more debug output:
-	for(int p=0;p<numChan/2;p++) if(TDR_Vpol_sorted_temp[p]!=0) cout<<"TDR_Vpol_sorted_temp["<<p<<"]!=0\n";
-	for(int p=0;p<numChan/2;p++) if(TDR_Hpol_sorted_temp[p]!=0) cout<<"TDR_Hpol_sorted_temp["<<p<<"]!=0\n";
-	
       }// if trig_mode==0
       if(settings1->TRIG_MODE==1){ // for N out of either polarization
 
@@ -2675,15 +2707,15 @@ int Report::triggerCheckLoop(Settings *settings1, Detector *detector, Event *eve
 	}// for ii
 	  
 	  // debug output:
-	  if(TDR_Vpol_sorted_temp[0]>TDR_Vpol_sorted_temp[1]||TDR_Vpol_sorted_temp[1]>TDR_Vpol_sorted_temp[2]){
-	   
-	    cout<<"\n";
-	    for(int p=0;p<80;p++) cout<<"*";
-	    cout<<"\n  ordering problem, Vpol: "<<TDR_Vpol_sorted_temp[0]<<" "<<TDR_Vpol_sorted_temp[1]<<" "<<TDR_Vpol_sorted_temp[2]<<"\n";
-	    for(int p=0;p<80;p++) cout<<"*";
-	    cout<<"\n";
-	    
-	  }
+// 	  if(TDR_Vpol_sorted_temp[0]>TDR_Vpol_sorted_temp[1]||TDR_Vpol_sorted_temp[1]>TDR_Vpol_sorted_temp[2]){
+// 	   
+// 	    cout<<"\n";
+// 	    for(int p=0;p<80;p++) cout<<"*";
+// 	    cout<<"\n  ordering problem, Vpol: "<<TDR_Vpol_sorted_temp[0]<<" "<<TDR_Vpol_sorted_temp[1]<<" "<<TDR_Vpol_sorted_temp[2]<<"\n";
+// 	    for(int p=0;p<80;p++) cout<<"*";
+// 	    cout<<"\n";
+// 	    
+// 	  }
 	// for Hpol only
 	if(N_pass_H>=settings1->N_TRIG_H) for(int ii=0;ii<N_pass_H; ii++){// find the N_pass best channel's TDR and store them.
 
@@ -2711,16 +2743,16 @@ int Report::triggerCheckLoop(Settings *settings1, Detector *detector, Event *eve
 	  	  
 	}// for ii
 	
-          // debug output:
-	  if(TDR_Hpol_sorted_temp[0]>TDR_Hpol_sorted_temp[1]||TDR_Hpol_sorted_temp[1]>TDR_Hpol_sorted_temp[2]){
-	   
-	    cout<<"\n";
-	    for(int p=0;p<80;p++) cout<<"*";
-	    cout<<"\n  ordering problem, Hpol: "<<TDR_Hpol_sorted_temp[0]<<" "<<TDR_Hpol_sorted_temp[1]<<" "<<TDR_Hpol_sorted_temp[2]<<"\n";
-	    for(int p=0;p<80;p++) cout<<"*";
-	    cout<<"\n";
-	    
-	  }
+//           // debug output:
+// 	  if(TDR_Hpol_sorted_temp[0]>TDR_Hpol_sorted_temp[1]||TDR_Hpol_sorted_temp[1]>TDR_Hpol_sorted_temp[2]){
+// 	   
+// 	    cout<<"\n";
+// 	    for(int p=0;p<80;p++) cout<<"*";
+// 	    cout<<"\n  ordering problem, Hpol: "<<TDR_Hpol_sorted_temp[0]<<" "<<TDR_Hpol_sorted_temp[1]<<" "<<TDR_Hpol_sorted_temp[2]<<"\n";
+// 	    for(int p=0;p<80;p++) cout<<"*";
+// 	    cout<<"\n";
+// 	    
+// 	  }
       }// if trig_mode==1
     
     
@@ -2761,18 +2793,14 @@ int Report::triggerCheckLoop(Settings *settings1, Detector *detector, Event *eve
 		
       }// ordering problem
       
-      // more debug output:
-      
-      for(int p=0;p<numChan/2;p++) if(stations[i].TDR_Vpol_sorted[p]!=0) cout<<"stations[i].TDR_Vpol_sorted["<<p<<"]="<<stations[i].TDR_Vpol_sorted[p]<<"\n";
-      for(int p=0;p<numChan/2;p++) if(stations[i].TDR_Hpol_sorted[p]!=0) cout<<"stations[i].TDR_Hpol_sorted["<<p<<"]="<<stations[i].TDR_Hpol_sorted[p]<<"\n";
-      
+   
     }// trig mode 0
     
     
     if(settings1->TRIG_MODE==1){
       cout<<"\nPthresh best: ";
-      cout<<"  Vpol: "; for(int ii=0;ii<3;ii++) cout<<" "<<stations[i].TDR_Vpol_sorted[ii];
-      cout<<"  Hpol: "; for(int ii=0;ii<3;ii++) cout<<" "<<stations[i].TDR_Hpol_sorted[ii];
+      cout<<"  Vpol: "; for(int ii=0;ii<stations[i].TDR_Vpol_sorted.size();ii++) cout<<" "<<stations[i].TDR_Vpol_sorted[ii];
+      cout<<"  Hpol: "; for(int ii=0;ii<stations[i].TDR_Hpol_sorted.size();ii++) cout<<" "<<stations[i].TDR_Hpol_sorted[ii];
       cout<<"\n";
       
         
@@ -2805,9 +2833,13 @@ int Report::triggerCheckLoop(Settings *settings1, Detector *detector, Event *eve
 
   for(int trig_j=0;trig_j<numChan; trig_j++) delete buffer[trig_j];
   delete [] buffer;
-  delete [] TDR_all_sorted_temp;
-  delete [] TDR_Vpol_sorted_temp;
-  delete [] TDR_Hpol_sorted_temp;
+  
+  if(scan_mode>1){
+    
+    delete [] TDR_all_sorted_temp;
+    delete [] TDR_Vpol_sorted_temp;
+    delete [] TDR_Hpol_sorted_temp;
+  }
   
   
   return stations[i].Global_Pass;
@@ -2824,9 +2856,10 @@ int Report::triggerCheckLoop(Settings *settings1, Detector *detector, Event *eve
 //   
 // }
 
-int Report::saveTriggeredEvent(Settings *settings1, Detector *detector, Event *event, Trigger *trigger, int stationID, int numChan, int trig_search_init, int max_total_bin, int trig_window_bin, int last_trig_bin){
+int Report::saveTriggeredEvent(Settings *settings1, Detector *detector, Event *event, Trigger *trigger, int stationID, int trig_search_init, int max_total_bin, int trig_window_bin, int last_trig_bin){
  
   int i=stationID;
+  int numChan=stations[i].TDR_all.size();
   cout<<"saving event"<<endl;
   stations[i].Global_Pass = last_trig_bin;
 
